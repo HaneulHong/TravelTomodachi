@@ -1,0 +1,26 @@
+node_modules
+dist
+dist-ssr
+*.local
+.DS_Store
+.env
+.env.local
+.env.*.local
+
+# Capacitor (2단계에서 생성)
+android
+ios
+.capacitor
+
+# 에디터
+.vscode/*
+!.vscode/extensions.json
+.idea
+
+# 전송용 임시 파일
+.tt-src.tar.gz
+.tt-maps-patch.tar.gz
+.tt-marker-fix.tar.gz
+
+# 타입체크 캐시
+tsconfig.tsbuildinfo

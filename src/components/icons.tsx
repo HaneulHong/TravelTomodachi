@@ -1,0 +1,144 @@
+/** 인라인 아이콘. 외부 아이콘 패키지를 안 쓰면 번들이 작고 색상 제어가 쉽다. */
+
+interface IconProps {
+  size?: number;
+  className?: string;
+}
+
+function base(size: number, className?: string) {
+  return {
+    width: size,
+    height: size,
+    viewBox: '0 0 24 24',
+    fill: 'none',
+    stroke: 'currentColor',
+    strokeWidth: 1.9,
+    strokeLinecap: 'round' as const,
+    strokeLinejoin: 'round' as const,
+    className,
+    'aria-hidden': true,
+  };
+}
+
+export const ChevronLeft = ({ size = 22, className }: IconProps) => (
+  <svg {...base(size, className)}>
+    <path d="M15 18l-6-6 6-6" />
+  </svg>
+);
+
+export const Menu = ({ size = 21, className }: IconProps) => (
+  <svg {...base(size, className)}>
+    <path d="M4 7h16M4 12h16M4 17h16" />
+  </svg>
+);
+
+export const HomeIcon = ({ size = 22, className }: IconProps) => (
+  <svg {...base(size, className)}>
+    <path d="M4 10.5L12 4l8 6.5V20a1 1 0 01-1 1h-4v-6H9v6H5a1 1 0 01-1-1v-9.5z" />
+  </svg>
+);
+
+export const CalendarIcon = ({ size = 22, className }: IconProps) => (
+  <svg {...base(size, className)}>
+    <rect x="3.5" y="5" width="17" height="15" rx="2.5" />
+    <path d="M3.5 10h17M8 3.5v3M16 3.5v3" />
+  </svg>
+);
+
+export const MapIcon = ({ size = 22, className }: IconProps) => (
+  <svg {...base(size, className)}>
+    <path d="M9 4.5L3.5 6.5v13L9 17.5l6 2 5.5-2v-13L15 6.5l-6-2z" />
+    <path d="M9 4.5v13M15 6.5v13" />
+  </svg>
+);
+
+export const PinIcon = ({ size = 13, className }: IconProps) => (
+  <svg {...base(size, className)}>
+    <path d="M12 21s7-5.5 7-11a7 7 0 10-14 0c0 5.5 7 11 7 11z" />
+    <circle cx="12" cy="10" r="2.5" />
+  </svg>
+);
+
+export const CheckIcon = ({ size = 14, className }: IconProps) => (
+  <svg {...base(size, className)} strokeWidth={2.6}>
+    <path d="M5 12.5l4.5 4.5L19 7" />
+  </svg>
+);
+
+export const PlusIcon = ({ size = 18, className }: IconProps) => (
+  <svg {...base(size, className)}>
+    <path d="M12 5v14M5 12h14" />
+  </svg>
+);
+
+export const WalkIcon = ({ size = 13, className }: IconProps) => (
+  <svg {...base(size, className)}>
+    <circle cx="13" cy="4.5" r="2" />
+    <path d="M11 21l1.5-6-3-2 1-5 3 3 3 1M12.5 15l3 6" />
+  </svg>
+);
+
+export const TransitIcon = ({ size = 13, className }: IconProps) => (
+  <svg {...base(size, className)}>
+    <rect x="5.5" y="3.5" width="13" height="13" rx="2.5" />
+    <path d="M5.5 10h13M9 20l1.5-3.5M15 20l-1.5-3.5" />
+    <circle cx="9.5" cy="13.5" r="0.6" fill="currentColor" />
+    <circle cx="14.5" cy="13.5" r="0.6" fill="currentColor" />
+  </svg>
+);
+
+export const CarIcon = ({ size = 13, className }: IconProps) => (
+  <svg {...base(size, className)}>
+    <path d="M4 15v-2.2a2 2 0 01.3-1L6.5 8A2 2 0 018.2 7h7.6a2 2 0 011.7 1l2.2 3.8c.2.3.3.7.3 1V15a1 1 0 01-1 1H5a1 1 0 01-1-1z" />
+    <path d="M4.5 12h15" />
+    <circle cx="8" cy="16.5" r="1.3" />
+    <circle cx="16" cy="16.5" r="1.3" />
+  </svg>
+);
+
+export const PlaneIcon = ({ size = 13, className }: IconProps) => (
+  <svg {...base(size, className)}>
+    <path d="M3 13l18-6-5.5 12-3-5.5L3 13z" />
+  </svg>
+);
+
+export const TrainIcon = ({ size = 13, className }: IconProps) => (
+  <svg {...base(size, className)}>
+    <rect x="6" y="3.5" width="12" height="12" rx="3" />
+    <path d="M6 9.5h12M8 19l1.5-3M16 19l-1.5-3" />
+  </svg>
+);
+
+export const AlertIcon = ({ size = 15, className }: IconProps) => (
+  <svg {...base(size, className)}>
+    <path d="M12 4.5L21 19.5H3L12 4.5z" />
+    <path d="M12 10v4M12 16.8v.2" />
+  </svg>
+);
+
+export const ClockIcon = ({ size = 13, className }: IconProps) => (
+  <svg {...base(size, className)}>
+    <circle cx="12" cy="12" r="8.5" />
+    <path d="M12 7.5V12l3 2" />
+  </svg>
+);
+
+export const ShareIcon = ({ size = 19, className }: IconProps) => (
+  <svg {...base(size, className)}>
+    <path d="M12 3.5v11M12 3.5L8 7.5M12 3.5l4 4" />
+    <path d="M5 13v6.5a1 1 0 001 1h12a1 1 0 001-1V13" />
+  </svg>
+);
+
+export const ListIcon = ({ size = 19, className }: IconProps) => (
+  <svg {...base(size, className)}>
+    <path d="M9 6.5h11M9 12h11M9 17.5h11M4.5 6.5h.2M4.5 12h.2M4.5 17.5h.2" />
+  </svg>
+);
+
+export const GlobeIcon = ({ size = 19, className }: IconProps) => (
+  <svg {...base(size, className)}>
+    <circle cx="12" cy="12" r="8.5" />
+    <path d="M3.5 12h17M12 3.5c2.5 2.5 2.5 14 0 17M12 3.5c-2.5 2.5-2.5 14 0 17" />
+  </svg>
+);

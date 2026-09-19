@@ -1,0 +1,8 @@
+{
+  // React·Vite 타입 없이 돌아가는 부분만 따로, 완전 엄격하게 타입체크한다.
+  // 도메인 로직과 지도 렌더러가 여기 들어간다 — 둘 다 React에 의존하지 않는다.
+  //   npm run typecheck:logic
+  "extends": "./tsconfig.json",
+  "compilerOptions": { "types": [] },
+  "include": ["src/domain", "src/providers", "src/data", "src/types"]
+}
