@@ -65,13 +65,22 @@ export interface Place {
   id: string;
   name: string;
   address: string;
-  coord: Coord;
+  /**
+   * 자동완성 단계에서는 없을 수 있다.
+   *
+   * Google은 후보 목록에 좌표를 주지 않는다 — 좌표는 상세 조회에서 나오고,
+   * 그게 별도 과금이다. 목록에 뜬 10개를 전부 조회하면 9개는 버리는 돈이
+   * 되므로, 고른 하나만 resolve()로 채운다.
+   */
+  coord?: Coord;
 }
 
 export interface PlaceProvider {
   readonly id: string;
   readonly label: string;
   search(query: string, near?: Coord): Promise<Place[]>;
+  /** 후보를 고른 뒤 좌표를 채워 돌려준다. 이미 있으면 그대로 돌려준다. */
+  resolve(place: Place): Promise<Place>;
 }
 
 // 지도 렌더러는 './maps'로 옮겼다. SDK를 실제로 붙이면서 명령형 핸들

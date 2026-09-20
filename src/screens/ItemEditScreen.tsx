@@ -51,6 +51,8 @@ export function ItemEditScreen() {
   const [open, setOpen] = useState(false);
   /** 키보드로 훑고 있는 후보. -1이면 아무것도 안 고른 상태. */
   const [active, setActive] = useState(-1);
+  /** 검색이 실패한 이유. 결과 0건과 구분해서 보여줘야 원인을 알 수 있다. */
+  const [searchError, setSearchError] = useState<string | null>(null);
   const places = useMemo(() => getPlaceProvider('GLOBAL'), []);
 
   /**
@@ -76,14 +78,25 @@ export function ItemEditScreen() {
     }
 
     setSearching(true);
+    setSearchError(null);
     const seq = ++seqRef.current;
     const timer = setTimeout(() => {
-      void places.search(q, coord).then((found) => {
-        if (seq !== seqRef.current) return;
-        setResults(found);
-        setActive(-1);
-        setSearching(false);
-      });
+      void places
+        .search(q, coord)
+        .then((found) => {
+          if (seq !== seqRef.current) return;
+          setResults(found);
+          setActive(-1);
+          setSearching(false);
+        })
+        .catch((err: unknown) => {
+          if (seq !== seqRef.current) return;
+          // 키 제한이나 API 미활성이면 여기로 온다. "결과 없음"으로 뭉뚱그리면
+          // 검색어를 계속 바꿔보게 되므로 이유를 그대로 보여준다.
+          setSearchError(err instanceof Error ? err.message : '장소를 찾지 못했습니다');
+          setResults([]);
+          setSearching(false);
+        });
     }, SEARCH_DEBOUNCE_MS);
 
     return () => clearTimeout(timer);
@@ -99,6 +112,24 @@ export function ItemEditScreen() {
     setResults([]);
     setOpen(false);
     setActive(-1);
+
+    /*
+     * 좌표는 후보 목록에 없다(Google은 상세 조회에서만 준다). 고른 하나만
+     * 채운다 — 목록 10개를 전부 조회하면 9개는 버리는 호출이 된다.
+     * 이름은 이미 넣었으므로 좌표가 늦게 와도 화면은 먼저 반응한다.
+     */
+    if (place.coord) return;
+    void places
+      .resolve(place)
+      .then((full) => {
+        // 그 사이 사용자가 다른 곳을 골랐으면 덮지 않는다
+        if (pickedNameRef.current !== place.name) return;
+        setCoord(full.coord);
+      })
+      .catch(() => {
+        // 좌표만 못 받은 것이므로 입력을 막지는 않는다. 지도에 안 뜬다는
+        // 안내는 아래 힌트가 이미 보여준다.
+      });
   }
 
   function onPlaceKeyDown(e: React.KeyboardEvent<HTMLInputElement>): void {
@@ -276,14 +307,15 @@ export function ItemEditScreen() {
               )}
             </div>
 
-            {!searching &&
+            {searchError && <p className="form__hint">{searchError}</p>}
+
+            {!searchError &&
+              !searching &&
               open &&
               results.length === 0 &&
               placeName.trim().length > 0 &&
               placeName.trim() !== pickedNameRef.current && (
-                <p className="form__hint">
-                  후보가 없습니다. 지금 장소 검색은 목(mock) 데이터라 등록된 11곳만 찾습니다.
-                </p>
+                <p className="form__hint">후보가 없습니다.</p>
               )}
 
             {/*
