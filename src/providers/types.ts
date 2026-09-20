@@ -42,7 +42,12 @@ export type RouteUnavailableReason =
   /** 해당 지역에서 이 프로바이더가 이 수단을 제공하지 않는다 (예: 한국 내 Google 차량) */
   | 'mode_not_supported_here'
   /** 좌표가 없어서 조회 자체가 불가 */
-  | 'missing_coordinates';
+  | 'missing_coordinates'
+  /**
+   * 조회는 시도했으나 결과를 받지 못했다 (네트워크 실패, 도로로 이어지지
+   * 않는 구간 등). 0분으로 뭉개지 않고 이 상태로 남긴다.
+   */
+  | 'lookup_failed';
 
 export interface RouteUnavailable {
   available: false;

@@ -54,11 +54,53 @@ export function MapScreen() {
     [items],
   );
 
-  const path: Coord[] = useMemo(() => stops.map((s) => s.coord), [stops]);
+  /**
+   * 지도에 그릴 선.
+   *
+   * 구간마다 추천 수단의 실제 경로 폴리라인이 있으면 그걸 잇고, 없으면
+   * 두 지점을 직선으로 잇는다. 직선은 "아직 모른다"는 표시에 가깝다 —
+   * 실제 길은 강을 건너고 돌아가는데 직선으로 그려두면 거리가 짧아 보여서
+   * 일정을 빡빡하게 짜게 된다.
+   *
+   * 조회가 끝나면 legs가 바뀌고 이 배열도 다시 만들어진다. MapCanvas는
+   * path가 바뀌면 선만 다시 그리므로(remount 아님) 깜빡이지 않는다.
+   */
+  const path: Coord[] = useMemo(() => {
+    const line: Coord[] = [];
+
+    stops.forEach((stop, i) => {
+      if (i === 0) {
+        line.push(stop.coord);
+        return;
+      }
+
+      const info = legs.get(stop.id);
+      const mode = info?.recommended;
+      const result = mode ? info?.results[mode] : undefined;
+      const shape = result?.available ? result.polyline : undefined;
+
+      if (shape && shape.length > 1) {
+        // 폴리라인의 첫 점은 직전 지점과 거의 같다. 그대로 이어 붙이면
+        // 점이 겹칠 뿐 선 모양은 달라지지 않으므로 그냥 잇는다.
+        line.push(...shape);
+        return;
+      }
+
+      line.push(stop.coord);
+    });
+
+    return line;
+  }, [stops, legs]);
+
+  /**
+   * 지역 판정에는 지점 좌표만 쓴다. 경로 폴리라인까지 넣으면 점이 수백 개라
+   * 매번 전부 검사하게 되고, 판정 결과는 어차피 같다.
+   */
+  const stopCoords: Coord[] = useMemo(() => stops.map((s) => s.coord), [stops]);
 
   // 지도 지역 판정은 길찾기와 규칙이 다르다 — 하나라도 해외면 Google.
   // (1일차 "서울 → 방콕" 같은 날 때문. providers/maps/index.ts 주석 참고)
-  const mapRegion = useMemo(() => resolveMapRegion(path), [path]);
+  const mapRegion = useMemo(() => resolveMapRegion(stopCoords), [stopCoords]);
   const renderer = getMapRenderer(mapRegion);
 
   if (!trip) {

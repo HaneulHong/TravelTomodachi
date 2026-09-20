@@ -7,7 +7,7 @@
 
 import type { Coord, Region } from '@/domain/types';
 import { resolveRegion } from './region';
-import { mockGlobalRouteProvider, mockKoreaRouteProvider } from './mock/mockRouteProvider';
+import { valhallaRouteProvider } from './route/valhallaRouteProvider';
 import { createPhotonPlaceProvider } from './places/photonPlaceProvider';
 import type { PlaceProvider, RouteProvider } from './types';
 
@@ -16,8 +16,15 @@ export * from './region';
 export * from './maps';
 
 
-export function getRouteProvider(region: Region): RouteProvider {
-  return region === 'KR' ? mockKoreaRouteProvider : mockGlobalRouteProvider;
+/**
+ * 길찾기도 지역을 나누지 않는다.
+ *
+ * 원래 한국을 갈라낸 이유는 Google이 국내 자동차·도보 길찾기를 제공하지 않기
+ * 때문이었다. OSM 기반 라우팅(Valhalla)은 그 제한에 걸리지 않아서 국내외를
+ * 한 프로바이더로 덮는다. 분기가 사라지면 "국내에서만 나는 버그"도 사라진다.
+ */
+export function getRouteProvider(_region: Region): RouteProvider {
+  return valhallaRouteProvider;
 }
 
 export function getRouteProviderFor(coord?: Coord): RouteProvider {
