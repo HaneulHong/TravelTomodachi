@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AppHeader } from '@/components/AppHeader';
 import { MODE_ICON } from '@/components/TransportChip';
-import { AlertIcon, PinIcon } from '@/components/icons';
+import { AlertIcon, PencilIcon, PinIcon } from '@/components/icons';
 import { useDayLegs } from '@/hooks/useDayLegs';
 import { formatDistance } from '@/domain/geo';
 import { formatMinutes, tzShortLabel } from '@/domain/time';
@@ -78,16 +78,9 @@ export function ItemDetailScreen() {
 
   return (
     <div className="app">
-      <AppHeader
-        title={item.title}
-        back
-        action={{
-          label: '수정',
-          onClick: () => navigate(`/trip/${tripId}/item/${itemId}/edit`),
-        }}
-      />
+      <AppHeader title={item.title} back />
 
-      <main className="main main--no-tabs">
+      <main className="main main--no-tabs main--fab">
         <div className="detail">
           {/* 일정 명세 */}
           <section className="card detail__hero">
@@ -267,6 +260,20 @@ export function ItemDetailScreen() {
           </section>
         </div>
       </main>
+
+      {/*
+        수정 버튼은 헤더가 아니라 화면 아래 오른쪽에 둔다. 상세를 끝까지
+        읽고 나서 고치게 되는데, 헤더에 있으면 그때마다 맨 위로 올라가야 한다.
+        감싸는 막대는 클릭을 통과시켜(pointer-events: none) 버튼만 받는다.
+      */}
+      <div className="fab-bar">
+        <button
+          className="fab"
+          onClick={() => navigate(`/trip/${tripId}/item/${itemId}/edit`)}
+        >
+          <PencilIcon size={16} /> 수정
+        </button>
+      </div>
     </div>
   );
 }

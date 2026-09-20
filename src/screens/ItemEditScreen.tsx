@@ -45,11 +45,20 @@ export function ItemEditScreen() {
   const [carrierCode, setCarrierCode] = useState(existing?.carrierCode ?? '');
   const [description, setDescription] = useState(existing?.description ?? '');
 
-  // ── 장소 검색 ────────────────────────────────────────────────────
-  const [query, setQuery] = useState('');
+  // ── 장소 자동완성 ────────────────────────────────────────────────
   const [results, setResults] = useState<Place[]>([]);
   const [searching, setSearching] = useState(false);
+  const [open, setOpen] = useState(false);
+  /** 키보드로 훑고 있는 후보. -1이면 아무것도 안 고른 상태. */
+  const [active, setActive] = useState(-1);
   const places = useMemo(() => getPlaceProvider('GLOBAL'), []);
+
+  /**
+   * 직전에 고른 장소의 이름. 입력값이 여기서 벗어나면 좌표를 버린다.
+   * 이름만 고치고 좌표는 남겨두면 "분짜 흐엉리엔"이라 적힌 마커가 엉뚱한
+   * 곳에 찍힌다.
+   */
+  const pickedNameRef = useRef(existing?.placeName ?? '');
 
   /**
    * 마지막 요청만 반영한다. 검색은 비동기라 늦게 시작한 요청이 먼저 끝날 수
@@ -58,8 +67,9 @@ export function ItemEditScreen() {
   const seqRef = useRef(0);
 
   useEffect(() => {
-    const q = query.trim();
-    if (q.length === 0) {
+    const q = placeName.trim();
+    // 고른 장소를 그대로 두고 있을 때는 다시 찾지 않는다.
+    if (q.length === 0 || q === pickedNameRef.current) {
       setResults([]);
       setSearching(false);
       return;
@@ -71,21 +81,43 @@ export function ItemEditScreen() {
       void places.search(q, coord).then((found) => {
         if (seq !== seqRef.current) return;
         setResults(found);
+        setActive(-1);
         setSearching(false);
       });
     }, SEARCH_DEBOUNCE_MS);
 
     return () => clearTimeout(timer);
-  }, [query, places, coord]);
+  }, [placeName, places, coord]);
 
   function pickPlace(place: Place): void {
+    pickedNameRef.current = place.name;
     setPlaceName(place.name);
     setCoord(place.coord);
     // 제목이 비어 있을 때만 장소 이름으로 채운다. 이미 적어둔 제목
     // ("점심 · 분짜" 같은)을 장소 이름으로 덮으면 안 된다.
     if (title.trim().length === 0) setTitle(place.name);
-    setQuery('');
     setResults([]);
+    setOpen(false);
+    setActive(-1);
+  }
+
+  function onPlaceKeyDown(e: React.KeyboardEvent<HTMLInputElement>): void {
+    if (!open || results.length === 0) return;
+
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      // 화살표로 목록을 훑는 동안 커서가 글자 끝으로 튀지 않게 막는다
+      e.preventDefault();
+      const step = e.key === 'ArrowDown' ? 1 : -1;
+      setActive((cur) => (cur + step + results.length) % results.length);
+      return;
+    }
+    if (e.key === 'Enter' && active >= 0) {
+      e.preventDefault();
+      const picked = results[active];
+      if (picked) pickPlace(picked);
+      return;
+    }
+    if (e.key === 'Escape') setOpen(false);
   }
 
   if (!trip) {
@@ -187,54 +219,78 @@ export function ItemEditScreen() {
           <div className="form__row">
             <span className="form__label">장소</span>
 
-            {placeName ? (
-              <div className="picked">
-                <span className="picked__name">
-                  <PinIcon /> {placeName}
-                </span>
-                <button
-                  className="btn btn--ghost btn--sm"
-                  onClick={() => {
-                    setPlaceName('');
-                    setCoord(undefined);
+            {/*
+              입력칸 하나로 검색과 표시를 겸한다. 고른 뒤에도 그 자리에서
+              바로 고쳐 다시 찾을 수 있어야 하는데, 칸을 "검색"과 "선택됨"
+              두 모양으로 갈라 두면 고칠 때마다 지우기를 눌러야 한다.
+            */}
+            <div className="ac">
+              <span className="ac__field">
+                <input
+                  className="form__input"
+                  value={placeName}
+                  onChange={(e) => {
+                    setPlaceName(e.target.value);
+                    // 이름을 손대는 순간 앞서 고른 좌표는 더 이상 이 이름의
+                    // 좌표가 아니다. 다시 고를 때까지 비워둔다.
+                    if (e.target.value.trim() !== pickedNameRef.current) setCoord(undefined);
+                    setOpen(true);
                   }}
-                >
-                  지우기
-                </button>
-              </div>
-            ) : (
-              <input
-                className="form__input"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="장소 검색 (예: 호안끼엠)"
-              />
-            )}
+                  onFocus={() => setOpen(true)}
+                  onBlur={() => setOpen(false)}
+                  onKeyDown={onPlaceKeyDown}
+                  placeholder="장소 검색 (예: 호안끼엠)"
+                  role="combobox"
+                  aria-expanded={open && results.length > 0}
+                  aria-autocomplete="list"
+                />
+                {coord && <PinIcon className="ac__pin" />}
+              </span>
 
-            {!placeName && searching && <p className="form__hint">찾는 중…</p>}
+              {open && (searching || results.length > 0) && (
+                /*
+                 * 목록은 흐름에서 띄운다(absolute). 흐름 안에 두면 글자를
+                 * 칠 때마다 아래 입력칸들이 밀려 내려가서, 시각을 넣으려고
+                 * 겨눈 자리가 움직인다.
+                 *
+                 * mousedown을 막는 이유: 클릭이 완료되기 전에 blur가 먼저
+                 * 일어나 목록이 닫히면 선택이 통째로 무시된다.
+                 */
+                <ul className="ac__list" onMouseDown={(e) => e.preventDefault()}>
+                  {searching && <li className="ac__msg">찾는 중…</li>}
 
-            {!placeName && !searching && results.length > 0 && (
-              <ul className="places">
-                {results.map((place) => (
-                  <li key={place.id}>
-                    <button className="places__item" onClick={() => pickPlace(place)}>
-                      <span className="places__name">{place.name}</span>
-                      <span className="places__addr">{place.address}</span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
+                  {!searching &&
+                    results.map((place, i) => (
+                      <li key={place.id}>
+                        <button
+                          className={`ac__item${i === active ? ' ac__item--on' : ''}`}
+                          onClick={() => pickPlace(place)}
+                          onMouseEnter={() => setActive(i)}
+                        >
+                          <span className="ac__name">{place.name}</span>
+                          <span className="ac__addr">{place.address}</span>
+                        </button>
+                      </li>
+                    ))}
+                </ul>
+              )}
+            </div>
 
-            {!placeName && !searching && query.trim().length > 0 && results.length === 0 && (
-              <p className="form__hint">결과가 없습니다. 제목만 적어도 됩니다.</p>
-            )}
+            {!searching &&
+              open &&
+              results.length === 0 &&
+              placeName.trim().length > 0 &&
+              placeName.trim() !== pickedNameRef.current && (
+                <p className="form__hint">
+                  후보가 없습니다. 지금 장소 검색은 목(mock) 데이터라 등록된 11곳만 찾습니다.
+                </p>
+              )}
 
             {/*
               좌표가 없으면 지도에 마커가 생기지 않는다. 저장은 되지만 지도
               탭에서 안 보이는 이유를 여기서 미리 알려준다.
             */}
-            {placeName && !coord && (
+            {placeName.trim().length > 0 && !coord && (
               <p className="form__hint">좌표가 없어 지도에는 표시되지 않습니다.</p>
             )}
           </div>

@@ -271,6 +271,11 @@ a {
   padding-bottom: calc(env(safe-area-inset-bottom) + 24px);
 }
 
+/* 떠 있는 버튼이 마지막 내용을 덮지 않도록 그만큼 비워둔다 */
+.main--fab {
+  padding-bottom: calc(env(safe-area-inset-bottom) + 84px);
+}
+
 .tabs {
   position: fixed;
   bottom: 0;
@@ -1445,42 +1450,79 @@ a {
   color: var(--accent);
 }
 
-/* 장소 검색 결과 */
-.places {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--surface);
-  overflow: hidden;
+/* ── 장소 자동완성 ───────────────────────────────────────────── */
+
+.ac {
+  position: relative;
 }
 
-.places__item {
+.ac__field {
+  position: relative;
+  display: block;
+}
+
+/* 좌표가 잡힌 상태 표시. 입력 글자와 겹치지 않게 오른쪽 여백을 준다. */
+.ac__field .form__input {
+  padding-right: 32px;
+}
+
+.ac__pin {
+  position: absolute;
+  right: 11px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--accent);
+  pointer-events: none;
+}
+
+/*
+ * 후보 목록은 입력칸 위에 띄운다. 흐름 안에 두면 글자를 칠 때마다 아래
+ * 입력칸들이 밀려 내려가서 겨눈 자리가 움직인다.
+ */
+.ac__list {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 232px;
+  overflow-y: auto;
+  list-style: none;
+  margin: 0;
+  padding: 4px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.ac__item {
   width: 100%;
   text-align: left;
-  padding: 10px 12px;
+  padding: 9px 10px;
+  border-radius: 6px;
   display: flex;
   flex-direction: column;
   gap: 2px;
-  border-bottom: 1px solid var(--border);
 }
 
-.places li:last-child .places__item {
-  border-bottom: none;
+.ac__item--on {
+  background: var(--accent-soft);
 }
 
-.places__item:active {
-  background: var(--surface-2);
-}
-
-.places__name {
+.ac__name {
   font-size: 14px;
   font-weight: 620;
 }
 
-.places__addr {
+.ac__addr {
   font-size: 12px;
+  color: var(--text-3);
+}
+
+.ac__msg {
+  padding: 9px 10px;
+  font-size: 13px;
   color: var(--text-3);
 }
 
@@ -1529,4 +1571,43 @@ a {
 
 .tl-add:active {
   background: var(--surface-2);
+}
+
+/* ── 화면 아래 떠 있는 버튼 ─────────────────────────────────────── */
+
+/*
+ * 앱이 480px로 가운데 정렬돼 있어서 버튼만 fixed로 두면 화면 끝에 붙는다.
+ * 같은 폭의 막대를 깔고 그 안에서 오른쪽 정렬한다. 막대는 클릭을 통과시켜
+ * 아래 내용을 가리지 않는다.
+ */
+.fab-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 25;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 0 16px calc(env(safe-area-inset-bottom) + 16px);
+  display: flex;
+  justify-content: flex-end;
+  pointer-events: none;
+}
+
+.fab {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 18px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-text);
+  font-size: 14px;
+  font-weight: 680;
+  box-shadow: 0 4px 14px rgba(78, 60, 32, 0.28);
+}
+
+.fab:active {
+  transform: translateY(1px);
 }
