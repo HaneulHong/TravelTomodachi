@@ -18,12 +18,28 @@ export interface MapStop {
   /** 마커에 표시할 순번 */
   label: string;
   title: string;
+  /** 마커 옆에 붙일 짧은 부가 정보 (보통 시각). 없으면 제목만 붙는다. */
+  caption?: string;
+}
+
+/**
+ * 지도에 그릴 선 한 토막.
+ *
+ * 실선과 점선을 나누는 이유: 둘은 성격이 다른 정보다. 실선은 "길찾기가
+ * 돌려준 실제 경로"이고, 점선은 "어떻게 가는지 아직 모른다"는 뜻이다.
+ * 같은 모양으로 그리면 직선 구간의 거리가 실제보다 짧아 보여서 일정을
+ * 빡빡하게 짜게 된다.
+ */
+export interface PathSegment {
+  coords: Coord[];
+  /** true면 점선 — 실제 경로가 아니라 두 점을 이은 직선이다. */
+  dashed?: boolean;
 }
 
 export interface MapHandle {
   setStops(stops: MapStop[]): void;
-  /** 구간 경로선. 실제 경로 폴리라인이 없으면 지점 간 직선. */
-  setPath(coords: Coord[]): void;
+  /** 구간 경로선. 실제 경로가 없는 토막은 dashed로 온다. */
+  setPath(segments: PathSegment[]): void;
   /** 모든 지점이 보이도록 뷰포트 맞춤 */
   fit(): void;
   destroy(): void;
@@ -51,6 +67,14 @@ export interface MapRenderer {
   readonly configured: boolean;
   /** 설정이 빠졌을 때 사용자에게 보여줄 안내 (환경변수 이름 등) */
   readonly setupHint?: string;
+  /**
+   * 지도는 뜨지만 뭔가 반쪽으로 동작할 때의 경고.
+   *
+   * configured와 다르다. configured=false는 "지도 자체가 없다"이고,
+   * warning은 "지도는 보이는데 일부가 조용히 빠진다"이다. 후자가 더 위험하다 —
+   * 화면에 단서가 없으면 콘솔을 열기 전까지 원인을 알 수 없기 때문이다.
+   */
+  readonly warning?: string;
   mount(container: HTMLElement, options?: MountOptions): Promise<MapHandle>;
 }
 
@@ -66,14 +90,50 @@ export function createPinElement(
   label: string,
   title: string,
   anchor: 'center' | 'bottom' = 'center',
+  caption?: string,
 ): HTMLElement {
   const el = document.createElement('div');
   el.className = anchor === 'bottom' ? 'mappin mappin--anchor-bottom' : 'mappin';
-  el.textContent = label;
-  el.title = title;
   el.setAttribute('role', 'img');
-  el.setAttribute('aria-label', `${label}번 지점: ${title}`);
+  el.setAttribute('aria-label', `${label}번 지점: ${caption ? `${caption} ` : ''}${title}`);
+
+  const dot = document.createElement('span');
+  dot.className = 'mappin__dot';
+  dot.textContent = label;
+  el.appendChild(dot);
+
+  /*
+   * 라벨은 절대배치로 원 밖에 띄운다. 일반 흐름에 넣으면 엘리먼트의 크기가
+   * 원보다 커지는데, 두 SDK 모두 **엘리먼트 상자 기준**으로 좌표를 맞추기
+   * 때문에(카카오는 xAnchor/yAnchor 비율, Google은 아래쪽 중앙) 원이 실제
+   * 좌표에서 밀려난다. 상자는 원 크기 그대로 두는 게 핵심이다.
+   */
+  const text = document.createElement('span');
+  text.className = 'mappin__label';
+  if (caption) {
+    const time = document.createElement('b');
+    time.className = 'mappin__time';
+    time.textContent = caption;
+    text.appendChild(time);
+  }
+  text.appendChild(document.createTextNode(title));
+  el.appendChild(text);
+
   return el;
+}
+
+/**
+ * 경로선 색. 지도 SDK는 CSS 변수를 이해하지 못하므로, 그릴 때마다 현재
+ * 테마의 --accent를 계산해서 넘긴다. 색을 파일에 박아두면 테마를 바꿔도
+ * 선만 옛날 색으로 남는다.
+ */
+export function accentColor(): string {
+  const fallback = '#b2563a';
+  if (typeof window === 'undefined') return fallback;
+  const value = getComputedStyle(document.documentElement)
+    .getPropertyValue('--accent')
+    .trim();
+  return value || fallback;
 }
 
 /** 지점이 하나뿐이면 fitBounds가 과도하게 확대되므로 이 줌으로 고정 */

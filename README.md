@@ -36,11 +36,13 @@ cp .env.example .env.local
 
 ## 지금 상태
 
-화면 흐름과 도메인 로직이 완성된 단계입니다. 외부 연동은 전부 목(mock)입니다.
+화면 흐름과 도메인 로직이 완성됐고, **외부 연동은 지도·장소검색·길찾기까지
+실제로 붙어 있습니다.** 남은 목(mock)은 데이터 저장과 로그인입니다.
 
 **되는 것**
 
 - 홈 → 일정 타임라인 → 항목 상세 → 지도 → 체크리스트 전체 흐름
+- 일정 추가·수정·삭제. 장소 자동완성(OpenStreetMap)으로 좌표까지 채워진다
 - 날짜별 타임라인, 가로 스와이프로 날짜 전환 (세로 스크롤과 충돌 없음)
 - 항목 사이 이동 구간을 도보·대중교통·차량으로 비교, 더 나은 쪽 자동 추천
 - 대중교통 데이터 없는 지역 감지 → 추정값 대신 "정보 없음" 표시 + 수동 입력
@@ -49,14 +51,29 @@ cp .env.example .env.local
 - 다크 모드, 초대 링크 공유(Web Share → 클립보드 폴백)
 - **실제 지도 타일** — 국내는 카카오맵, 그 외 전 세계는 Google Maps.
   키가 없으면 개략도로 폴백하고 무엇을 설정해야 하는지 화면에 안내합니다.
+- **실제 경로선** — 도로를 따라 그려진다. 못 구한 구간은 점선 직선으로 두어
+  "아직 모른다"를 숨기지 않는다.
+- **터미널 이동** — 기차·시외버스·배편을 구간 항목으로 넣으면 출발·도착
+  터미널을 잇는 선이 그려진다. 지도에 그려진 선의 출처도 상세에서 밝힌다.
+- 로그인·프로필(닉네임) 화면 — **단, 아래 참고**
+
+**외부 서비스 (전부 무료)**
+
+| 기능 | 서비스 | 키 |
+|---|---|---|
+| 해외 지도 | Google Maps JS | 필요 ([docs/MAP_SETUP.md](./docs/MAP_SETUP.md)) |
+| 국내 지도 | 카카오맵 | 필요 (같은 문서) |
+| 장소 검색 | Photon (OSM) | 불필요 |
+| 도보·차량 길찾기 | Valhalla (OSM) | 불필요 |
+| 대중교통 | Transitous | 불필요 |
 
 **아직 목(mock)인 것**
 
-- 길찾기 — `src/providers/mock/mockRouteProvider.ts`
-  (지도에 그려지는 선은 지점 간 직선입니다. 실제 경로 폴리라인은 아직 없음)
-- 장소 검색 — `src/providers/mock/mockPlaceProvider.ts`
-- 데이터 — 메모리 상태 (`src/store/tripStore.ts`)
-- 로그인 · 실시간 동기화 — 없음
+- 데이터 — 메모리 상태 (`src/store/tripStore.ts`). 새로고침하면 초기화된다
+- 로그인 — 개발용 목. 세션이 **이 브라우저에만** 남아서 친구 초대와 공동
+  편집이 동작하지 않는다. 실제로 쓰려면
+  [docs/AUTH_SETUP.md](./docs/AUTH_SETUP.md)를 따라 Supabase를 연결한다
+- 실시간 동기화 — 없음
 
 ## 구조
 
@@ -67,11 +84,14 @@ src/
     fractionalIndex.ts  순서 키 (실시간 공동 편집용)
     time.ts           타임존 · 시간 표기
     geo.ts            거리 · 좌표 정규화
-  providers/      외부 지도·길찾기 서비스 추상화
+  auth/           로그인 추상화. Supabase Auth를 붙일 지점.
+  providers/      외부 지도·길찾기·장소검색 추상화
     types.ts          RouteProvider / PlaceProvider
     region.ts         KR / GLOBAL 판별 (길찾기용)
     index.ts          지역별 구현체 선택 (팩토리)
-    mock/             목 길찾기·장소검색
+    routeCache.ts     조회 캐시 + 동시 요청 제한
+    places/           장소 검색 (Photon)
+    route/            길찾기 (Valhalla · Transitous)
     maps/             지도 렌더러 (실제 SDK)
       types.ts          MapRenderer / MapHandle, 공용 마커 DOM
       googleMapRenderer.ts   해외 — Advanced Marker, mapId 필수

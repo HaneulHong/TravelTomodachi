@@ -17,8 +17,22 @@ export type Region = 'KR' | 'GLOBAL';
 
 export type TransportMode = 'walk' | 'transit' | 'car';
 
-/** 도시간 이동(항공/기차)은 API로 풀지 않고 사용자가 직접 입력한다. */
-export type ItemKind = 'place' | 'flight' | 'train';
+/**
+ * 일정 항목의 종류.
+ *
+ * place를 뺀 나머지는 **구간 항목**이다 — 한 지점에 머무는 게 아니라 터미널
+ * 에서 터미널로 이동하는 한 줄이다. 그래서 출발 좌표(coord)와 함께 도착
+ * 좌표(toCoord)를 가질 수 있고, 지도에는 점이 아니라 선으로 그려진다.
+ *
+ * 편·시각은 사용자가 직접 넣는다. 항공·선박 시간표는 무료로 조회할 방법이
+ * 마땅치 않고, 기차·광역버스도 예매 사이트를 거쳐야 정확하기 때문이다.
+ */
+export type ItemKind = 'place' | 'flight' | 'train' | 'bus' | 'ferry';
+
+/** 구간 항목인지 — 터미널에서 터미널로 이동하는 종류인가. */
+export function isSegmentKind(kind: ItemKind): boolean {
+  return kind !== 'place';
+}
 
 export interface Coord {
   lat: number;
@@ -74,8 +88,16 @@ export interface Item {
   description?: string;
   /** 앞 항목에서 여기까지의 이동. 그 날의 첫 항목은 없다. */
   leg?: Leg;
-  /** kind가 'flight' | 'train'일 때의 편명 등 */
+  /** kind가 'place'가 아닐 때의 편명·노선명 등 */
   carrierCode?: string;
+  /**
+   * 구간 항목의 도착 지점. 출발은 coord가 맡는다.
+   *
+   * 이게 있어야 지도에 선을 그릴 수 있다. 없으면 출발 터미널만 점으로 찍히고
+   * 다음 일정까지 어떻게 갔는지가 지도에서 사라진다.
+   */
+  toCoord?: Coord;
+  toPlaceName?: string;
 }
 
 export interface Trip {
@@ -109,4 +131,23 @@ export const ITEM_KIND_LABEL: Record<ItemKind, string> = {
   place: '방문',
   flight: '항공',
   train: '기차',
+  bus: '버스',
+  ferry: '배편',
+};
+
+/** 편명 칸에 무엇을 적는지. 종류마다 부르는 이름이 다르다. */
+export const CARRIER_LABEL: Record<ItemKind, string> = {
+  place: '',
+  flight: '편명',
+  train: '열차편',
+  bus: '버스 노선',
+  ferry: '항로 · 선박',
+};
+
+export const CARRIER_PLACEHOLDER: Record<ItemKind, string> = {
+  place: '',
+  flight: '예: KE1201',
+  train: '예: KTX 101',
+  bus: '예: 동서울 → 속초 시외버스',
+  ferry: '예: 목포 → 제주 퀸메리호',
 };

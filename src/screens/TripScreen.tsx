@@ -3,14 +3,18 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { AppHeader } from '@/components/AppHeader';
 import { BottomTabs } from '@/components/BottomTabs';
 import { DateStrip } from '@/components/DateStrip';
+import { DataCredits } from '@/components/DataCredits';
 import { MenuSheet } from '@/components/MenuSheet';
 import { TransportChip } from '@/components/TransportChip';
 import {
   AlertIcon,
+  BusIcon,
   ClockIcon,
+  FerryIcon,
   ListIcon,
   PinIcon,
   PlaneIcon,
+  PlusIcon,
   ShareIcon,
   TrainIcon,
 } from '@/components/icons';
@@ -23,13 +27,24 @@ import {
   timezoneShift,
   tzShortLabel,
 } from '@/domain/time';
-import type { Item } from '@/domain/types';
+import { ITEM_KIND_LABEL, isSegmentKind, type Item } from '@/domain/types';
 import { platform } from '@/platform';
 import { useTripStore } from '@/store/tripStore';
+
+/** 구간 종류별 칩 색. 수단이 다르면 한눈에 갈려야 한다. */
+const KIND_TONE: Record<Item['kind'], string> = {
+  place: '',
+  flight: 'transit',
+  train: 'accent',
+  bus: 'car',
+  ferry: 'walk',
+};
 
 function KindIcon({ kind }: { kind: Item['kind'] }) {
   if (kind === 'flight') return <PlaneIcon />;
   if (kind === 'train') return <TrainIcon />;
+  if (kind === 'bus') return <BusIcon />;
+  if (kind === 'ferry') return <FerryIcon />;
   return null;
 }
 
@@ -106,7 +121,7 @@ export function TripScreen() {
     [allItems, tripId, activeDate],
   );
 
-  const legs = useDayLegs(items);
+  const legs = useDayLegs(items, day?.timezone);
 
   function goToDay(offset: number) {
     if (!trip || dayIndex < 0) return;
@@ -205,10 +220,10 @@ export function TripScreen() {
                 >
                   <div className="tl-item__head">
                     <span className="tl-item__title">{item.title}</span>
-                    {item.kind !== 'place' && (
-                      <span className={`chip chip--${item.kind === 'flight' ? 'transit' : 'car'}`}>
+                    {isSegmentKind(item.kind) && (
+                      <span className={`chip chip--${KIND_TONE[item.kind]}`}>
                         <KindIcon kind={item.kind} />
-                        {item.carrierCode ?? (item.kind === 'flight' ? '항공' : '기차')}
+                        {item.carrierCode ?? ITEM_KIND_LABEL[item.kind]}
                       </span>
                     )}
                   </div>
@@ -225,6 +240,17 @@ export function TripScreen() {
               </div>
             </div>
           ))}
+
+          {/*
+            추가 버튼을 목록 끝에 둔다. 띄우는 버튼(FAB)은 마지막 항목을 가려서,
+            일정이 꽉 찬 날일수록 방해가 된다.
+          */}
+          <button
+            className="tl-add"
+            onClick={() => navigate(`/trip/${trip.id}/item/new?date=${activeDate}`)}
+          >
+            <PlusIcon size={16} /> 일정 추가
+          </button>
         </div>
       </main>
 
@@ -243,6 +269,9 @@ export function TripScreen() {
           <ShareIcon />
           친구에게 공유
         </button>
+
+        {/* 라이선스 의무라 메뉴에 상시 노출한다 — DataCredits 주석 참고 */}
+        <DataCredits />
       </MenuSheet>
 
       {toast && <div className="toast">{toast}</div>}

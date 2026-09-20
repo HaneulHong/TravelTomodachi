@@ -2,15 +2,17 @@ import { useMemo, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { AppHeader } from '@/components/AppHeader';
 import { BottomTabs } from '@/components/BottomTabs';
+import { DataCredits } from '@/components/DataCredits';
 import { DateStrip } from '@/components/DateStrip';
 import { MapCanvas } from '@/components/MapCanvas';
 import { TransportChip, MODE_ICON } from '@/components/TransportChip';
 import { AlertIcon } from '@/components/icons';
 import { useDayLegs } from '@/hooks/useDayLegs';
+import { useSegmentRoutes } from '@/hooks/useSegmentRoutes';
 import { formatDistance } from '@/domain/geo';
 import { formatMinutes } from '@/domain/time';
 import { TRANSPORT_LABEL, type Coord, type TransportMode } from '@/domain/types';
-import { getMapRenderer, resolveMapRegion, type MapStop } from '@/providers';
+import { getMapRenderer, resolveMapRegion, type MapStop, type PathSegment } from '@/providers';
 import { useTripStore } from '@/store/tripStore';
 
 const MODES: TransportMode[] = ['walk', 'transit', 'car'];
@@ -33,7 +35,12 @@ export function MapScreen() {
     [allItems, tripId, activeDate],
   );
 
-  const legs = useDayLegs(items);
+  // 대중교통 조회에 출발 시각이 필요하고, 벽시계 시각은 이 날의 타임존으로만
+  // 실제 순간이 된다.
+  const day = trip?.days.find((d) => d.date === activeDate);
+  const legs = useDayLegs(items, day?.timezone);
+  /** 터미널 구간 자체의 경로선 (기차·버스·배편). 없으면 직선으로 잇는다. */
+  const segmentShapes = useSegmentRoutes(items, day?.timezone);
 
   /**
    * 지도에 올릴 지점. 좌표가 없는 항목(항공편 등)은 제외한다.
@@ -49,15 +56,84 @@ export function MapScreen() {
           coord: item.coord!,
           label: String(i + 1),
           title: item.placeName ?? item.title,
+          caption: item.localTime,
         })),
     [items],
   );
 
-  const path: Coord[] = useMemo(() => stops.map((s) => s.coord), [stops]);
+  /**
+   * 지도에 그릴 선.
+   *
+   * 구간마다 추천 수단의 실제 경로 폴리라인이 있으면 그걸 잇고, 없으면
+   * 두 지점을 직선으로 잇는다. 직선은 "아직 모른다"는 표시에 가깝다 —
+   * 실제 길은 강을 건너고 돌아가는데 직선으로 그려두면 거리가 짧아 보여서
+   * 일정을 빡빡하게 짜게 된다.
+   *
+   * 조회가 끝나면 legs가 바뀌고 이 배열도 다시 만들어진다. MapCanvas는
+   * path가 바뀌면 선만 다시 그리므로(remount 아님) 깜빡이지 않는다.
+   */
+  /**
+   * 지도에 그릴 선.
+   *
+   * 토막마다 성격이 다르다.
+   *   실선 — 길찾기가 돌려준 실제 경로
+   *   점선 — 어떻게 가는지 모르는 구간 (이동수단 미선택·조회 실패·터미널 이동)
+   *
+   * 둘을 같은 모양으로 그리면 직선 구간이 실제보다 가까워 보여서 일정을
+   * 빡빡하게 짜게 된다. 그래서 "모른다"는 점선으로 드러낸다.
+   */
+  const path: PathSegment[] = useMemo(() => {
+    const segments: PathSegment[] = [];
+    /** 직전 항목이 우리를 내려준 곳. 구간 항목이면 도착 터미널이다. */
+    let cursor: Coord | undefined;
+
+    for (const item of items) {
+      if (!item.coord) continue;
+
+      // 앞 지점에서 이 항목까지 — 조회된 경로가 있으면 실선, 없으면 점선
+      if (cursor) {
+        const info = legs.get(item.id);
+        const mode = info?.recommended;
+        const result = mode ? info?.results[mode] : undefined;
+        const shape = result?.available ? result.polyline : undefined;
+
+        segments.push(
+          shape && shape.length > 1
+            ? { coords: shape }
+            : { coords: [cursor, item.coord], dashed: true },
+        );
+      }
+
+      cursor = item.coord;
+
+      /*
+       * 구간 항목(기차·버스·배편·항공)은 그 자체가 한 토막이다.
+       * 실제 노선을 구했으면 실선으로, 못 구했으면 터미널끼리 직선 점선으로.
+       * (항공은 조회 대상이 아니다 — useSegmentRoutes 주석 참고)
+       */
+      if (item.toCoord) {
+        const drawn = segmentShapes.get(item.id);
+        segments.push(
+          drawn && drawn.shape.length > 1
+            ? { coords: drawn.shape }
+            : { coords: [item.coord, item.toCoord], dashed: true },
+        );
+        cursor = item.toCoord;
+      }
+    }
+
+    return segments;
+  }, [items, legs, segmentShapes]);
+
+  /**
+   * 지역 판정에는 지점 좌표만 쓴다. 경로 폴리라인까지 넣으면 점이 수백 개라
+   * 매번 전부 검사하게 되고, 판정 결과는 어차피 같다.
+   */
+  const stopCoords: Coord[] = useMemo(() => stops.map((s) => s.coord), [stops]);
 
   // 지도 지역 판정은 길찾기와 규칙이 다르다 — 하나라도 해외면 Google.
   // (1일차 "서울 → 방콕" 같은 날 때문. providers/maps/index.ts 주석 참고)
-  const mapRegion = useMemo(() => resolveMapRegion(path), [path]);
+  const mapRegion = useMemo(() => resolveMapRegion(stopCoords), [stopCoords]);
   const renderer = getMapRenderer(mapRegion);
 
   if (!trip) {
@@ -203,6 +279,12 @@ export function MapScreen() {
             );
           })}
         </div>
+
+        {/*
+          지도 위 attribution은 타일에 대한 것이다. 이 화면에 그려진 선은
+          별도 서비스(길찾기·대중교통)에서 왔으므로 따로 밝힌다.
+        */}
+        <DataCredits />
       </main>
 
       <BottomTabs tripId={trip.id} date={activeDate} />

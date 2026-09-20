@@ -11,8 +11,10 @@
  */
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { addMinutesToWallClock, wallClockToInstant } from '@/domain/time';
 import type { Coord, Item, TransportMode } from '@/domain/types';
-import { getRouteProviderFor, resolveLegRegion } from '@/providers';
+import { resolveLegRegion } from '@/providers';
+import { fetchRoute } from '@/providers/routeCache';
 import type { RouteResult } from '@/providers';
 
 export interface LegInfo {
@@ -29,23 +31,38 @@ export interface LegInfo {
 
 const MODES: TransportMode[] = ['walk', 'transit', 'car'];
 
-/** 조회 결과 캐시. 실제 구현의 routes 테이블 캐시와 같은 역할. */
-const cache = new Map<string, RouteResult>();
+/**
+ * 이보다 긴 도보는 추천하지 않는다.
+ *
+ * 다른 수단 조회가 실패하면 도보만 남는데, 그대로 두면 "도보 15시간 7분"이
+ * 추천으로 올라온다. 사실이긴 해도 일정으로는 쓸모가 없고, 추천이라는 말이
+ * 붙는 순간 오해를 부른다. 이럴 때는 추천을 비워 '이동 정보 없음 · 탭해서
+ * 입력'으로 떨어뜨리는 게 이 앱의 원래 폴백 정책과도 맞는다.
+ * (값 자체는 수단 비교 칸에 그대로 보여준다 — 숨기지는 않는다.)
+ */
+const WALK_RECOMMEND_LIMIT_MIN = 120;
 
-function cacheKey(from: Coord, to: Coord, mode: TransportMode): string {
-  const r = (n: number) => n.toFixed(5);
-  return `${r(from.lat)},${r(from.lng)}|${r(to.lat)},${r(to.lng)}|${mode}`;
+/**
+ * 앞 항목이 우리를 내려준 곳.
+ *
+ * 구간 항목(기차·버스·배편)은 출발 터미널이 아니라 **도착 터미널**에서
+ * 다음 일정이 시작된다. coord만 보면 "부산역에서 내렸는데 서울역부터 걷는"
+ * 경로가 나온다.
+ */
+function arrivalOf(item: Item): Coord | undefined {
+  return item.toCoord ?? item.coord;
 }
 
-async function fetchLeg(from: Coord, to: Coord, mode: TransportMode): Promise<RouteResult> {
-  const key = cacheKey(from, to, mode);
-  const hit = cache.get(key);
-  if (hit) return hit;
-
-  const provider = getRouteProviderFor(from);
-  const result = await provider.route({ from, to, mode });
-  cache.set(key, result);
-  return result;
+/**
+ * 이 구간을 언제 출발하는지. 앞 항목에 머무는 시간이 있으면 그만큼 더한다.
+ * 시각이나 타임존을 모르면 undefined — 프로바이더가 "지금"으로 처리한다.
+ */
+function departureOf(from: Item, timezone?: string): string | undefined {
+  if (!timezone || !from.localTime) return undefined;
+  const leaveAt = from.durationMin
+    ? addMinutesToWallClock(from.localTime, from.durationMin)
+    : from.localTime;
+  return wallClockToInstant(from.date, leaveAt, timezone);
 }
 
 function pickRecommended(results: Partial<Record<TransportMode, RouteResult>>):
@@ -55,6 +72,7 @@ function pickRecommended(results: Partial<Record<TransportMode, RouteResult>>):
   for (const mode of MODES) {
     const r = results[mode];
     if (!r || !r.available) continue;
+    if (mode === 'walk' && r.minutes > WALK_RECOMMEND_LIMIT_MIN) continue;
     // 도보 20분 이내면 도보를 선호한다 — 환승 대기까지 합치면
     // 대중교통이 명목상 빨라도 실제로는 더 번거롭다.
     const weighted = mode === 'walk' && r.minutes <= 20 ? r.minutes - 5 : r.minutes;
@@ -63,7 +81,7 @@ function pickRecommended(results: Partial<Record<TransportMode, RouteResult>>):
   return best?.mode;
 }
 
-export function useDayLegs(items: Item[]): Map<string, LegInfo> {
+export function useDayLegs(items: Item[], timezone?: string): Map<string, LegInfo> {
   const [legs, setLegs] = useState<Map<string, LegInfo>>(new Map());
   const requestId = useRef(0);
 
@@ -71,9 +89,14 @@ export function useDayLegs(items: Item[]): Map<string, LegInfo> {
   const signature = useMemo(
     () =>
       items
-        .map((i) => `${i.id}:${i.coord ? `${i.coord.lat},${i.coord.lng}` : '-'}:${i.leg?.isManual ? 'm' : ''}`)
-        .join('|'),
-    [items],
+        .map(
+          (i) =>
+            `${i.id}:${i.coord ? `${i.coord.lat},${i.coord.lng}` : '-'}` +
+            `>${i.toCoord ? `${i.toCoord.lat},${i.toCoord.lng}` : '-'}` +
+            `:${i.leg?.isManual ? 'm' : ''}`,
+        )
+        .join('|') + `#${timezone ?? ''}`,
+    [items, timezone],
   );
 
   useEffect(() => {
@@ -100,8 +123,9 @@ export function useDayLegs(items: Item[]): Map<string, LegInfo> {
         });
         continue;
       }
-      const { crossBorder } = resolveLegRegion(from.coord, to.coord);
-      if (!from.coord || !to.coord) {
+      const fromCoord = arrivalOf(from);
+      const { crossBorder } = resolveLegRegion(fromCoord, to.coord);
+      if (!fromCoord || !to.coord) {
         // 항공편처럼 좌표가 없는 항목이 끼면 조회 자체를 하지 않는다
         initial.set(to.id, {
           toItemId: to.id,
@@ -131,8 +155,8 @@ export function useDayLegs(items: Item[]): Map<string, LegInfo> {
 
     const pending = pairs.filter(({ from, to }) => {
       if (to.leg?.isManual) return false;
-      if (!from.coord || !to.coord) return false;
-      return !resolveLegRegion(from.coord, to.coord).crossBorder;
+      if (!arrivalOf(from) || !to.coord) return false;
+      return !resolveLegRegion(arrivalOf(from), to.coord).crossBorder;
     });
 
     if (pending.length === 0) return;
@@ -143,7 +167,12 @@ export function useDayLegs(items: Item[]): Map<string, LegInfo> {
           const results: Partial<Record<TransportMode, RouteResult>> = {};
           await Promise.all(
             MODES.map(async (mode) => {
-              results[mode] = await fetchLeg(from.coord!, to.coord!, mode);
+              results[mode] = await fetchRoute(
+                arrivalOf(from)!,
+                to.coord!,
+                mode,
+                departureOf(from, timezone),
+              );
             }),
           );
           const transitResult = results.transit;

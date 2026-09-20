@@ -7,23 +7,43 @@
 
 import type { Coord, Region } from '@/domain/types';
 import { resolveRegion } from './region';
-import { mockGlobalRouteProvider, mockKoreaRouteProvider } from './mock/mockRouteProvider';
-import { mockPlaceProvider } from './mock/mockPlaceProvider';
+import { combinedRouteProvider } from './route';
+import { createPhotonPlaceProvider } from './places/photonPlaceProvider';
 import type { PlaceProvider, RouteProvider } from './types';
 
 export * from './types';
 export * from './region';
 export * from './maps';
 
-export function getRouteProvider(region: Region): RouteProvider {
-  return region === 'KR' ? mockKoreaRouteProvider : mockGlobalRouteProvider;
+
+/**
+ * 길찾기도 지역을 나누지 않는다.
+ *
+ * 원래 한국을 갈라낸 이유는 Google이 국내 자동차·도보 길찾기를 제공하지 않기
+ * 때문이었다. OSM 기반 라우팅은 그 제한에 걸리지 않아서 국내외를 한 프로바이더로
+ * 덮는다. 분기가 사라지면 "국내에서만 나는 버그"도 사라진다.
+ *
+ * 수단별로 뒤에 붙는 서비스는 다르다 — route/index.ts 참고.
+ */
+export function getRouteProvider(_region: Region): RouteProvider {
+  return combinedRouteProvider;
 }
 
 export function getRouteProviderFor(coord?: Coord): RouteProvider {
   return getRouteProvider(resolveRegion(coord));
 }
 
+/**
+ * 장소 검색은 지역을 나누지 않는다.
+ *
+ * Photon(OpenStreetMap)은 전 세계를 한 엔드포인트로 덮고 키도 필요 없다.
+ * 국내만 카카오로 갈라두면 코드 경로가 둘이 되고 응답 모양이 달라 버그만 는다.
+ *
+ * Google Places를 쓰지 않는 이유는 과금 SKU이기 때문이다. 자동완성은 타이핑
+ * 자리라 비용이 가장 빨리 새는 곳이고, 이 앱은 무료로 굴러가야 한다.
+ */
+const osmPlaces = createPhotonPlaceProvider();
+
 export function getPlaceProvider(_region: Region): PlaceProvider {
-  // 실제로는 KR → 카카오 로컬, GLOBAL → Google Places
-  return mockPlaceProvider;
+  return osmPlaces;
 }

@@ -1,12 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { Coord } from '@/domain/types';
 import { createSchematicMapRenderer } from '@/providers';
-import type { MapHandle, MapRenderer, MapStop } from '@/providers';
+import type { MapHandle, MapRenderer, MapStop, PathSegment } from '@/providers';
 
 interface Props {
   renderer: MapRenderer;
   stops: MapStop[];
-  path: Coord[];
+  path: PathSegment[];
   onStopClick?(stopId: string): void;
 }
 
@@ -111,9 +110,11 @@ export function MapCanvas({ renderer, stops, path, onStopClick }: Props) {
      * 마운트마다 표면(div)을 새로 만들어 붙인다. 컨테이너를 그대로 재사용하면
      * 안 되는 이유는 카카오 SDK에 지도를 파기하는 API가 없기 때문이다. destroy()로
      * 마커와 선은 치울 수 있어도 kakao.maps.Map 인스턴스 자체는 살아남아서,
-     * 자기가 물고 있는 엘리먼트에 계속 타일을 다시 그린다. 컨테이너를 공유하면
-     * 그 죽은 지도가 다음에 올라온 Google 지도 위에 타일을 덮어버린다
-     * (attribution은 © Google인데 화면에는 kakaomap 워터마크가 찍히는 증상).
+     * 자기가 물고 있는 엘리먼트에 계속 타일을 다시 그린다. 게다가 컨테이너의
+     * 인라인 style에 배경 타일 이미지까지 심어두기 때문에 자식만 지워서는
+     * 흔적이 남는다. 컨테이너를 공유하면 그 죽은 지도가 다음에 올라온 Google
+     * 지도 위에 타일을 덮어버린다 (attribution은 © Google인데 화면에는
+     * kakaomap 워터마크가 찍히는 증상).
      * 표면을 통째로 떼어내면 그 노드가 문서에서 빠지므로 덮어쓸 수 없다.
      */
     const surface = document.createElement('div');
@@ -197,6 +198,11 @@ export function MapCanvas({ renderer, stops, path, onStopClick }: Props) {
           {renderer.setupHint && <code>{renderer.setupHint}</code>} 환경변수를 설정하세요.
           발급 방법은 <code>docs/MAP_SETUP.md</code>에 있습니다.
         </div>
+      )}
+
+      {/* 지도는 떴지만 일부가 조용히 빠진 경우 (예: Map ID 누락 → 마커 없음) */}
+      {!fallbackReason && active.configured && status === 'ready' && renderer.warning && (
+        <div className="mapstage__note mapstage__note--warn">⚠ {renderer.warning}</div>
       )}
 
       {active.configured && status === 'ready' && (

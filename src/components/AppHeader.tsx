@@ -7,9 +7,14 @@ interface Props {
   back?: boolean;
   /** 메뉴 버튼 표시 (스케치의 '≡') */
   onMenu?: () => void;
+  /**
+   * 오른쪽 텍스트 버튼 (예: 수정 · 저장).
+   * 자리를 메뉴 버튼과 공유하므로 onMenu와 같이 쓰지 않는다.
+   */
+  action?: { label: string; onClick(): void; disabled?: boolean };
 }
 
-export function AppHeader({ title, back = false, onMenu }: Props) {
+export function AppHeader({ title, back = false, onMenu, action }: Props) {
   const navigate = useNavigate();
 
   return (
@@ -27,6 +32,14 @@ export function AppHeader({ title, back = false, onMenu }: Props) {
       {onMenu ? (
         <button className="header__btn" onClick={onMenu} aria-label="메뉴">
           <Menu />
+        </button>
+      ) : action ? (
+        <button
+          className="header__action"
+          onClick={action.onClick}
+          disabled={action.disabled}
+        >
+          {action.label}
         </button>
       ) : (
         <span />

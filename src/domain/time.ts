@@ -3,8 +3,8 @@
  *
  * 규칙: 저장은 date + localTime(벽시계) + timezone. UTC 변환 없음.
  * 여기 있는 함수들은 전부 "표시"와 "타임존 비교"만 한다.
- * 벽시계 시간을 실제 순간(instant)으로 바꾸는 일은 항공편 알림 같은
- * 기능이 생길 때에나 필요하고, 그때도 이 파일 안에서만 한다.
+ * 예외는 wallClockToInstant 하나다. 대중교통 조회는 "그 순간"의 시간표를
+ * 봐야 해서 외부 API에 넘길 때만 변환한다. 변환은 이 파일 안에서만 한다.
  */
 
 import type { TripDay } from './types';
@@ -55,6 +55,20 @@ export function tzOffsetMinutes(timezone: string, onDate?: string): number {
   const hours = Number(m[2]);
   const mins = Number(m[3] ?? '0');
   return sign * (hours * 60 + mins);
+}
+
+/**
+ * 벽시계 시간을 실제 시점(ISO)으로 바꾼다.
+ *
+ * 대중교통 조회에 필요하다. "11월 6일 09:00"은 어느 도시냐에 따라 서로 다른
+ * 순간이고, 버스 시간표는 그 순간을 기준으로 갈린다. 저장은 벽시계로 하되
+ * (ARCHITECTURE.md의 타임존 결정) 외부 API에 넘길 때만 여기서 변환한다.
+ */
+export function wallClockToInstant(date: string, hhmm: string, timezone: string): string {
+  // 일단 UTC로 읽은 뒤 그 지역의 오프셋만큼 되돌린다.
+  const asUtc = Date.parse(`${date}T${hhmm}:00Z`);
+  if (Number.isNaN(asUtc)) return new Date().toISOString();
+  return new Date(asUtc - tzOffsetMinutes(timezone, date) * 60_000).toISOString();
 }
 
 /**

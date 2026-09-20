@@ -23,6 +23,12 @@ export interface RouteQuery {
   from: Coord;
   to: Coord;
   mode: TransportMode;
+  /**
+   * 출발 시점(ISO). 대중교통에만 의미가 있다 — 버스·지하철 시간표는 그
+   * 순간을 기준으로 갈리고, 주지 않으면 "지금"이 되어 몇 달 뒤 일정에
+   * 엉뚱한 결과가 나온다. 도보·차량은 무시한다.
+   */
+  departAt?: string;
 }
 
 export interface RouteFound {
@@ -32,6 +38,14 @@ export interface RouteFound {
   distanceM: number;
   /** 지도에 그릴 경로선. 목 구현에서는 비어 있다. */
   polyline?: Coord[];
+  /**
+   * 대중교통이라면 실제로 타는 노선 이름들 (예: ['251', '제주-목포 연안']).
+   *
+   * 화면에 밝히기 위해 필요하다. 길찾기는 좌표만 보고 경로를 찾으므로,
+   * 사용자가 "퀸메리호"라고 적어둔 것과 다른 노선이 그려질 수 있다.
+   * 무엇이 그려졌는지 보여주지 않으면 그 차이를 알 방법이 없다.
+   */
+  lines?: string[];
   /** 'Google Directions' 같은 표시용 출처 */
   source: string;
 }
@@ -42,7 +56,12 @@ export type RouteUnavailableReason =
   /** 해당 지역에서 이 프로바이더가 이 수단을 제공하지 않는다 (예: 한국 내 Google 차량) */
   | 'mode_not_supported_here'
   /** 좌표가 없어서 조회 자체가 불가 */
-  | 'missing_coordinates';
+  | 'missing_coordinates'
+  /**
+   * 조회는 시도했으나 결과를 받지 못했다 (네트워크 실패, 도로로 이어지지
+   * 않는 구간 등). 0분으로 뭉개지 않고 이 상태로 남긴다.
+   */
+  | 'lookup_failed';
 
 export interface RouteUnavailable {
   available: false;
@@ -65,13 +84,22 @@ export interface Place {
   id: string;
   name: string;
   address: string;
-  coord: Coord;
+  /**
+   * 자동완성 단계에서는 없을 수 있다.
+   *
+   * Google은 후보 목록에 좌표를 주지 않는다 — 좌표는 상세 조회에서 나오고,
+   * 그게 별도 과금이다. 목록에 뜬 10개를 전부 조회하면 9개는 버리는 돈이
+   * 되므로, 고른 하나만 resolve()로 채운다.
+   */
+  coord?: Coord;
 }
 
 export interface PlaceProvider {
   readonly id: string;
   readonly label: string;
   search(query: string, near?: Coord): Promise<Place[]>;
+  /** 후보를 고른 뒤 좌표를 채워 돌려준다. 이미 있으면 그대로 돌려준다. */
+  resolve(place: Place): Promise<Place>;
 }
 
 // 지도 렌더러는 './maps'로 옮겼다. SDK를 실제로 붙이면서 명령형 핸들
