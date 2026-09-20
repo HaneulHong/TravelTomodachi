@@ -315,7 +315,15 @@ export function ItemEditScreen() {
               results.length === 0 &&
               placeName.trim().length > 0 &&
               placeName.trim() !== pickedNameRef.current && (
-                <p className="form__hint">후보가 없습니다.</p>
+                /*
+                  한글로 해외 장소를 치면 대부분 여기로 온다. OSM에는 해외
+                  지명의 한글 표기가 거의 없어서다. 그냥 "없음"이라고만 하면
+                  검색이 고장난 줄 알고 같은 말을 계속 바꿔 치게 된다.
+                */
+                <p className="form__hint">
+                  후보가 없습니다. 해외 장소는 현지어나 영어로 쳐보세요 (예: 도쿄
+                  스카이트리 → Tokyo Skytree).
+                </p>
               )}
 
             {/*

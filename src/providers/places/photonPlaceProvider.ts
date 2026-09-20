@@ -1,0 +1,123 @@
+/**
+ * 장소 검색 — Photon (OpenStreetMap 기반).
+ *
+ * ── 왜 Google이 아니라 이걸 쓰나 ──────────────────────────────────
+ * Google Places는 과금 SKU다. 월 무료 사용량이 있긴 하지만 초과분은 청구되고,
+ * 자동완성은 타이핑마다 호출이 나가는 자리라 가장 빨리 새는 곳이다.
+ * Photon은 무료이고 키도 필요 없다.
+ *
+ * ── 대신 감수하는 것 ──────────────────────────────────────────────
+ * OSM 데이터에는 해외 장소의 **한글 이름이 거의 없다.** "도쿄 스카이트리"로는
+ * 안 나오고 "Tokyo Skytree"나 "東京スカイツリー"로 쳐야 한다. 결과 이름도
+ * 현지어로 돌아온다. 국내는 한글로 잘 찾힌다.
+ * 이 차이는 화면에서 안내한다 — 안 그러면 검색이 고장난 걸로 보인다.
+ *
+ * ── 공개 인스턴스를 쓰는 예의 ─────────────────────────────────────
+ * 남의 서버다. 화면 쪽 디바운스와 여기 캐시로 호출을 줄인다. 트래픽이 늘면
+ * 자체 호스팅(photon은 오픈소스)으로 옮기는 게 맞다.
+ */
+
+import type { Coord } from '@/domain/types';
+import type { Place, PlaceProvider } from '../types';
+
+const ENDPOINT = 'https://photon.komoot.io/api/';
+const LIMIT = 6;
+
+/** 한 번의 편집에서 치는 질의어는 많아야 수십 개라 이 정도면 전부 담긴다. */
+const MAX_CACHE = 60;
+
+/**
+ * Photon이 돌려주는 GeoJSON 중 우리가 읽는 것만.
+ * 속성은 OSM 태그에서 오기 때문에 대부분 있을 수도, 없을 수도 있다.
+ */
+interface PhotonFeature {
+  properties?: {
+    name?: string;
+    street?: string;
+    housenumber?: string;
+    district?: string;
+    city?: string;
+    state?: string;
+    country?: string;
+    osm_id?: number;
+    osm_type?: string;
+  };
+  geometry?: {
+    /** GeoJSON은 [경도, 위도] 순서다 — lat/lng과 뒤집혀 있으니 주의. */
+    coordinates?: [number, number];
+  };
+}
+
+function addressOf(p: NonNullable<PhotonFeature['properties']>): string {
+  return [p.street, p.district, p.city, p.state, p.country].filter(Boolean).join(', ');
+}
+
+function cacheKey(query: string, near?: Coord): string {
+  if (!near) return query;
+  // 좌표를 통째로 넣으면 소수점 끝자리 차이로 캐시가 안 맞는다
+  return `${query}@${near.lat.toFixed(2)},${near.lng.toFixed(2)}`;
+}
+
+export function createPhotonPlaceProvider(): PlaceProvider {
+  const cache = new Map<string, Place[]>();
+
+  return {
+    id: 'photon-osm',
+    label: 'OpenStreetMap',
+
+    async search(query: string, near?: Coord): Promise<Place[]> {
+      const q = query.trim();
+      if (q.length === 0) return [];
+
+      const key = cacheKey(q, near);
+      const hit = cache.get(key);
+      if (hit) return hit;
+
+      const params = new URLSearchParams({ q, limit: String(LIMIT) });
+      if (near) {
+        // 가까운 결과를 위로 올린다. 필터가 아니라 가중치다.
+        params.set('lat', String(near.lat));
+        params.set('lon', String(near.lng));
+      }
+      /*
+       * lang은 de/en/fr/it만 받는다. ko를 넣으면 요청이 거부되고 features가
+       * 아예 오지 않는다. 빼면 현지 이름(경복궁, 東京スカイツリー)이 온다.
+       */
+
+      const res = await fetch(`${ENDPOINT}?${params.toString()}`);
+      if (!res.ok) {
+        throw new Error(`장소 검색에 실패했습니다 (${res.status}). 잠시 후 다시 시도해 주세요.`);
+      }
+
+      const data = (await res.json()) as { features?: PhotonFeature[] };
+      const found: Place[] = (data.features ?? [])
+        .map((feature): Place | null => {
+          const p = feature.properties ?? {};
+          const c = feature.geometry?.coordinates;
+          if (!p.name || !c) return null;
+          return {
+            id: `${p.osm_type ?? 'x'}${p.osm_id ?? p.name}`,
+            name: p.name,
+            address: addressOf(p),
+            // GeoJSON은 [lng, lat] 순서
+            coord: { lat: c[1], lng: c[0] },
+          };
+        })
+        .filter((p): p is Place => p !== null);
+
+      if (cache.size >= MAX_CACHE) {
+        // 가장 오래된 것부터 버린다 (Map은 삽입 순서를 지킨다)
+        const oldest = cache.keys().next().value;
+        if (oldest !== undefined) cache.delete(oldest);
+      }
+      cache.set(key, found);
+
+      return found;
+    },
+
+    // Photon은 검색 응답에 좌표를 함께 준다. 따로 조회할 게 없다.
+    async resolve(place: Place): Promise<Place> {
+      return place;
+    },
+  };
+}
