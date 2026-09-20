@@ -20,55 +20,20 @@
  * 호스팅으로 옮기는 게 맞다(Valhalla는 오픈소스).
  */
 
-import type { Coord, TransportMode } from '@/domain/types';
+import type { TransportMode } from '@/domain/types';
 import type { RouteProvider, RouteQuery, RouteResult } from '../types';
+import { decodePolyline } from './polyline';
 
 const ENDPOINT = 'https://valhalla1.openstreetmap.de/route';
 const SOURCE = 'Valhalla (OSM)';
+/** Valhalla의 shape는 정밀도 6이다 (구글 기본값 5가 아니다). */
+const SHAPE_PRECISION = 6;
 
 /** 우리 수단 이름 → Valhalla costing. transit은 여기 없다(데이터 없음). */
 const COSTING: Partial<Record<TransportMode, string>> = {
   walk: 'pedestrian',
   car: 'auto',
 };
-
-/**
- * Valhalla가 돌려주는 shape는 정밀도 6의 encoded polyline이다.
- * (구글 polyline 알고리즘과 같되 1e5가 아니라 1e6로 나눈다 — 1e5로 풀면
- * 좌표가 10배 어긋나 경로가 지구 반대편에 그려진다.)
- */
-function decodeShape(encoded: string): Coord[] {
-  const points: Coord[] = [];
-  let index = 0;
-  let lat = 0;
-  let lng = 0;
-
-  while (index < encoded.length) {
-    let result = 0;
-    let shift = 0;
-    let byte: number;
-
-    do {
-      byte = encoded.charCodeAt(index++) - 63;
-      result |= (byte & 0x1f) << shift;
-      shift += 5;
-    } while (byte >= 0x20);
-    lat += result & 1 ? ~(result >> 1) : result >> 1;
-
-    result = 0;
-    shift = 0;
-    do {
-      byte = encoded.charCodeAt(index++) - 63;
-      result |= (byte & 0x1f) << shift;
-      shift += 5;
-    } while (byte >= 0x20);
-    lng += result & 1 ? ~(result >> 1) : result >> 1;
-
-    points.push({ lat: lat / 1e6, lng: lng / 1e6 });
-  }
-
-  return points;
-}
 
 interface ValhallaResponse {
   trip?: {
@@ -138,7 +103,7 @@ export const valhallaRouteProvider: RouteProvider = {
         minutes: Math.max(1, Math.round(summary.time / 60)),
         // units가 kilometers라 km로 온다
         distanceM: Math.round(summary.length * 1000),
-        polyline: shape ? decodeShape(shape) : undefined,
+        polyline: shape ? decodePolyline(shape, SHAPE_PRECISION) : undefined,
         source: SOURCE,
       };
     } catch {
