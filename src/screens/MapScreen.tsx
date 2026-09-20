@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { AppHeader } from '@/components/AppHeader';
 import { BottomTabs } from '@/components/BottomTabs';
+import { DataCredits } from '@/components/DataCredits';
 import { DateStrip } from '@/components/DateStrip';
 import { MapCanvas } from '@/components/MapCanvas';
 import { TransportChip, MODE_ICON } from '@/components/TransportChip';
@@ -249,6 +250,12 @@ export function MapScreen() {
             );
           })}
         </div>
+
+        {/*
+          지도 위 attribution은 타일에 대한 것이다. 이 화면에 그려진 선은
+          별도 서비스(길찾기·대중교통)에서 왔으므로 따로 밝힌다.
+        */}
+        <DataCredits />
       </main>
 
       <BottomTabs tripId={trip.id} date={activeDate} />

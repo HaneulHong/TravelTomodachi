@@ -3,6 +3,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { AppHeader } from '@/components/AppHeader';
 import { BottomTabs } from '@/components/BottomTabs';
 import { DateStrip } from '@/components/DateStrip';
+import { DataCredits } from '@/components/DataCredits';
 import { MenuSheet } from '@/components/MenuSheet';
 import { TransportChip } from '@/components/TransportChip';
 import { AlertIcon, ClockIcon, ListIcon, PinIcon, PlaneIcon, PlusIcon, ShareIcon, TrainIcon } from '@/components/icons';
@@ -246,6 +247,9 @@ export function TripScreen() {
           <ShareIcon />
           친구에게 공유
         </button>
+
+        {/* 라이선스 의무라 메뉴에 상시 노출한다 — DataCredits 주석 참고 */}
+        <DataCredits />
       </MenuSheet>
 
       {toast && <div className="toast">{toast}</div>}
