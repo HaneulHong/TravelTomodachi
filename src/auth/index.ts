@@ -15,6 +15,7 @@
  */
 
 import { mockAuthProvider } from './mockAuthProvider';
+import { createSupabaseAuthProvider } from './supabaseAuthProvider';
 import type { AuthProvider } from './types';
 
 export * from './types';
@@ -37,7 +38,14 @@ const SUPABASE_KEY =
 /** 백엔드가 설정돼 있는지. 화면에서 "개발용" 안내를 띄울지 판단하는 데도 쓴다. */
 export const hasBackend = SUPABASE_URL.length > 0 && SUPABASE_KEY.length > 0;
 
+/**
+ * 한 번만 만든다. 매번 새로 만들면 Supabase 클라이언트가 여러 개 생기고
+ * 각자 세션을 들고 있어서, 한쪽에서 로그아웃해도 다른 쪽이 살아 있다.
+ */
+const provider: AuthProvider = hasBackend
+  ? createSupabaseAuthProvider(SUPABASE_URL, SUPABASE_KEY)
+  : mockAuthProvider;
+
 export function getAuthProvider(): AuthProvider {
-  // TODO: hasBackend면 supabaseAuthProvider를 돌려준다
-  return mockAuthProvider;
+  return provider;
 }

@@ -16,7 +16,15 @@ const PUBLIC_BASE_URL =
 
 export const webPlatform: Platform = {
   kind: 'web',
-  authRedirectUrl: `${PUBLIC_BASE_URL}/auth/callback`,
+  /*
+   * OAuth가 돌아올 주소는 **앱 루트**다.
+   *
+   * /auth/callback 같은 경로를 쓰면 안 된다. 이 앱은 HashRouter라 라우트가
+   * 전부 # 뒤에 있어서 그런 경로를 처리할 화면이 없고, 정적 배포나 Capacitor
+   * 웹뷰에서는 그 경로 자체가 404다. 루트로 돌아오면 Supabase가 쿼리에 붙여준
+   * code를 읽어 세션을 만들고, 해시 라우팅은 그대로 이어진다.
+   */
+  authRedirectUrl: PUBLIC_BASE_URL,
   publicBaseUrl: PUBLIC_BASE_URL,
 
   openExternal(url: string): void {
