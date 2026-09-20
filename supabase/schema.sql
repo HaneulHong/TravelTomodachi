@@ -19,20 +19,27 @@
 -- ─────────────────────────────────────────────────────────────────────
 
 -- ── 정리 ──────────────────────────────────────────────────────────
-drop trigger if exists on_trip_created on public.trips;
-drop trigger if exists on_item_updated on public.items;
+--
+-- 테이블을 먼저 지운다. cascade가 그 테이블에 달린 트리거와 정책까지 함께
+-- 정리하므로 트리거를 따로 지울 필요가 없다.
+--
+-- `drop trigger if exists ... on public.trips` 로 시작하면 안 된다. IF EXISTS는
+-- **트리거**가 없을 때만 봐주고 **테이블**은 있어야 한다. 첫 실행처럼 테이블이
+-- 아직 없는 상황에서는 거기서 42P01로 멈춘다.
+drop table if exists public.checklist cascade;
+drop table if exists public.items cascade;
+drop table if exists public.trip_days cascade;
+drop table if exists public.trip_members cascade;
+drop table if exists public.trips cascade;
+
+-- 함수는 테이블 뒤에. 정책과 트리거가 이 함수들을 참조하는데, 위에서
+-- 테이블과 함께 이미 사라진 뒤라 걸리는 게 없다.
 drop function if exists public.handle_new_trip();
 drop function if exists public.touch_updated_at();
 drop function if exists public.join_trip_by_code(text);
 drop function if exists public.is_trip_member(uuid);
 drop function if exists public.is_trip_owner(uuid);
 drop function if exists public.new_invite_code();
-
-drop table if exists public.checklist cascade;
-drop table if exists public.items cascade;
-drop table if exists public.trip_days cascade;
-drop table if exists public.trip_members cascade;
-drop table if exists public.trips cascade;
 
 -- ── 초대 코드 ─────────────────────────────────────────────────────
 -- 사람이 불러줄 수 있어야 해서 8자로 짧게 하고, 헷갈리는 글자를 뺀다.
