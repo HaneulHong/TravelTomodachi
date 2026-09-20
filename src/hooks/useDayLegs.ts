@@ -30,6 +30,17 @@ export interface LegInfo {
 
 const MODES: TransportMode[] = ['walk', 'transit', 'car'];
 
+/**
+ * 이보다 긴 도보는 추천하지 않는다.
+ *
+ * 다른 수단 조회가 실패하면 도보만 남는데, 그대로 두면 "도보 15시간 7분"이
+ * 추천으로 올라온다. 사실이긴 해도 일정으로는 쓸모가 없고, 추천이라는 말이
+ * 붙는 순간 오해를 부른다. 이럴 때는 추천을 비워 '이동 정보 없음 · 탭해서
+ * 입력'으로 떨어뜨리는 게 이 앱의 원래 폴백 정책과도 맞는다.
+ * (값 자체는 수단 비교 칸에 그대로 보여준다 — 숨기지는 않는다.)
+ */
+const WALK_RECOMMEND_LIMIT_MIN = 120;
+
 /** 조회 결과 캐시. 실제 구현의 routes 테이블 캐시와 같은 역할. */
 const cache = new Map<string, RouteResult>();
 
@@ -75,6 +86,7 @@ function pickRecommended(results: Partial<Record<TransportMode, RouteResult>>):
   for (const mode of MODES) {
     const r = results[mode];
     if (!r || !r.available) continue;
+    if (mode === 'walk' && r.minutes > WALK_RECOMMEND_LIMIT_MIN) continue;
     // 도보 20분 이내면 도보를 선호한다 — 환승 대기까지 합치면
     // 대중교통이 명목상 빨라도 실제로는 더 번거롭다.
     const weighted = mode === 'walk' && r.minutes <= 20 ? r.minutes - 5 : r.minutes;

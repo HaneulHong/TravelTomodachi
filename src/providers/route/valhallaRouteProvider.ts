@@ -77,6 +77,14 @@ interface ValhallaResponse {
   };
 }
 
+/** 한 번만 다시 시도한다. 더 늘리면 실패한 구간마다 화면이 느려진다. */
+async function fetchWithRetry(url: string): Promise<Response> {
+  const first = await fetch(url);
+  if (first.ok) return first;
+  await new Promise((resolve) => setTimeout(resolve, 400));
+  return fetch(url);
+}
+
 export const valhallaRouteProvider: RouteProvider = {
   id: 'valhalla-osm',
   label: 'Valhalla (OSM)',
@@ -99,7 +107,15 @@ export const valhallaRouteProvider: RouteProvider = {
     };
 
     try {
-      const res = await fetch(`${ENDPOINT}?json=${encodeURIComponent(JSON.stringify(body))}`);
+      /*
+       * 한 번 더 시도한다. 공개 인스턴스는 같은 구간에서도 수단마다 결과가
+       * 갈릴 만큼 간헐적으로 실패한다(도보는 되는데 차량만 안 오는 식).
+       * 그 상태로 두면 "차량 정보 없음"이 남아 15시간짜리 도보가 추천으로
+       * 올라온다. 한 번의 재시도로 대부분 사라진다.
+       */
+      const res = await fetchWithRetry(
+        `${ENDPOINT}?json=${encodeURIComponent(JSON.stringify(body))}`,
+      );
       if (!res.ok) {
         /*
          * 경로를 못 찾는 경우도 여기로 온다(섬과 육지 사이처럼 도로로 이어지지
