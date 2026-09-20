@@ -14,36 +14,20 @@
  * RLS부터 켜야 한다.
  */
 
+import { hasBackend } from '@/supabase/client';
 import { mockAuthProvider } from './mockAuthProvider';
 import { createSupabaseAuthProvider } from './supabaseAuthProvider';
 import type { AuthProvider } from './types';
 
 export * from './types';
-
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL ?? '';
-
-/**
- * 브라우저에 두는 공개 키.
- *
- * Supabase가 키 체계를 바꾸는 중이라 이름이 두 가지다.
- *   sb_publishable_...  새 이름 (publishable). 새로 만든 프로젝트는 이걸 준다.
- *   eyJhbGciOi...       옛 이름 (anon). JWT 모양이고 2026년 말 지원 종료 예정.
- *
- * 둘 다 같은 자리에 들어가고 하는 일도 같아서 어느 쪽이 와도 받는다.
- * 대시보드에서 보이는 걸 그대로 붙여넣으면 된다.
- */
-const SUPABASE_KEY =
-  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? import.meta.env.VITE_SUPABASE_ANON_KEY ?? '';
-
-/** 백엔드가 설정돼 있는지. 화면에서 "개발용" 안내를 띄울지 판단하는 데도 쓴다. */
-export const hasBackend = SUPABASE_URL.length > 0 && SUPABASE_KEY.length > 0;
+export { hasBackend } from '@/supabase/client';
 
 /**
  * 한 번만 만든다. 매번 새로 만들면 Supabase 클라이언트가 여러 개 생기고
  * 각자 세션을 들고 있어서, 한쪽에서 로그아웃해도 다른 쪽이 살아 있다.
  */
 const provider: AuthProvider = hasBackend
-  ? createSupabaseAuthProvider(SUPABASE_URL, SUPABASE_KEY)
+  ? createSupabaseAuthProvider()
   : mockAuthProvider;
 
 export function getAuthProvider(): AuthProvider {

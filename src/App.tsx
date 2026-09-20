@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { HashRouter, Navigate, Route, Routes, useParams } from 'react-router-dom';
 import { getAuthProvider } from '@/auth';
 import { useAuthStore } from '@/store/authStore';
+import { useTripStore } from '@/store/tripStore';
 import { HomeScreen } from '@/screens/HomeScreen';
 import { TripScreen } from '@/screens/TripScreen';
 import { ItemDetailScreen } from '@/screens/ItemDetailScreen';
@@ -40,9 +41,19 @@ export function App() {
   const account = useAuthStore((s) => s.account);
   const restore = useAuthStore((s) => s.restore);
 
+  const loadTrips = useTripStore((s) => s.load);
+
   useEffect(() => {
     void restore();
   }, [restore]);
+
+  /*
+   * 로그인한 뒤에 읽는다. 로그인 전에 부르면 RLS가 전부 막아 빈 목록이
+   * 돌아오고, 그 결과가 "여행이 없습니다"로 화면에 굳는다.
+   */
+  useEffect(() => {
+    if (account) void loadTrips(account.id);
+  }, [account, loadTrips]);
 
   /*
    * 세션 복구가 끝나기 전에는 아무것도 결정하지 않는다. 바로 로그인 화면을

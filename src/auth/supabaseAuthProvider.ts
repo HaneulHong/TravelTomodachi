@@ -12,28 +12,15 @@
  *  우리 코드가 읽지 않는다.)
  */
 
-import { createClient } from '@supabase/supabase-js';
 import { platform } from '@/platform';
+import { getSupabase } from '@/supabase/client';
 import { colorOf, initialOf, type Account, type AuthProvider, type SignInMethod } from './types';
 
 /** 프로필이 아직 없을 때 쓰는 이름. 사용자가 프로필 화면에서 바꾼다. */
 const DEFAULT_NICKNAME = '여행자';
 
-export function createSupabaseAuthProvider(url: string, key: string): AuthProvider {
-  const client = createClient(url, key, {
-    auth: {
-      /*
-       * PKCE를 쓴다. 암묵적 흐름(implicit)은 토큰을 URL **해시**에 붙여 보내는데,
-       * 이 앱은 HashRouter라 해시가 곧 라우트다. 둘이 같은 자리를 놓고 싸우면
-       * 로그인 직후 엉뚱한 화면으로 떨어지거나 세션을 놓친다.
-       * PKCE는 쿼리스트링(?code=)으로 오므로 충돌하지 않는다.
-       */
-      flowType: 'pkce',
-      detectSessionInUrl: true,
-      persistSession: true,
-      autoRefreshToken: true,
-    },
-  });
+export function createSupabaseAuthProvider(): AuthProvider {
+  const client = getSupabase();
 
   /** auth 사용자 + profiles 행 → 화면이 쓰는 Account */
   async function toAccount(userId: string, via: SignInMethod): Promise<Account> {
