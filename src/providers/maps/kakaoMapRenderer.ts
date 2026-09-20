@@ -13,7 +13,6 @@
  * 호출하면 키가 맞아도 401이 돌아온다. localhost도 포트까지 등록해야 한다.
  */
 
-import type { Coord } from '@/domain/types';
 import {
   accentColor,
   createPinElement,
@@ -22,6 +21,7 @@ import {
   type MapRenderer,
   type MapStop,
   type MountOptions,
+  type PathSegment,
 } from './types';
 
 /** 카카오 level은 숫자가 작을수록 확대. Google zoom과 반대 방향이다. */
@@ -88,12 +88,17 @@ export function createKakaoMapRenderer(jsKey: string): MapRenderer {
       });
 
       let overlays: kakao.maps.CustomOverlay[] = [];
-      let line: kakao.maps.Polyline | null = null;
+      let lines: kakao.maps.Polyline[] = [];
       let stops: MapStop[] = [];
 
       function clearOverlays(): void {
         for (const overlay of overlays) overlay.setMap(null);
         overlays = [];
+      }
+
+      function clearLines(): void {
+        for (const line of lines) line.setMap(null);
+        lines = [];
       }
 
       return {
@@ -119,19 +124,22 @@ export function createKakaoMapRenderer(jsKey: string): MapRenderer {
           });
         },
 
-        setPath(coords: Coord[]): void {
-          line?.setMap(null);
-          line =
-            coords.length > 1
-              ? new kakao.maps.Polyline({
-                  map,
-                  path: coords.map((c) => new kakao.maps.LatLng(c.lat, c.lng)),
-                  strokeColor: accentColor(),
-                  strokeOpacity: 0.85,
-                  strokeWeight: 3,
-                  strokeStyle: 'solid',
-                })
-              : null;
+        setPath(segments: PathSegment[]): void {
+          clearLines();
+          for (const segment of segments) {
+            if (segment.coords.length < 2) continue;
+            lines.push(
+              new kakao.maps.Polyline({
+                map,
+                path: segment.coords.map((c) => new kakao.maps.LatLng(c.lat, c.lng)),
+                strokeColor: accentColor(),
+                strokeOpacity: 0.85,
+                strokeWeight: 3,
+                // 카카오는 dash를 문자열 하나로 받는다 (Google과 달리 내장)
+                strokeStyle: segment.dashed ? 'shortdash' : 'solid',
+              }),
+            );
+          }
         },
 
         fit(): void {
@@ -152,8 +160,7 @@ export function createKakaoMapRenderer(jsKey: string): MapRenderer {
 
         destroy(): void {
           clearOverlays();
-          line?.setMap(null);
-          line = null;
+          clearLines();
           stops = [];
         },
       };

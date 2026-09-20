@@ -6,7 +6,18 @@ import { DateStrip } from '@/components/DateStrip';
 import { DataCredits } from '@/components/DataCredits';
 import { MenuSheet } from '@/components/MenuSheet';
 import { TransportChip } from '@/components/TransportChip';
-import { AlertIcon, ClockIcon, ListIcon, PinIcon, PlaneIcon, PlusIcon, ShareIcon, TrainIcon } from '@/components/icons';
+import {
+  AlertIcon,
+  BusIcon,
+  ClockIcon,
+  FerryIcon,
+  ListIcon,
+  PinIcon,
+  PlaneIcon,
+  PlusIcon,
+  ShareIcon,
+  TrainIcon,
+} from '@/components/icons';
 import { useDayLegs, type LegInfo } from '@/hooks/useDayLegs';
 import { useSwipe } from '@/hooks/useSwipe';
 import {
@@ -16,13 +27,24 @@ import {
   timezoneShift,
   tzShortLabel,
 } from '@/domain/time';
-import type { Item } from '@/domain/types';
+import { ITEM_KIND_LABEL, isSegmentKind, type Item } from '@/domain/types';
 import { platform } from '@/platform';
 import { useTripStore } from '@/store/tripStore';
+
+/** 구간 종류별 칩 색. 수단이 다르면 한눈에 갈려야 한다. */
+const KIND_TONE: Record<Item['kind'], string> = {
+  place: '',
+  flight: 'transit',
+  train: 'accent',
+  bus: 'car',
+  ferry: 'walk',
+};
 
 function KindIcon({ kind }: { kind: Item['kind'] }) {
   if (kind === 'flight') return <PlaneIcon />;
   if (kind === 'train') return <TrainIcon />;
+  if (kind === 'bus') return <BusIcon />;
+  if (kind === 'ferry') return <FerryIcon />;
   return null;
 }
 
@@ -198,10 +220,10 @@ export function TripScreen() {
                 >
                   <div className="tl-item__head">
                     <span className="tl-item__title">{item.title}</span>
-                    {item.kind !== 'place' && (
-                      <span className={`chip chip--${item.kind === 'flight' ? 'transit' : 'car'}`}>
+                    {isSegmentKind(item.kind) && (
+                      <span className={`chip chip--${KIND_TONE[item.kind]}`}>
                         <KindIcon kind={item.kind} />
-                        {item.carrierCode ?? (item.kind === 'flight' ? '항공' : '기차')}
+                        {item.carrierCode ?? ITEM_KIND_LABEL[item.kind]}
                       </span>
                     )}
                   </div>

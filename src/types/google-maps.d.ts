@@ -57,6 +57,20 @@ declare namespace google.maps {
     setZoom(zoom: number): void;
   }
 
+  /** 점선을 만들 때 선 위에 반복해 찍는 심볼. */
+  interface IconSequence {
+    icon: {
+      /** SVG path. 점선용 짧은 선분은 'M 0,-1 0,1'. */
+      path: string;
+      strokeOpacity?: number;
+      strokeWeight?: number;
+      scale?: number;
+    };
+    offset?: string;
+    /** '12px'처럼 간격. 이게 있어야 반복된다. */
+    repeat?: string;
+  }
+
   interface PolylineOptions {
     path?: LatLngLiteral[];
     map?: Map | null;
@@ -65,6 +79,8 @@ declare namespace google.maps {
     strokeWeight?: number;
     geodesic?: boolean;
     zIndex?: number;
+    /** 점선 표현용 — Google에는 dash 옵션이 없어서 이걸 쓴다. */
+    icons?: IconSequence[];
   }
 
   class Polyline {

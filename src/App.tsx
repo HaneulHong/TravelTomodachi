@@ -1,4 +1,4 @@
-import { HashRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { HashRouter, Navigate, Route, Routes, useParams } from 'react-router-dom';
 import { HomeScreen } from '@/screens/HomeScreen';
 import { TripScreen } from '@/screens/TripScreen';
 import { ItemDetailScreen } from '@/screens/ItemDetailScreen';
@@ -15,6 +15,21 @@ import { ChecklistScreen } from '@/screens/ChecklistScreen';
  * 웹에서 경로를 깔끔하게 만들고 싶어지면 그때 웹 전용으로 바꾸면 되지만,
  * 앱까지 하나로 가려면 해시가 안전하다.
  */
+/**
+ * 편집 화면을 항목마다 새로 만든다.
+ *
+ * 두 라우트가 같은 컴포넌트를 가리키기 때문에, 수정 화면에서 추가 화면으로
+ * (또는 다른 항목 수정으로) 넘어가도 React가 같은 인스턴스를 재사용한다.
+ * 입력값은 useState 초기값으로 한 번만 읽으므로, 그대로 두면 "일정 추가"를
+ * 눌렀는데 직전에 고치던 항목의 내용이 남는다.
+ *
+ * key를 주면 항목이 바뀔 때 언마운트되고 초기값을 다시 읽는다.
+ */
+function ItemEditRoute() {
+  const { itemId } = useParams();
+  return <ItemEditScreen key={itemId ?? 'new'} />;
+}
+
 export function App() {
   return (
     <HashRouter>
@@ -22,8 +37,8 @@ export function App() {
         <Route path="/" element={<HomeScreen />} />
         <Route path="/trip/:tripId" element={<TripScreen />} />
         {/* 'new'가 :itemId로 잡히지 않도록 상세보다 먼저 선언한다 */}
-        <Route path="/trip/:tripId/item/new" element={<ItemEditScreen />} />
-        <Route path="/trip/:tripId/item/:itemId/edit" element={<ItemEditScreen />} />
+        <Route path="/trip/:tripId/item/new" element={<ItemEditRoute />} />
+        <Route path="/trip/:tripId/item/:itemId/edit" element={<ItemEditRoute />} />
         <Route path="/trip/:tripId/item/:itemId" element={<ItemDetailScreen />} />
         <Route path="/trip/:tripId/map" element={<MapScreen />} />
         <Route path="/trip/:tripId/checklist" element={<ChecklistScreen />} />

@@ -11,7 +11,6 @@
  * DEMO_MAP_ID는 개발용이다 — 배포 전에 실제 Map ID를 발급해 넣을 것.
  */
 
-import type { Coord } from '@/domain/types';
 import {
   authFailureListeners,
   installAuthFailureHook,
@@ -27,6 +26,7 @@ import {
   type MapRenderer,
   type MapStop,
   type MountOptions,
+  type PathSegment,
 } from './types';
 
 export function createGoogleMapRenderer(apiKey: string, mapId?: string): MapRenderer {
@@ -64,12 +64,17 @@ export function createGoogleMapRenderer(apiKey: string, mapId?: string): MapRend
       });
 
       let markers: google.maps.marker.AdvancedMarkerElement[] = [];
-      let line: google.maps.Polyline | null = null;
+      let lines: google.maps.Polyline[] = [];
       let stops: MapStop[] = [];
 
       function clearMarkers(): void {
         for (const marker of markers) marker.map = null;
         markers = [];
+      }
+
+      function clearLines(): void {
+        for (const line of lines) line.setMap(null);
+        lines = [];
       }
 
       return {
@@ -96,20 +101,42 @@ export function createGoogleMapRenderer(apiKey: string, mapId?: string): MapRend
           });
         },
 
-        setPath(coords: Coord[]): void {
-          line?.setMap(null);
-          line =
-            coords.length > 1
-              ? new google.maps.Polyline({
-                  path: coords,
-                  map,
-                  strokeColor: accentColor(),
-                  strokeOpacity: 0.85,
-                  strokeWeight: 3,
-                  // 장거리 구간(도시간 이동)에서 직선이 아니라 대권 경로로 보이게
-                  geodesic: true,
-                })
-              : null;
+        setPath(segments: PathSegment[]): void {
+          clearLines();
+          for (const segment of segments) {
+            if (segment.coords.length < 2) continue;
+            lines.push(
+              new google.maps.Polyline({
+                path: segment.coords,
+                map,
+                strokeColor: accentColor(),
+                strokeOpacity: segment.dashed ? 0 : 0.85,
+                strokeWeight: 3,
+                // 장거리 구간(도시간 이동)에서 직선이 아니라 대권 경로로 보이게
+                geodesic: true,
+                /*
+                 * Google에는 점선 옵션이 없다. 선을 투명하게 만들고 점 아이콘을
+                 * 일정 간격으로 반복하는 게 공식 문서가 안내하는 방법이다.
+                 */
+                ...(segment.dashed
+                  ? {
+                      icons: [
+                        {
+                          icon: {
+                            path: 'M 0,-1 0,1',
+                            strokeOpacity: 0.85,
+                            strokeWeight: 3,
+                            scale: 2,
+                          },
+                          offset: '0',
+                          repeat: '12px',
+                        },
+                      ],
+                    }
+                  : {}),
+              }),
+            );
+          }
         },
 
         fit(): void {
@@ -127,8 +154,7 @@ export function createGoogleMapRenderer(apiKey: string, mapId?: string): MapRend
         destroy(): void {
           if (failureListener) authFailureListeners.delete(failureListener);
           clearMarkers();
-          line?.setMap(null);
-          line = null;
+          clearLines();
           stops = [];
         },
       };

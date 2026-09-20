@@ -11,7 +11,7 @@ import { useDayLegs } from '@/hooks/useDayLegs';
 import { formatDistance } from '@/domain/geo';
 import { formatMinutes } from '@/domain/time';
 import { TRANSPORT_LABEL, type Coord, type TransportMode } from '@/domain/types';
-import { getMapRenderer, resolveMapRegion, type MapStop } from '@/providers';
+import { getMapRenderer, resolveMapRegion, type MapStop, type PathSegment } from '@/providers';
 import { useTripStore } from '@/store/tripStore';
 
 const MODES: TransportMode[] = ['walk', 'transit', 'car'];
@@ -69,32 +69,53 @@ export function MapScreen() {
    * 조회가 끝나면 legs가 바뀌고 이 배열도 다시 만들어진다. MapCanvas는
    * path가 바뀌면 선만 다시 그리므로(remount 아님) 깜빡이지 않는다.
    */
-  const path: Coord[] = useMemo(() => {
-    const line: Coord[] = [];
+  /**
+   * 지도에 그릴 선.
+   *
+   * 토막마다 성격이 다르다.
+   *   실선 — 길찾기가 돌려준 실제 경로
+   *   점선 — 어떻게 가는지 모르는 구간 (이동수단 미선택·조회 실패·터미널 이동)
+   *
+   * 둘을 같은 모양으로 그리면 직선 구간이 실제보다 가까워 보여서 일정을
+   * 빡빡하게 짜게 된다. 그래서 "모른다"는 점선으로 드러낸다.
+   */
+  const path: PathSegment[] = useMemo(() => {
+    const segments: PathSegment[] = [];
+    /** 직전 항목이 우리를 내려준 곳. 구간 항목이면 도착 터미널이다. */
+    let cursor: Coord | undefined;
 
-    stops.forEach((stop, i) => {
-      if (i === 0) {
-        line.push(stop.coord);
-        return;
+    for (const item of items) {
+      if (!item.coord) continue;
+
+      // 앞 지점에서 이 항목까지 — 조회된 경로가 있으면 실선, 없으면 점선
+      if (cursor) {
+        const info = legs.get(item.id);
+        const mode = info?.recommended;
+        const result = mode ? info?.results[mode] : undefined;
+        const shape = result?.available ? result.polyline : undefined;
+
+        segments.push(
+          shape && shape.length > 1
+            ? { coords: shape }
+            : { coords: [cursor, item.coord], dashed: true },
+        );
       }
 
-      const info = legs.get(stop.id);
-      const mode = info?.recommended;
-      const result = mode ? info?.results[mode] : undefined;
-      const shape = result?.available ? result.polyline : undefined;
+      cursor = item.coord;
 
-      if (shape && shape.length > 1) {
-        // 폴리라인의 첫 점은 직전 지점과 거의 같다. 그대로 이어 붙이면
-        // 점이 겹칠 뿐 선 모양은 달라지지 않으므로 그냥 잇는다.
-        line.push(...shape);
-        return;
+      /*
+       * 구간 항목(기차·버스·배편·항공)은 그 자체가 한 토막이다.
+       * 실제 경로를 조회할 방법이 없으므로 터미널끼리 직선으로 잇고 점선으로
+       * 둔다 — 배는 바다 위를, 기차는 선로를 가는데 도로 경로로는 못 그린다.
+       */
+      if (item.toCoord) {
+        segments.push({ coords: [item.coord, item.toCoord], dashed: true });
+        cursor = item.toCoord;
       }
+    }
 
-      line.push(stop.coord);
-    });
-
-    return line;
-  }, [stops, legs]);
+    return segments;
+  }, [items, legs]);
 
   /**
    * 지역 판정에는 지점 좌표만 쓴다. 경로 폴리라인까지 넣으면 점이 수백 개라

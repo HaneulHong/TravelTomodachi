@@ -1,12 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { Coord } from '@/domain/types';
 import { createSchematicMapRenderer } from '@/providers';
-import type { MapHandle, MapRenderer, MapStop } from '@/providers';
+import type { MapHandle, MapRenderer, MapStop, PathSegment } from '@/providers';
 
 interface Props {
   renderer: MapRenderer;
   stops: MapStop[];
-  path: Coord[];
+  path: PathSegment[];
   onStopClick?(stopId: string): void;
 }
 

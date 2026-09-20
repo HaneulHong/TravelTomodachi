@@ -412,6 +412,20 @@ const JEJU_ITEMS: Omit<Item, 'sortKey' | 'tripId'>[] = [
   },
 
   // ── 3일차: 섬 동쪽 끝까지. 하루 안에서 가장 긴 국내 구간 ──
+  // 구간 항목(버스)은 터미널에서 터미널로 간다 — 지도에 점선 한 토막으로 그려진다.
+  {
+    id: 'j-8b',
+    date: '2026-12-16',
+    kind: 'bus',
+    title: '시외버스로 이동',
+    placeName: '제주버스터미널',
+    coord: { lat: 33.4996, lng: 126.5158 },
+    toPlaceName: '대정읍 방면 정류장',
+    toCoord: { lat: 33.2251, lng: 126.2519 },
+    localTime: '08:30',
+    durationMin: 80,
+    carrierCode: '제주 → 대정 시외버스',
+  },
   {
     id: 'j-9',
     date: '2026-12-16',
@@ -474,6 +488,20 @@ const JEJU_ITEMS: Omit<Item, 'sortKey' | 'tripId'>[] = [
     coord: { lat: 33.5071, lng: 126.4916 },
     localTime: '13:00',
     durationMin: 60,
+  },
+  {
+    id: 'j-14b',
+    date: '2026-12-17',
+    kind: 'ferry',
+    title: '(대안) 배편으로 목포',
+    placeName: '제주항 여객터미널',
+    coord: { lat: 33.5186, lng: 126.5322 },
+    toPlaceName: '목포연안여객선터미널',
+    toCoord: { lat: 34.7846, lng: 126.3833 },
+    localTime: '13:30',
+    durationMin: 270,
+    carrierCode: '제주 → 목포 퀸메리호',
+    description: '비행기 결항 대비. 차를 싣고 갈 수 있음.',
   },
   {
     id: 'j-15',

@@ -1426,7 +1426,8 @@ a {
 /* 종류 선택 — 탭처럼 붙여서 셋 중 하나임을 드러낸다 */
 .seg {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  /* 종류가 5개다. 고정 3칸으로 두면 글자가 잘린다. */
+  grid-template-columns: repeat(5, 1fr);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-sm);
   overflow: hidden;
@@ -1434,8 +1435,8 @@ a {
 }
 
 .seg__btn {
-  padding: 9px 4px;
-  font-size: 13px;
+  padding: 9px 2px;
+  font-size: 12.5px;
   font-weight: 620;
   color: var(--text-2);
   border-right: 1px solid var(--border);

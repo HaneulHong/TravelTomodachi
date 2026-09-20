@@ -22,10 +22,24 @@ export interface MapStop {
   caption?: string;
 }
 
+/**
+ * 지도에 그릴 선 한 토막.
+ *
+ * 실선과 점선을 나누는 이유: 둘은 성격이 다른 정보다. 실선은 "길찾기가
+ * 돌려준 실제 경로"이고, 점선은 "어떻게 가는지 아직 모른다"는 뜻이다.
+ * 같은 모양으로 그리면 직선 구간의 거리가 실제보다 짧아 보여서 일정을
+ * 빡빡하게 짜게 된다.
+ */
+export interface PathSegment {
+  coords: Coord[];
+  /** true면 점선 — 실제 경로가 아니라 두 점을 이은 직선이다. */
+  dashed?: boolean;
+}
+
 export interface MapHandle {
   setStops(stops: MapStop[]): void;
-  /** 구간 경로선. 실제 경로 폴리라인이 없으면 지점 간 직선. */
-  setPath(coords: Coord[]): void;
+  /** 구간 경로선. 실제 경로가 없는 토막은 dashed로 온다. */
+  setPath(segments: PathSegment[]): void;
   /** 모든 지점이 보이도록 뷰포트 맞춤 */
   fit(): void;
   destroy(): void;

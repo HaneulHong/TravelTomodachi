@@ -68,6 +68,17 @@ async function fetchLeg(
 }
 
 /**
+ * 앞 항목이 우리를 내려준 곳.
+ *
+ * 구간 항목(기차·버스·배편)은 출발 터미널이 아니라 **도착 터미널**에서
+ * 다음 일정이 시작된다. coord만 보면 "부산역에서 내렸는데 서울역부터 걷는"
+ * 경로가 나온다.
+ */
+function arrivalOf(item: Item): Coord | undefined {
+  return item.toCoord ?? item.coord;
+}
+
+/**
  * 이 구간을 언제 출발하는지. 앞 항목에 머무는 시간이 있으면 그만큼 더한다.
  * 시각이나 타임존을 모르면 undefined — 프로바이더가 "지금"으로 처리한다.
  */
@@ -103,7 +114,12 @@ export function useDayLegs(items: Item[], timezone?: string): Map<string, LegInf
   const signature = useMemo(
     () =>
       items
-        .map((i) => `${i.id}:${i.coord ? `${i.coord.lat},${i.coord.lng}` : '-'}:${i.leg?.isManual ? 'm' : ''}`)
+        .map(
+          (i) =>
+            `${i.id}:${i.coord ? `${i.coord.lat},${i.coord.lng}` : '-'}` +
+            `>${i.toCoord ? `${i.toCoord.lat},${i.toCoord.lng}` : '-'}` +
+            `:${i.leg?.isManual ? 'm' : ''}`,
+        )
         .join('|') + `#${timezone ?? ''}`,
     [items, timezone],
   );
@@ -132,8 +148,9 @@ export function useDayLegs(items: Item[], timezone?: string): Map<string, LegInf
         });
         continue;
       }
-      const { crossBorder } = resolveLegRegion(from.coord, to.coord);
-      if (!from.coord || !to.coord) {
+      const fromCoord = arrivalOf(from);
+      const { crossBorder } = resolveLegRegion(fromCoord, to.coord);
+      if (!fromCoord || !to.coord) {
         // 항공편처럼 좌표가 없는 항목이 끼면 조회 자체를 하지 않는다
         initial.set(to.id, {
           toItemId: to.id,
@@ -163,8 +180,8 @@ export function useDayLegs(items: Item[], timezone?: string): Map<string, LegInf
 
     const pending = pairs.filter(({ from, to }) => {
       if (to.leg?.isManual) return false;
-      if (!from.coord || !to.coord) return false;
-      return !resolveLegRegion(from.coord, to.coord).crossBorder;
+      if (!arrivalOf(from) || !to.coord) return false;
+      return !resolveLegRegion(arrivalOf(from), to.coord).crossBorder;
     });
 
     if (pending.length === 0) return;
@@ -176,7 +193,7 @@ export function useDayLegs(items: Item[], timezone?: string): Map<string, LegInf
           await Promise.all(
             MODES.map(async (mode) => {
               results[mode] = await fetchLeg(
-                from.coord!,
+                arrivalOf(from)!,
                 to.coord!,
                 mode,
                 departureOf(from, timezone),

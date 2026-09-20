@@ -149,3 +149,22 @@ export const PencilIcon = ({ size = 18, className }: IconProps) => (
     <path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z" />
   </svg>
 );
+
+export const BusIcon = ({ size = 13, className }: IconProps) => (
+  <svg {...base(size, className)}>
+    <path d="M4 17V6a2 2 0 012-2h12a2 2 0 012 2v11" />
+    <path d="M4 11h16" />
+    <path d="M6 17v2M18 17v2" />
+    <circle cx="7.5" cy="14.5" r=".8" fill="currentColor" stroke="none" />
+    <circle cx="16.5" cy="14.5" r=".8" fill="currentColor" stroke="none" />
+  </svg>
+);
+
+export const FerryIcon = ({ size = 13, className }: IconProps) => (
+  <svg {...base(size, className)}>
+    <path d="M3 18c1.5 0 1.5 1.5 3 1.5s1.5-1.5 3-1.5 1.5 1.5 3 1.5 1.5-1.5 3-1.5 1.5 1.5 3 1.5 1.5-1.5 3-1.5" />
+    <path d="M5 15l1.5-5h11L19 15" />
+    <path d="M12 10V6" />
+    <path d="M9 6h6" />
+  </svg>
+);
