@@ -187,9 +187,18 @@ alter table public.checklist enable row level security;
 -- ── trips ─────────────────────────────────────────────────────────
 -- 비멤버는 여행의 존재조차 볼 수 없다. 초대 코드로 들어오는 길은
 -- join_trip_by_code 함수 하나뿐이다.
-create policy "멤버만 여행을 본다"
+--
+-- owner_id 조건이 왜 따로 필요한가:
+-- 여행을 만들면 트리거가 소유자를 멤버로 넣는데, 그 트리거는 AFTER INSERT라
+-- INSERT ... RETURNING 이 평가되는 시점에는 아직 돌지 않았다. 멤버십만 보면
+-- **방금 만든 행을 만든 사람이 돌려받지 못한다.**
+--   new row violates row-level security policy for table "trips"
+-- supabase-js는 기본적으로 삽입 결과를 돌려받으므로 앱에서 매번 걸린다.
+-- 소유자는 멤버십 행과 무관하게 자기 여행을 볼 수 있어야 하니, 의미상으로도
+-- 이쪽이 맞다.
+create policy "멤버와 소유자가 여행을 본다"
   on public.trips for select to authenticated
-  using (public.is_trip_member(id));
+  using (public.is_trip_member(id) or owner_id = auth.uid());
 
 create policy "자기를 소유자로 해서 만든다"
   on public.trips for insert to authenticated
@@ -197,8 +206,8 @@ create policy "자기를 소유자로 해서 만든다"
 
 create policy "멤버는 여행 정보를 고친다"
   on public.trips for update to authenticated
-  using (public.is_trip_member(id))
-  with check (public.is_trip_member(id));
+  using (public.is_trip_member(id) or owner_id = auth.uid())
+  with check (public.is_trip_member(id) or owner_id = auth.uid());
 
 -- 지우는 건 소유자만. 초대받아 들어온 사람이 남의 여행을 지우면 안 된다.
 create policy "소유자만 여행을 지운다"
