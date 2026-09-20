@@ -28,8 +28,16 @@ export * from './types';
 export { createSchematicMapRenderer } from './schematicMapRenderer';
 
 const GOOGLE_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY ?? '';
-/** Advanced Marker에 필수. 실제 Map ID를 발급하기 전까지는 개발용 값. */
-const GOOGLE_MAP_ID = import.meta.env.VITE_GOOGLE_MAPS_MAP_ID || 'DEMO_MAP_ID';
+/**
+ * Advanced Marker에 필수. 비어 있으면 렌더러가 DEMO_MAP_ID로 떨어지고
+ * 화면에 경고를 띄운다 (마커가 조용히 안 뜨는 걸 막기 위해).
+ *
+ * 주의: `?? 'DEMO_MAP_ID'`로 쓰면 안 된다. .env.local에 `VITE_..._MAP_ID=`처럼
+ * 키만 있고 값이 없으면 Vite는 undefined가 아니라 **빈 문자열**을 준다.
+ * 그러면 ??가 발동하지 않아 빈 mapId가 그대로 넘어간다 — 빈 값 판정은
+ * 렌더러에서 length로 한다.
+ */
+const GOOGLE_MAP_ID = import.meta.env.VITE_GOOGLE_MAPS_MAP_ID;
 const KAKAO_KEY = import.meta.env.VITE_KAKAO_MAPS_JS_KEY ?? '';
 
 export type MapRegion = 'KR' | 'GLOBAL';

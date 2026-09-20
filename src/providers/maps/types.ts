@@ -51,6 +51,14 @@ export interface MapRenderer {
   readonly configured: boolean;
   /** 설정이 빠졌을 때 사용자에게 보여줄 안내 (환경변수 이름 등) */
   readonly setupHint?: string;
+  /**
+   * 지도는 뜨지만 뭔가 반쪽으로 동작할 때의 경고.
+   *
+   * configured와 다르다. configured=false는 "지도 자체가 없다"이고,
+   * warning은 "지도는 보이는데 일부가 조용히 빠진다"이다. 후자가 더 위험하다 —
+   * 화면에 단서가 없으면 콘솔을 열기 전까지 원인을 알 수 없기 때문이다.
+   */
+  readonly warning?: string;
   mount(container: HTMLElement, options?: MountOptions): Promise<MapHandle>;
 }
 

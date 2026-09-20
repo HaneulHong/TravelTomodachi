@@ -97,28 +97,34 @@ function loadSdk(apiKey: string): Promise<void> {
   return sdkPromise;
 }
 
-export function createGoogleMapRenderer(apiKey: string, mapId: string): MapRenderer {
+export function createGoogleMapRenderer(apiKey: string, mapId?: string): MapRenderer {
+  // Map ID가 없으면 지도는 정상적으로 뜨지만 **마커만 조용히 사라진다.**
+  // 콘솔을 열기 전까지 원인을 알 수 없는 종류의 실패라서 화면에 경고를 띄운다.
+  const hasRealMapId = Boolean(mapId && mapId.length > 0);
+  const effectiveMapId = hasRealMapId ? mapId! : 'DEMO_MAP_ID';
+
   return {
     id: 'google-maps',
     label: 'Google Maps',
     attribution: '© Google',
     configured: apiKey.length > 0,
     setupHint: 'VITE_GOOGLE_MAPS_API_KEY',
+    warning: hasRealMapId
+      ? undefined
+      : 'VITE_GOOGLE_MAPS_MAP_ID가 비어 있어 번호 마커가 표시되지 않습니다. Google Cloud Console의 [지도 관리]에서 Map ID를 발급해 .env.local에 넣으세요.',
 
     async mount(container: HTMLElement, options?: MountOptions): Promise<MapHandle> {
       installAuthFailureHook();
       await loadSdk(apiKey);
 
       const onFailure = options?.onFailure;
-      const failureListener: FailureListener | null = onFailure
-        ? (err) => onFailure(err)
-        : null;
+      const failureListener: FailureListener | null = onFailure ? (err) => onFailure(err) : null;
       if (failureListener) authFailureListeners.add(failureListener);
 
       const map = new google.maps.Map(container, {
         center: { lat: 35.68, lng: 139.77 },
         zoom: 11,
-        mapId,
+        mapId: effectiveMapId,
         disableDefaultUI: true,
         zoomControl: true,
         clickableIcons: false,

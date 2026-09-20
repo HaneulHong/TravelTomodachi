@@ -844,10 +844,10 @@ a {
 
 /*
  * 마운트마다 새로 만들어 붙이는 지도 표면.
- * 카카오 SDK에는 지도를 파기하는 API가 없어서, 렌더러를 바꿔도 이전 지도
- * 인스턴스가 살아남아 같은 엘리먼트에 계속 다시 그린다. 표면을 매번 새로
- * 만들고 정리할 때 통째로 떼어내면, 죽은 지도가 붙잡고 있는 노드가 문서에서
- * 빠지므로 새 지도를 덮어쓰지 못한다.
+ * 카카오 SDK에는 지도를 파기하는 API가 없고, 컨테이너의 인라인 style에
+ * 배경 타일 이미지까지 심는다. 표면을 매번 새로 만들고 정리할 때 통째로
+ * 떼어내면, 죽은 지도가 붙잡고 있는 노드가 문서에서 빠지므로 새 지도를
+ * 덮어쓰지 못한다.
  */
 .mapstage__surface {
   position: absolute;
@@ -923,6 +923,13 @@ a {
   border-radius: var(--radius-sm);
   padding: 6px 8px;
   line-height: 1.45;
+}
+
+.mapstage__note--warn {
+  background: color-mix(in srgb, var(--warn-soft) 94%, transparent);
+  border-color: var(--warn-border);
+  color: var(--warn);
+  font-size: 11px;
 }
 
 .mapstage__note code {
