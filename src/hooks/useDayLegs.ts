@@ -13,7 +13,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { addMinutesToWallClock, wallClockToInstant } from '@/domain/time';
 import type { Coord, Item, TransportMode } from '@/domain/types';
-import { getRouteProviderFor, resolveLegRegion } from '@/providers';
+import { resolveLegRegion } from '@/providers';
+import { fetchRoute } from '@/providers/routeCache';
 import type { RouteResult } from '@/providers';
 
 export interface LegInfo {
@@ -40,32 +41,6 @@ const MODES: TransportMode[] = ['walk', 'transit', 'car'];
  * (값 자체는 수단 비교 칸에 그대로 보여준다 — 숨기지는 않는다.)
  */
 const WALK_RECOMMEND_LIMIT_MIN = 120;
-
-/** 조회 결과 캐시. 실제 구현의 routes 테이블 캐시와 같은 역할. */
-const cache = new Map<string, RouteResult>();
-
-function cacheKey(from: Coord, to: Coord, mode: TransportMode, departAt?: string): string {
-  const r = (n: number) => n.toFixed(5);
-  // 출발 시각도 키에 넣는다. 같은 구간이라도 새벽과 출근길의 대중교통 결과가
-  // 다르기 때문에, 시각을 빼면 먼저 조회한 시간대 결과가 하루 종일 재사용된다.
-  return `${r(from.lat)},${r(from.lng)}|${r(to.lat)},${r(to.lng)}|${mode}|${departAt ?? ''}`;
-}
-
-async function fetchLeg(
-  from: Coord,
-  to: Coord,
-  mode: TransportMode,
-  departAt?: string,
-): Promise<RouteResult> {
-  const key = cacheKey(from, to, mode, departAt);
-  const hit = cache.get(key);
-  if (hit) return hit;
-
-  const provider = getRouteProviderFor(from);
-  const result = await provider.route({ from, to, mode, departAt });
-  cache.set(key, result);
-  return result;
-}
 
 /**
  * 앞 항목이 우리를 내려준 곳.
@@ -192,7 +167,7 @@ export function useDayLegs(items: Item[], timezone?: string): Map<string, LegInf
           const results: Partial<Record<TransportMode, RouteResult>> = {};
           await Promise.all(
             MODES.map(async (mode) => {
-              results[mode] = await fetchLeg(
+              results[mode] = await fetchRoute(
                 arrivalOf(from)!,
                 to.coord!,
                 mode,

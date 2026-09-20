@@ -13,6 +13,7 @@
  * 호출하면 키가 맞아도 401이 돌아온다. localhost도 포트까지 등록해야 한다.
  */
 
+import type { Coord } from '@/domain/types';
 import {
   accentColor,
   createPinElement,
@@ -90,6 +91,8 @@ export function createKakaoMapRenderer(jsKey: string): MapRenderer {
       let overlays: kakao.maps.CustomOverlay[] = [];
       let lines: kakao.maps.Polyline[] = [];
       let stops: MapStop[] = [];
+      /** fit이 선까지 담으려면 좌표를 들고 있어야 한다 — 아래 fit() 주석 참고. */
+      let pathCoords: Coord[] = [];
 
       function clearOverlays(): void {
         for (const overlay of overlays) overlay.setMap(null);
@@ -126,6 +129,16 @@ export function createKakaoMapRenderer(jsKey: string): MapRenderer {
 
         setPath(segments: PathSegment[]): void {
           clearLines();
+          /*
+           * fit에는 각 토막의 양끝만 쓴다. 폴리라인은 한 구간이 수천 점이라
+           * 전부 넣으면 bounds 계산이 무거워지고, 어차피 중간 점은 양끝이
+           * 만드는 사각형 안에 들어온다.
+           */
+          pathCoords = segments.flatMap((segment) =>
+            segment.coords.length === 0
+              ? []
+              : [segment.coords[0]!, segment.coords[segment.coords.length - 1]!],
+          );
           for (const segment of segments) {
             if (segment.coords.length < 2) continue;
             lines.push(
@@ -144,7 +157,11 @@ export function createKakaoMapRenderer(jsKey: string): MapRenderer {
 
         fit(): void {
           if (stops.length === 0) return;
-          if (stops.length === 1) {
+          /*
+           * 선까지 담아야 한다. 지점만 보면 터미널 구간(제주 → 목포 배편처럼
+           * 도착지가 그 날 지점 목록에 없는 경우)이 화면 밖으로 밀려난다.
+           */
+          if (stops.length === 1 && pathCoords.length === 0) {
             map.setCenter(new kakao.maps.LatLng(stops[0]!.coord.lat, stops[0]!.coord.lng));
             map.setLevel(SINGLE_STOP_LEVEL);
             return;
@@ -152,6 +169,9 @@ export function createKakaoMapRenderer(jsKey: string): MapRenderer {
           const bounds = new kakao.maps.LatLngBounds();
           for (const stop of stops) {
             bounds.extend(new kakao.maps.LatLng(stop.coord.lat, stop.coord.lng));
+          }
+          for (const coord of pathCoords) {
+            bounds.extend(new kakao.maps.LatLng(coord.lat, coord.lng));
           }
           if (!bounds.isEmpty()) {
             map.setBounds(bounds, FIT_PADDING_PX, FIT_PADDING_PX, FIT_PADDING_PX, FIT_PADDING_PX);
@@ -162,6 +182,7 @@ export function createKakaoMapRenderer(jsKey: string): MapRenderer {
           clearOverlays();
           clearLines();
           stops = [];
+          pathCoords = [];
         },
       };
     },

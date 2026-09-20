@@ -8,6 +8,7 @@ import { MapCanvas } from '@/components/MapCanvas';
 import { TransportChip, MODE_ICON } from '@/components/TransportChip';
 import { AlertIcon } from '@/components/icons';
 import { useDayLegs } from '@/hooks/useDayLegs';
+import { useSegmentRoutes } from '@/hooks/useSegmentRoutes';
 import { formatDistance } from '@/domain/geo';
 import { formatMinutes } from '@/domain/time';
 import { TRANSPORT_LABEL, type Coord, type TransportMode } from '@/domain/types';
@@ -38,6 +39,8 @@ export function MapScreen() {
   // 실제 순간이 된다.
   const day = trip?.days.find((d) => d.date === activeDate);
   const legs = useDayLegs(items, day?.timezone);
+  /** 터미널 구간 자체의 경로선 (기차·버스·배편). 없으면 직선으로 잇는다. */
+  const segmentShapes = useSegmentRoutes(items, day?.timezone);
 
   /**
    * 지도에 올릴 지점. 좌표가 없는 항목(항공편 등)은 제외한다.
@@ -105,17 +108,22 @@ export function MapScreen() {
 
       /*
        * 구간 항목(기차·버스·배편·항공)은 그 자체가 한 토막이다.
-       * 실제 경로를 조회할 방법이 없으므로 터미널끼리 직선으로 잇고 점선으로
-       * 둔다 — 배는 바다 위를, 기차는 선로를 가는데 도로 경로로는 못 그린다.
+       * 실제 노선을 구했으면 실선으로, 못 구했으면 터미널끼리 직선 점선으로.
+       * (항공은 조회 대상이 아니다 — useSegmentRoutes 주석 참고)
        */
       if (item.toCoord) {
-        segments.push({ coords: [item.coord, item.toCoord], dashed: true });
+        const shape = segmentShapes.get(item.id);
+        segments.push(
+          shape && shape.length > 1
+            ? { coords: shape }
+            : { coords: [item.coord, item.toCoord], dashed: true },
+        );
         cursor = item.toCoord;
       }
     }
 
     return segments;
-  }, [items, legs]);
+  }, [items, legs, segmentShapes]);
 
   /**
    * 지역 판정에는 지점 좌표만 쓴다. 경로 폴리라인까지 넣으면 점이 수백 개라

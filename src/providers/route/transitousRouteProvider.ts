@@ -45,7 +45,22 @@ interface MotisItinerary {
   legs?: MotisLeg[];
 }
 
-/** encoded polyline 해독. 정밀도는 응답이 준 값을 쓴다. */
+/**
+ * encoded polyline 해독. 정밀도는 응답이 준 값을 쓴다.
+ *
+ * ── 비트 연산을 쓰지 않는 이유 ───────────────────────────────────
+ * 흔히 보이는 구현은 `result |= (byte & 0x1f) << shift`로 누적하는데,
+ * 자바스크립트의 비트 연산은 **32비트 정수**로 잘린다. 정밀도 7이면
+ * 경도 126.5가 1,265,000,000이 되고 지그재그로 한 번 더 2배가 되어
+ * 2,530,000,000 — 2^31(2,147,483,647)을 넘는다. 그 순간 부호 비트를
+ * 침범해서 경도가 음수로 뒤집힌다.
+ *
+ * 실제로 제주(126.5)가 미국(-88.5)으로 찍혔다. 위도(33)는 값이 절반이라
+ * 넘지 않아 멀쩡했고, 그래서 "위도만 맞는" 이상한 증상이 나왔다.
+ * Valhalla는 정밀도 6이라 여유가 있어 이 함정에 걸리지 않는다.
+ *
+ * 그래서 시프트 대신 곱셈, 지그재그 해제도 산술로 한다.
+ */
 function decodePolyline(encoded: string, precision: number): Coord[] {
   const factor = 10 ** precision;
   const points: Coord[] = [];
@@ -53,27 +68,25 @@ function decodePolyline(encoded: string, precision: number): Coord[] {
   let lat = 0;
   let lng = 0;
 
-  while (index < encoded.length) {
+  function readDelta(): number {
     let result = 0;
     let shift = 0;
     let byte: number;
 
     do {
       byte = encoded.charCodeAt(index++) - 63;
-      result |= (byte & 0x1f) << shift;
+      // << 대신 곱셈 — 32비트로 잘리지 않는다
+      result += (byte & 0x1f) * 2 ** shift;
       shift += 5;
     } while (byte >= 0x20);
-    lat += result & 1 ? ~(result >> 1) : result >> 1;
 
-    result = 0;
-    shift = 0;
-    do {
-      byte = encoded.charCodeAt(index++) - 63;
-      result |= (byte & 0x1f) << shift;
-      shift += 5;
-    } while (byte >= 0x20);
-    lng += result & 1 ? ~(result >> 1) : result >> 1;
+    // 지그재그 해제도 산술로 (result & 1, result >> 1은 다시 32비트가 된다)
+    return result % 2 === 1 ? -(result + 1) / 2 : result / 2;
+  }
 
+  while (index < encoded.length) {
+    lat += readDelta();
+    lng += readDelta();
     points.push({ lat: lat / factor, lng: lng / factor });
   }
 
