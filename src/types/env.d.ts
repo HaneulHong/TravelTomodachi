@@ -19,12 +19,14 @@ interface ImportMetaEnv {
   readonly VITE_GOOGLE_MAPS_MAP_ID?: string;
   readonly VITE_KAKAO_MAPS_JS_KEY?: string;
 
-  // ── Supabase (아직 미연결) ────────────────────────────────────────
+  // ── Supabase (로그인·공유) ────────────────────────────────────────
   // 주의: VITE_ 접두사가 붙은 값은 빌드 결과에 그대로 들어간다.
-  // anon key는 RLS로 보호되므로 노출해도 되지만, **길찾기 API 키는
-  // 절대 여기 두지 말고** Supabase Edge Function 프록시 뒤에 둔다.
-  // (길찾기는 서버에서 부르고 결과를 routes 테이블에 캐시한다)
+  // 공개 키는 RLS로 보호되므로 노출해도 되지만, **secret/service_role 키는
+  // 절대 여기 두지 말 것** — RLS를 통째로 우회한다.
   readonly VITE_SUPABASE_URL?: string;
+  /** 공개 키 새 이름 (sb_publishable_... ). 새 프로젝트는 이걸 준다. */
+  readonly VITE_SUPABASE_PUBLISHABLE_KEY?: string;
+  /** 공개 키 옛 이름 (eyJ... JWT). 2026년 말 지원 종료 예정. */
   readonly VITE_SUPABASE_ANON_KEY?: string;
 }
 

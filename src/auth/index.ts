@@ -20,10 +20,22 @@ import type { AuthProvider } from './types';
 export * from './types';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL ?? '';
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY ?? '';
+
+/**
+ * 브라우저에 두는 공개 키.
+ *
+ * Supabase가 키 체계를 바꾸는 중이라 이름이 두 가지다.
+ *   sb_publishable_...  새 이름 (publishable). 새로 만든 프로젝트는 이걸 준다.
+ *   eyJhbGciOi...       옛 이름 (anon). JWT 모양이고 2026년 말 지원 종료 예정.
+ *
+ * 둘 다 같은 자리에 들어가고 하는 일도 같아서 어느 쪽이 와도 받는다.
+ * 대시보드에서 보이는 걸 그대로 붙여넣으면 된다.
+ */
+const SUPABASE_KEY =
+  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? import.meta.env.VITE_SUPABASE_ANON_KEY ?? '';
 
 /** 백엔드가 설정돼 있는지. 화면에서 "개발용" 안내를 띄울지 판단하는 데도 쓴다. */
-export const hasBackend = SUPABASE_URL.length > 0 && SUPABASE_ANON_KEY.length > 0;
+export const hasBackend = SUPABASE_URL.length > 0 && SUPABASE_KEY.length > 0;
 
 export function getAuthProvider(): AuthProvider {
   // TODO: hasBackend면 supabaseAuthProvider를 돌려준다
