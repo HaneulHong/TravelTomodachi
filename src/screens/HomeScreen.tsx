@@ -4,6 +4,7 @@ import { BottomTabs } from '@/components/BottomTabs';
 import { GlobeIcon } from '@/components/icons';
 import { daysUntil, formatDateLabel, tripLengthDays } from '@/domain/time';
 import { REGION_LABEL, resolveRegion } from '@/providers';
+import { useAuthStore } from '@/store/authStore';
 import { useTripStore } from '@/store/tripStore';
 import type { Trip } from '@/domain/types';
 
@@ -25,6 +26,7 @@ function countdownLabel(startDate: string): string {
 }
 
 export function HomeScreen() {
+  const account = useAuthStore((a) => a.account);
   const navigate = useNavigate();
   const trips = useTripStore((s) => s.trips);
   const items = useTripStore((s) => s.items);
@@ -35,7 +37,10 @@ export function HomeScreen() {
 
   return (
     <div className="app">
-      <AppHeader title="홈" />
+      <AppHeader
+        title="홈"
+        action={{ label: account?.initial ?? '?', onClick: () => navigate('/profile') }}
+      />
 
       <main className="main">
         <section className="section">

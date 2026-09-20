@@ -1682,3 +1682,109 @@ a {
   line-height: 1.5;
   color: var(--text-3);
 }
+
+/* ── 로그인 ────────────────────────────────────────────────────── */
+
+.signin {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 22px;
+  padding: 32px 22px;
+  min-height: 100dvh;
+}
+
+.signin__brand {
+  text-align: center;
+}
+
+.signin__mark {
+  font-size: 44px;
+  line-height: 1;
+}
+
+.signin__title {
+  margin: 12px 0 4px;
+  font-size: 23px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.signin__sub {
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--text-2);
+}
+
+.signin__methods {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.signin__error {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--danger);
+  text-align: center;
+}
+
+/*
+ * 개발용이라는 안내. 눈에 띄어야 한다 — 진짜 로그인으로 착각하면 친구를
+ * 초대했는데 아무 일도 안 일어나는 이유를 못 찾는다.
+ */
+.signin__note {
+  margin: 0;
+  padding: 11px 13px;
+  border-radius: var(--radius);
+  background: var(--warn-soft);
+  border: 1px solid var(--warn-border);
+  color: var(--warn);
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+
+.signin__privacy {
+  margin: 0;
+  text-align: center;
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: var(--text-3);
+}
+
+/* ── 프로필 ────────────────────────────────────────────────────── */
+
+.profile__head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 0 4px;
+}
+
+/* 사진을 받지 않으므로 닉네임 첫 글자로 만든다 */
+.profile__avatar {
+  width: 62px;
+  height: 62px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-size: 25px;
+  font-weight: 700;
+  color: #fff;
+  box-shadow: var(--shadow-sm);
+}
+
+.profile__via {
+  font-size: 12.5px;
+  color: var(--text-3);
+}
+
+.form__hint--error {
+  color: var(--danger);
+}
+
+/* 헤더의 프로필 버튼 — 글자 하나라 동그랗게 */
+.header__action--avatar {
+  padding: 0;
+}

@@ -1,10 +1,15 @@
+import { useEffect } from 'react';
 import { HashRouter, Navigate, Route, Routes, useParams } from 'react-router-dom';
+import { getAuthProvider } from '@/auth';
+import { useAuthStore } from '@/store/authStore';
 import { HomeScreen } from '@/screens/HomeScreen';
 import { TripScreen } from '@/screens/TripScreen';
 import { ItemDetailScreen } from '@/screens/ItemDetailScreen';
 import { ItemEditScreen } from '@/screens/ItemEditScreen';
 import { MapScreen } from '@/screens/MapScreen';
 import { ChecklistScreen } from '@/screens/ChecklistScreen';
+import { ProfileScreen } from '@/screens/ProfileScreen';
+import { SignInScreen } from '@/screens/SignInScreen';
 
 /**
  * HashRouter를 쓰는 이유 — Capacitor 전환 제약 #1·#2.
@@ -31,6 +36,32 @@ function ItemEditRoute() {
 }
 
 export function App() {
+  const loading = useAuthStore((s) => s.loading);
+  const account = useAuthStore((s) => s.account);
+  const restore = useAuthStore((s) => s.restore);
+
+  useEffect(() => {
+    void restore();
+  }, [restore]);
+
+  /*
+   * 세션 복구가 끝나기 전에는 아무것도 결정하지 않는다. 바로 로그인 화면을
+   * 띄우면 이미 로그인한 사람에게도 한 번 깜빡이고 지나간다.
+   */
+  if (loading) {
+    return (
+      <div className="app">
+        <main className="main main--no-tabs">
+          <p className="empty">불러오는 중…</p>
+        </main>
+      </div>
+    );
+  }
+
+  if (!account) {
+    return <SignInScreen methods={getAuthProvider().methods} />;
+  }
+
   return (
     <HashRouter>
       <Routes>
@@ -42,6 +73,7 @@ export function App() {
         <Route path="/trip/:tripId/item/:itemId" element={<ItemDetailScreen />} />
         <Route path="/trip/:tripId/map" element={<MapScreen />} />
         <Route path="/trip/:tripId/checklist" element={<ChecklistScreen />} />
+        <Route path="/profile" element={<ProfileScreen />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </HashRouter>
