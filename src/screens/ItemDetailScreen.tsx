@@ -39,7 +39,12 @@ export function ItemDetailScreen() {
 
   const index = dayItems.findIndex((i) => i.id === itemId);
   const prev = index > 0 ? dayItems[index - 1] : undefined;
-  const legs = useDayLegs(dayItems);
+  // day는 아래에서 다시 쓰지만, 훅은 조건부 return보다 앞에 있어야 하므로
+  // 타임존만 여기서 먼저 꺼낸다.
+  const legs = useDayLegs(
+    dayItems,
+    trip?.days.find((d) => d.date === item?.date)?.timezone,
+  );
   const legInfo = legs.get(itemId);
 
   const [draftMinutes, setDraftMinutes] = useState<number | null>(null);

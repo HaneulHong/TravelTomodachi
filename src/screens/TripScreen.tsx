@@ -98,7 +98,7 @@ export function TripScreen() {
     [allItems, tripId, activeDate],
   );
 
-  const legs = useDayLegs(items);
+  const legs = useDayLegs(items, day?.timezone);
 
   function goToDay(offset: number) {
     if (!trip || dayIndex < 0) return;

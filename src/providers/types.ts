@@ -23,6 +23,12 @@ export interface RouteQuery {
   from: Coord;
   to: Coord;
   mode: TransportMode;
+  /**
+   * 출발 시점(ISO). 대중교통에만 의미가 있다 — 버스·지하철 시간표는 그
+   * 순간을 기준으로 갈리고, 주지 않으면 "지금"이 되어 몇 달 뒤 일정에
+   * 엉뚱한 결과가 나온다. 도보·차량은 무시한다.
+   */
+  departAt?: string;
 }
 
 export interface RouteFound {

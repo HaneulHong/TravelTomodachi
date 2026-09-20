@@ -33,7 +33,10 @@ export function MapScreen() {
     [allItems, tripId, activeDate],
   );
 
-  const legs = useDayLegs(items);
+  // 대중교통 조회에 출발 시각이 필요하고, 벽시계 시각은 이 날의 타임존으로만
+  // 실제 순간이 된다.
+  const day = trip?.days.find((d) => d.date === activeDate);
+  const legs = useDayLegs(items, day?.timezone);
 
   /**
    * 지도에 올릴 지점. 좌표가 없는 항목(항공편 등)은 제외한다.

@@ -11,6 +11,7 @@
  */
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { addMinutesToWallClock, wallClockToInstant } from '@/domain/time';
 import type { Coord, Item, TransportMode } from '@/domain/types';
 import { getRouteProviderFor, resolveLegRegion } from '@/providers';
 import type { RouteResult } from '@/providers';
@@ -32,20 +33,39 @@ const MODES: TransportMode[] = ['walk', 'transit', 'car'];
 /** 조회 결과 캐시. 실제 구현의 routes 테이블 캐시와 같은 역할. */
 const cache = new Map<string, RouteResult>();
 
-function cacheKey(from: Coord, to: Coord, mode: TransportMode): string {
+function cacheKey(from: Coord, to: Coord, mode: TransportMode, departAt?: string): string {
   const r = (n: number) => n.toFixed(5);
-  return `${r(from.lat)},${r(from.lng)}|${r(to.lat)},${r(to.lng)}|${mode}`;
+  // 출발 시각도 키에 넣는다. 같은 구간이라도 새벽과 출근길의 대중교통 결과가
+  // 다르기 때문에, 시각을 빼면 먼저 조회한 시간대 결과가 하루 종일 재사용된다.
+  return `${r(from.lat)},${r(from.lng)}|${r(to.lat)},${r(to.lng)}|${mode}|${departAt ?? ''}`;
 }
 
-async function fetchLeg(from: Coord, to: Coord, mode: TransportMode): Promise<RouteResult> {
-  const key = cacheKey(from, to, mode);
+async function fetchLeg(
+  from: Coord,
+  to: Coord,
+  mode: TransportMode,
+  departAt?: string,
+): Promise<RouteResult> {
+  const key = cacheKey(from, to, mode, departAt);
   const hit = cache.get(key);
   if (hit) return hit;
 
   const provider = getRouteProviderFor(from);
-  const result = await provider.route({ from, to, mode });
+  const result = await provider.route({ from, to, mode, departAt });
   cache.set(key, result);
   return result;
+}
+
+/**
+ * 이 구간을 언제 출발하는지. 앞 항목에 머무는 시간이 있으면 그만큼 더한다.
+ * 시각이나 타임존을 모르면 undefined — 프로바이더가 "지금"으로 처리한다.
+ */
+function departureOf(from: Item, timezone?: string): string | undefined {
+  if (!timezone || !from.localTime) return undefined;
+  const leaveAt = from.durationMin
+    ? addMinutesToWallClock(from.localTime, from.durationMin)
+    : from.localTime;
+  return wallClockToInstant(from.date, leaveAt, timezone);
 }
 
 function pickRecommended(results: Partial<Record<TransportMode, RouteResult>>):
@@ -63,7 +83,7 @@ function pickRecommended(results: Partial<Record<TransportMode, RouteResult>>):
   return best?.mode;
 }
 
-export function useDayLegs(items: Item[]): Map<string, LegInfo> {
+export function useDayLegs(items: Item[], timezone?: string): Map<string, LegInfo> {
   const [legs, setLegs] = useState<Map<string, LegInfo>>(new Map());
   const requestId = useRef(0);
 
@@ -72,8 +92,8 @@ export function useDayLegs(items: Item[]): Map<string, LegInfo> {
     () =>
       items
         .map((i) => `${i.id}:${i.coord ? `${i.coord.lat},${i.coord.lng}` : '-'}:${i.leg?.isManual ? 'm' : ''}`)
-        .join('|'),
-    [items],
+        .join('|') + `#${timezone ?? ''}`,
+    [items, timezone],
   );
 
   useEffect(() => {
@@ -143,7 +163,12 @@ export function useDayLegs(items: Item[]): Map<string, LegInfo> {
           const results: Partial<Record<TransportMode, RouteResult>> = {};
           await Promise.all(
             MODES.map(async (mode) => {
-              results[mode] = await fetchLeg(from.coord!, to.coord!, mode);
+              results[mode] = await fetchLeg(
+                from.coord!,
+                to.coord!,
+                mode,
+                departureOf(from, timezone),
+              );
             }),
           );
           const transitResult = results.transit;
