@@ -38,6 +38,14 @@ export interface RouteFound {
   distanceM: number;
   /** 지도에 그릴 경로선. 목 구현에서는 비어 있다. */
   polyline?: Coord[];
+  /**
+   * 대중교통이라면 실제로 타는 노선 이름들 (예: ['251', '제주-목포 연안']).
+   *
+   * 화면에 밝히기 위해 필요하다. 길찾기는 좌표만 보고 경로를 찾으므로,
+   * 사용자가 "퀸메리호"라고 적어둔 것과 다른 노선이 그려질 수 있다.
+   * 무엇이 그려졌는지 보여주지 않으면 그 차이를 알 방법이 없다.
+   */
+  lines?: string[];
   /** 'Google Directions' 같은 표시용 출처 */
   source: string;
 }

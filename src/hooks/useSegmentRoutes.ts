@@ -50,11 +50,25 @@ function isDrawnRoute(shape: Coord[]): boolean {
   return true;
 }
 
+/**
+ * 그려진 선이 어디서 왔는지.
+ *
+ * 화면에 밝히기 위해 들고 다닌다. 길찾기는 좌표만 보고 경로를 찾으므로
+ * 사용자가 적어둔 편명("퀸메리호")과 다른 노선이 그려질 수 있는데,
+ * 무엇이 그려졌는지 보여주지 않으면 그 차이를 알 방법이 없다.
+ */
+export interface SegmentRoute {
+  shape: Coord[];
+  via: 'transit' | 'car';
+  /** 대중교통이면 실제로 타는 노선 이름들 */
+  lines?: string[];
+}
+
 export function useSegmentRoutes(
   items: Item[],
   timezone?: string,
-): Map<string, Coord[]> {
-  const [shapes, setShapes] = useState<Map<string, Coord[]>>(new Map());
+): Map<string, SegmentRoute> {
+  const [shapes, setShapes] = useState<Map<string, SegmentRoute>>(new Map());
   const requestId = useRef(0);
 
   // 좌표가 바뀔 때만 다시 조회한다
@@ -78,7 +92,7 @@ export function useSegmentRoutes(
     requestId.current = myRequest;
 
     void (async () => {
-      const found = new Map<string, Coord[]>();
+      const found = new Map<string, SegmentRoute>();
 
       await Promise.all(
         targets.map(async (item) => {
@@ -92,7 +106,11 @@ export function useSegmentRoutes(
           // 실제로 그려진 노선이 먼저. 없으면 도로(·항로)를 따라가는 선으로.
           const transit = await fetchRoute(from, to, 'transit', departAt);
           if (transit.available && transit.polyline && isDrawnRoute(transit.polyline)) {
-            found.set(item.id, transit.polyline);
+            found.set(item.id, {
+              shape: transit.polyline,
+              via: 'transit',
+              lines: transit.lines,
+            });
             return;
           }
 
@@ -102,7 +120,7 @@ export function useSegmentRoutes(
            */
           const car = await fetchRoute(from, to, 'car', departAt);
           if (car.available && car.polyline && car.polyline.length > 1) {
-            found.set(item.id, car.polyline);
+            found.set(item.id, { shape: car.polyline, via: 'car' });
           }
         }),
       );

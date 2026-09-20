@@ -44,6 +44,10 @@ interface MotisLeg {
   duration?: number;
   distance?: number;
   legGeometry?: MotisGeometry;
+  /** '251' 같은 노선 번호 */
+  routeShortName?: string;
+  /** '제주도(제주연안)[제주]-목포(연안)[목포]' 같은 긴 이름 */
+  routeLongName?: string;
 }
 
 interface MotisItinerary {
@@ -99,8 +103,14 @@ export const transitousRouteProvider: RouteProvider = {
       }
 
       const line: Coord[] = [];
+      const lines: string[] = [];
       let distance = 0;
       for (const leg of withTransit.legs ?? []) {
+        // 도보는 노선이 아니다. 이름이 있는 구간만 모은다.
+        if (leg.mode && leg.mode !== 'WALK') {
+          const name = leg.routeShortName ?? leg.routeLongName;
+          if (name) lines.push(name);
+        }
         const encoded = leg.legGeometry?.points;
         const shape = encoded
           ? decodePolyline(encoded, leg.legGeometry?.precision ?? DEFAULT_PRECISION)
@@ -116,6 +126,7 @@ export const transitousRouteProvider: RouteProvider = {
         minutes: Math.max(1, Math.round(withTransit.duration / 60)),
         distanceM: Math.round(distance),
         polyline: line.length > 1 ? line : undefined,
+        lines: lines.length > 0 ? lines : undefined,
         source: SOURCE,
       };
     } catch {

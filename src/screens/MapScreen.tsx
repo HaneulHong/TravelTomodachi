@@ -112,10 +112,10 @@ export function MapScreen() {
        * (항공은 조회 대상이 아니다 — useSegmentRoutes 주석 참고)
        */
       if (item.toCoord) {
-        const shape = segmentShapes.get(item.id);
+        const drawn = segmentShapes.get(item.id);
         segments.push(
-          shape && shape.length > 1
-            ? { coords: shape }
+          drawn && drawn.shape.length > 1
+            ? { coords: drawn.shape }
             : { coords: [item.coord, item.toCoord], dashed: true },
         );
         cursor = item.toCoord;

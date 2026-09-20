@@ -4,9 +4,16 @@ import { AppHeader } from '@/components/AppHeader';
 import { MODE_ICON } from '@/components/TransportChip';
 import { AlertIcon, PencilIcon, PinIcon } from '@/components/icons';
 import { useDayLegs } from '@/hooks/useDayLegs';
+import { useSegmentRoutes } from '@/hooks/useSegmentRoutes';
 import { formatDistance } from '@/domain/geo';
 import { formatMinutes, tzShortLabel } from '@/domain/time';
-import { ITEM_KIND_LABEL, TRANSPORT_LABEL, type Coord, type TransportMode } from '@/domain/types';
+import {
+  ITEM_KIND_LABEL,
+  TRANSPORT_LABEL,
+  isSegmentKind,
+  type Coord,
+  type TransportMode,
+} from '@/domain/types';
 import {
   REGION_LABEL,
   getMapRenderer,
@@ -46,6 +53,11 @@ export function ItemDetailScreen() {
     trip?.days.find((d) => d.date === item?.date)?.timezone,
   );
   const legInfo = legs.get(itemId);
+  /** 이 항목이 터미널 구간이라면, 지도에 그려진 선이 어디서 왔는지. */
+  const segmentRoute = useSegmentRoutes(
+    dayItems,
+    trip?.days.find((d) => d.date === item?.date)?.timezone,
+  ).get(itemId);
 
   const [draftMinutes, setDraftMinutes] = useState<number | null>(null);
 
@@ -246,6 +258,51 @@ export function ItemDetailScreen() {
               {item.description ?? '아직 메모가 없습니다.'}
             </div>
           </section>
+
+          {/*
+            터미널 구간이면 지도에 그려진 선의 출처를 밝힌다.
+
+            길찾기는 좌표만 보고 경로를 찾는다. 위에 적어둔 편명("퀸메리호")은
+            표시용일 뿐 조회에 들어가지 않으므로, 다른 노선이 그려질 수 있다.
+            실제로 "제주 → 목포 퀸메리호"라고 적은 구간에 여객터미널까지 가는
+            426번 버스가 딸려 나온다. 무엇이 그려졌는지 보여주지 않으면 그
+            차이를 알 방법이 없다.
+          */}
+          {isSegmentKind(item.kind) && item.toCoord && (
+            <section className="card field">
+              <div className="field__label">지도에 그려진 선</div>
+
+              {segmentRoute?.via === 'transit' && (
+                <div className="field__value">
+                  조회된 대중교통 노선
+                  {segmentRoute.lines && segmentRoute.lines.length > 0 && (
+                    <div className="routesrc__lines">
+                      {segmentRoute.lines.map((line, i) => (
+                        <span key={`${line}-${i}`} className="chip chip--transit">
+                          {line}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {segmentRoute?.via === 'car' && (
+                <div className="field__value">도로·항로를 따라간 차량 경로</div>
+              )}
+
+              {!segmentRoute && (
+                <div className="field__value field__value--muted">
+                  경로를 못 찾아 두 터미널을 직선(점선)으로 이었습니다.
+                </div>
+              )}
+
+              <div className="routesrc__note">
+                좌표만 보고 찾은 경로입니다.
+                {item.carrierCode ? ` 적어두신 "${item.carrierCode}"와 다를 수 있습니다.` : ''}
+              </div>
+            </section>
+          )}
 
           {/* 지역 분기가 제대로 도는지 눈으로 확인하는 패널.
               실제 배포에서는 지워도 되지만, 개발 중에는 이게 있어야
