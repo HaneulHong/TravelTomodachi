@@ -17,6 +17,7 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
+import { haversineMeters } from '@/domain/geo';
 import { wallClockToInstant } from '@/domain/time';
 import type { Coord, Item } from '@/domain/types';
 import { fetchRoute } from '@/providers/routeCache';
@@ -24,6 +25,29 @@ import { fetchRoute } from '@/providers/routeCache';
 /** 이 종류만 실제 노선을 찾아본다. */
 function wantsRoute(item: Item): boolean {
   return item.kind === 'train' || item.kind === 'bus' || item.kind === 'ferry';
+}
+
+/**
+ * 이보다 긴 직선 구간이 하나라도 있으면 "그려진 노선"으로 치지 않는다.
+ *
+ * 왜 필요한가: 대중교통 응답이 늘 경로를 그려주지는 않는다. 제주–목포
+ * 여객선은 GTFS에 실려 있어서 시간(270분)은 정확히 오는데, 폴리라인은
+ * **점 두 개**(출발항·도착항)뿐이다. 그대로 쓰면 200km를 가로지르는 직선이
+ * 실선으로 그려져서 "조회된 실제 항로"처럼 보인다.
+ *
+ * 점 개수만 세면 안 된다. 양끝 도보 구간에 점이 수십 개 붙어 있어서 총합은
+ * 넉넉해 보이지만, 정작 긴 구간이 비어 있기 때문이다. 그래서 이웃한 두 점
+ * 사이의 최대 간격을 본다.
+ */
+const MAX_GAP_M = 20_000;
+
+/** 이웃한 점 사이가 전부 촘촘한지 — 즉 실제로 그려진 선인지. */
+function isDrawnRoute(shape: Coord[]): boolean {
+  if (shape.length < 2) return false;
+  for (let i = 1; i < shape.length; i += 1) {
+    if (haversineMeters(shape[i - 1]!, shape[i]!) > MAX_GAP_M) return false;
+  }
+  return true;
 }
 
 export function useSegmentRoutes(
@@ -65,13 +89,17 @@ export function useSegmentRoutes(
               ? wallClockToInstant(item.date, item.localTime, timezone)
               : undefined;
 
-          // 실제 노선이 먼저. 없으면 도로를 따라가는 선으로.
+          // 실제로 그려진 노선이 먼저. 없으면 도로(·항로)를 따라가는 선으로.
           const transit = await fetchRoute(from, to, 'transit', departAt);
-          if (transit.available && transit.polyline && transit.polyline.length > 1) {
+          if (transit.available && transit.polyline && isDrawnRoute(transit.polyline)) {
             found.set(item.id, transit.polyline);
             return;
           }
 
+          /*
+           * 차량 경로는 OSM의 페리 항로도 탄다. 그래서 배편에서도 바다를
+           * 건너는 선이 나온다 — 대중교통이 준 두 점짜리 직선보다 훨씬 낫다.
+           */
           const car = await fetchRoute(from, to, 'car', departAt);
           if (car.available && car.polyline && car.polyline.length > 1) {
             found.set(item.id, car.polyline);
