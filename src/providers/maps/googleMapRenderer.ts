@@ -13,6 +13,7 @@
 
 import type { Coord } from '@/domain/types';
 import {
+  accentColor,
   createPinElement,
   FIT_PADDING_PX,
   SINGLE_STOP_ZOOM,
@@ -171,7 +172,7 @@ export function createGoogleMapRenderer(apiKey: string, mapId?: string): MapRend
               ? new google.maps.Polyline({
                   path: coords,
                   map,
-                  strokeColor: '#4f46e5',
+                  strokeColor: accentColor(),
                   strokeOpacity: 0.85,
                   strokeWeight: 3,
                   // 장거리 구간(도시간 이동)에서 직선이 아니라 대권 경로로 보이게

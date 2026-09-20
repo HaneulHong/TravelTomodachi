@@ -15,6 +15,7 @@
 
 import type { Coord } from '@/domain/types';
 import {
+  accentColor,
   createPinElement,
   FIT_PADDING_PX,
   type MapHandle,
@@ -125,7 +126,7 @@ export function createKakaoMapRenderer(jsKey: string): MapRenderer {
               ? new kakao.maps.Polyline({
                   map,
                   path: coords.map((c) => new kakao.maps.LatLng(c.lat, c.lng)),
-                  strokeColor: '#4f46e5',
+                  strokeColor: accentColor(),
                   strokeOpacity: 0.85,
                   strokeWeight: 3,
                   strokeStyle: 'solid',

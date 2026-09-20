@@ -108,6 +108,20 @@ export function createPinElement(
   return el;
 }
 
+/**
+ * 경로선 색. 지도 SDK는 CSS 변수를 이해하지 못하므로, 그릴 때마다 현재
+ * 테마의 --accent를 계산해서 넘긴다. 색을 파일에 박아두면 테마를 바꿔도
+ * 선만 옛날 색으로 남는다.
+ */
+export function accentColor(): string {
+  const fallback = '#b2563a';
+  if (typeof window === 'undefined') return fallback;
+  const value = getComputedStyle(document.documentElement)
+    .getPropertyValue('--accent')
+    .trim();
+  return value || fallback;
+}
+
 /** 지점이 하나뿐이면 fitBounds가 과도하게 확대되므로 이 줌으로 고정 */
 export const SINGLE_STOP_ZOOM = 15;
 export const FIT_PADDING_PX = 52;

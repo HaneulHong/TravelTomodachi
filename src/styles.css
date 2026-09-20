@@ -6,42 +6,62 @@
    Capacitor로 감싸도 이 레이아웃이 그대로 유효하다.
    ───────────────────────────────────────────────────────────────────── */
 
+/*
+ * 색: 노트 필기 느낌.
+ *
+ * 흰 종이가 아니라 살짝 누런 모조지를 기준으로 잡았다. 순백(#fff)은 화면에서
+ * 눈이 부시고 "앱" 느낌이 나는데, 크림 톤으로 내리면 종이 위에 적은 것처럼
+ * 읽힌다. 텍스트도 순검정 대신 갈색이 도는 먹색을 쓴다 — 연필·만년필 자국이
+ * 실제로 그렇게 보인다.
+ *
+ * 강조색은 잉크가 아니라 **형광펜**이다. 교통수단 색이 곧 형광펜 색이 되도록
+ * soft 계열을 칠 면적용으로, 진한 쪽을 글자용으로 짝지어 둔다.
+ */
 :root {
-  --bg: #f1f2f5;
-  --surface: #ffffff;
-  --surface-2: #f7f8fa;
-  --surface-3: #eef0f4;
-  --border: #e3e5ea;
-  --border-strong: #d2d6dd;
+  --bg: #efe9dc;
+  --surface: #fdfaf3;
+  --surface-2: #f7f1e4;
+  --surface-3: #efe7d5;
+  --border: #e2d9c6;
+  --border-strong: #cabfa6;
 
-  --text: #15171c;
-  --text-2: #565e6c;
-  --text-3: #8a919f;
+  --text: #2f2a22;
+  --text-2: #6a6152;
+  --text-3: #9c9382;
 
-  --accent: #4f46e5;
-  --accent-text: #ffffff;
-  --accent-soft: #eceafe;
-  --accent-border: #c7c2f7;
+  /* 붉은 흙빛 — 종이 위에서 파랑보다 먹색과 잘 붙는다 */
+  --accent: #b2563a;
+  --accent-text: #fffaf4;
+  --accent-soft: #f9e4d9;
+  --accent-border: #e9bfa9;
 
-  --walk: #0b8a5a;
-  --walk-soft: #e3f5ec;
-  --transit: #1f62d4;
-  --transit-soft: #e5edfb;
-  --car: #b3690a;
-  --car-soft: #fbf0dd;
+  --walk: #3f7a52;
+  --walk-soft: #dcefe0;
+  --transit: #3a5fa0;
+  --transit-soft: #dee7f6;
+  --car: #94671a;
+  --car-soft: #f6ecd3;
 
-  --warn: #a4540b;
-  --warn-soft: #fcf1e2;
-  --warn-border: #f0d6b0;
+  --warn: #9a5410;
+  --warn-soft: #fbedda;
+  --warn-border: #eed3ab;
 
-  --danger: #c02a35;
+  --danger: #b33a34;
+
+  /* 종이 격자 */
+  --grid-line: #ded3bd;
+  --grid-size: 22px;
 
   --radius-sm: 8px;
   --radius: 12px;
   --radius-lg: 16px;
 
-  --shadow-sm: 0 1px 2px rgba(18, 21, 26, 0.06);
-  --shadow: 0 2px 8px rgba(18, 21, 26, 0.07);
+  /*
+   * 그림자는 회색이 아니라 갈색 계열로 둔다. 크림 배경 위에 중성 회색 그림자를
+   * 깔면 종이가 아니라 플라스틱처럼 탁해 보인다.
+   */
+  --shadow-sm: 0 1px 2px rgba(78, 60, 32, 0.08);
+  --shadow: 0 2px 8px rgba(78, 60, 32, 0.1);
 
   --header-h: 52px;
   --tabs-h: 58px;
@@ -50,66 +70,74 @@
     'Malgun Gothic', 'Segoe UI', Roboto, sans-serif;
 }
 
+/*
+ * 다크 모드는 "검은 화면"이 아니라 **불 끄고 보는 책상**으로 잡는다.
+ * 차가운 회색으로 내리면 낮의 종이와 다른 앱처럼 보이므로, 갈색이 남은
+ * 어두운 톤을 쓰고 형광펜 색만 밝기를 올린다.
+ */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
-    --bg: #0e1014;
-    --surface: #181b21;
-    --surface-2: #1f232a;
-    --surface-3: #262b33;
-    --border: #2b3038;
-    --border-strong: #3a4048;
+    --bg: #14120e;
+    --surface: #1e1b16;
+    --surface-2: #26221b;
+    --surface-3: #2f2a21;
+    --border: #352f26;
+    --border-strong: #4a4234;
 
-    --text: #e9ebef;
-    --text-2: #a3abb8;
-    --text-3: #757d8b;
+    --text: #ece5d8;
+    --text-2: #aca391;
+    --text-3: #7c7364;
 
-    --accent: #8b84f7;
-    --accent-text: #14121f;
-    --accent-soft: #241f3f;
-    --accent-border: #3e3670;
+    --accent: #e08968;
+    --accent-text: #1c140f;
+    --accent-soft: #35231a;
+    --accent-border: #5a382a;
 
-    --walk: #4cc38f;
-    --walk-soft: #16281f;
-    --transit: #6fa4f5;
-    --transit-soft: #17222f;
-    --car: #e0a552;
-    --car-soft: #2a2114;
+    --walk: #6cc088;
+    --walk-soft: #17271c;
+    --transit: #7ea6e8;
+    --transit-soft: #17202e;
+    --car: #d9a95e;
+    --car-soft: #2b2113;
 
-    --warn: #e0a552;
-    --warn-soft: #2a2114;
-    --warn-border: #4a3a1e;
+    --warn: #dda75c;
+    --warn-soft: #2b2113;
+    --warn-border: #4c3a1d;
 
-    --danger: #f08a92;
+    --danger: #ef8b84;
 
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-    --shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+    --grid-line: #2b261e;
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
+    --shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
   }
 }
 
 :root[data-theme='dark'] {
-  --bg: #0e1014;
-  --surface: #181b21;
-  --surface-2: #1f232a;
-  --surface-3: #262b33;
-  --border: #2b3038;
-  --border-strong: #3a4048;
-  --text: #e9ebef;
-  --text-2: #a3abb8;
-  --text-3: #757d8b;
-  --accent: #8b84f7;
-  --accent-text: #14121f;
-  --accent-soft: #241f3f;
-  --accent-border: #3e3670;
-  --walk: #4cc38f;
-  --walk-soft: #16281f;
-  --transit: #6fa4f5;
-  --transit-soft: #17222f;
-  --car: #e0a552;
-  --car-soft: #2a2114;
-  --warn: #e0a552;
-  --warn-soft: #2a2114;
-  --warn-border: #4a3a1e;
-  --danger: #f08a92;
+  --bg: #14120e;
+  --surface: #1e1b16;
+  --surface-2: #26221b;
+  --surface-3: #2f2a21;
+  --border: #352f26;
+  --border-strong: #4a4234;
+  --text: #ece5d8;
+  --text-2: #aca391;
+  --text-3: #7c7364;
+  --accent: #e08968;
+  --accent-text: #1c140f;
+  --accent-soft: #35231a;
+  --accent-border: #5a382a;
+  --walk: #6cc088;
+  --walk-soft: #17271c;
+  --transit: #7ea6e8;
+  --transit-soft: #17202e;
+  --car: #d9a95e;
+  --car-soft: #2b2113;
+  --warn: #dda75c;
+  --warn-soft: #2b2113;
+  --warn-border: #4c3a1d;
+  --danger: #ef8b84;
+  --grid-line: #2b261e;
 }
 
 * {
@@ -160,10 +188,23 @@ a {
   max-width: 480px;
   margin: 0 auto;
   min-height: 100dvh;
-  background: var(--bg);
   position: relative;
   display: flex;
   flex-direction: column;
+
+  /*
+   * 모눈. 배경색 위에 얇은 선 두 방향을 깔아 노트를 만든다.
+   * 이미지를 쓰지 않는 이유: 격자 색이 테마 토큰을 따라가야 다크 모드에서
+   * 같이 어두워지고, 파일도 늘지 않는다.
+   *
+   * 선은 거의 안 보일 정도로 흐려야 한다. 여기서 대비를 올리면 그 위에 얹힌
+   * 카드와 본문 글씨가 격자와 싸워서 오히려 읽기 힘들어진다.
+   */
+  background-color: var(--bg);
+  background-image:
+    linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+  background-size: var(--grid-size) var(--grid-size);
 }
 
 @media (min-width: 600px) {
@@ -288,6 +329,18 @@ a {
   box-shadow: var(--shadow-sm);
 }
 
+/*
+ * 격자 위에 얹히는 종이 조각.
+ * 카드가 불투명해야 아래 모눈이 글자에 겹쳐 보이지 않는다.
+ */
+.card,
+.tl-item,
+.trip-card,
+.mode,
+.field {
+  background-color: var(--surface);
+}
+
 .empty {
   padding: 48px 24px;
   text-align: center;
@@ -295,14 +348,19 @@ a {
   font-size: 14px;
 }
 
+/*
+ * 칩은 알약이 아니라 **형광펜으로 그은 자국**으로 본다.
+ * 둥근 알약은 버튼처럼 보이는데, 이건 누르는 게 아니라 표시이기 때문이다.
+ * 모서리를 거의 직각으로 내리고 테두리를 없애면 칠한 것처럼 읽힌다.
+ */
 .chip {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 3px 8px;
-  border-radius: 999px;
+  padding: 3px 7px;
+  border-radius: 3px;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 650;
   background: var(--surface-3);
   color: var(--text-2);
   white-space: nowrap;
@@ -311,13 +369,13 @@ a {
 .chip--warn {
   background: var(--warn-soft);
   color: var(--warn);
-  border: 1px solid var(--warn-border);
+  box-shadow: inset 0 0 0 1px var(--warn-border);
 }
 
 .chip--accent {
   background: var(--accent-soft);
   color: var(--accent);
-  border: 1px solid var(--accent-border);
+  box-shadow: inset 0 0 0 1px var(--accent-border);
 }
 
 .chip--walk {
@@ -519,7 +577,8 @@ a {
 
 .tl-row {
   display: grid;
-  grid-template-columns: 46px 1fr;
+  /* "1시간 30분"이 한 줄에 들어가는 최소 폭. 더 좁으면 분이 아래로 떨어진다. */
+  grid-template-columns: 54px 1fr;
   gap: 10px;
 }
 
@@ -538,6 +597,7 @@ a {
   font-weight: 500;
   color: var(--text-3);
   margin-top: 2px;
+  white-space: nowrap;
 }
 
 .tl-item {
@@ -1003,10 +1063,21 @@ a {
   padding: 2px 5px;
 }
 
+/*
+ * 지도 아래 일정 목록.
+ *
+ * 모눈 배경 위에 글자를 바로 얹으면 격자선과 획이 겹쳐 읽기 힘들다.
+ * 타임라인 화면의 항목들처럼 불투명한 종이 한 장으로 감싼다.
+ */
 .stop-list {
-  padding: 14px 16px 16px;
+  margin: 12px 16px 16px;
+  padding: 14px;
   display: flex;
   flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
 }
 
 .stop {
