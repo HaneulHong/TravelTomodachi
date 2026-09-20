@@ -149,7 +149,7 @@ export function createGoogleMapRenderer(apiKey: string, mapId?: string): MapRend
               map,
               position: stop.coord,
               // Google은 content의 아래쪽 중앙을 좌표에 맞춘다
-              content: createPinElement(stop.label, stop.title, 'bottom'),
+              content: createPinElement(stop.label, stop.title, 'bottom', stop.caption),
               title: stop.title,
               gmpClickable: Boolean(options?.onStopClick),
             });

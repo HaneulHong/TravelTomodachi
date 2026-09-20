@@ -862,21 +862,73 @@ a {
 }
 
 /* 번호 마커. Google·카카오 양쪽에서 같은 DOM을 쓴다. */
+/*
+ * 지도 마커.
+ *
+ * 상자 크기는 원과 같게 유지한다. 라벨은 absolute라 상자를 넓히지 않는다 —
+ * 두 SDK가 상자 기준으로 좌표를 맞추기 때문에 넓어지면 원이 밀린다.
+ * (providers/maps/types.ts의 createPinElement 주석 참고)
+ */
 .mappin {
-  width: 26px;
-  height: 26px;
+  position: relative;
+  width: 28px;
+  height: 28px;
+  user-select: none;
+}
+
+.mappin__dot {
+  position: absolute;
+  inset: 0;
   border-radius: 999px;
   background: var(--accent);
   color: var(--accent-text);
   display: grid;
   place-items: center;
   font-family: var(--font);
-  font-size: 12px;
-  font-weight: 700;
+  font-size: 12.5px;
+  font-weight: 800;
   line-height: 1;
-  border: 2px solid var(--surface);
+  /*
+   * 위성/지형/야간 등 어떤 타일 위에 놓일지 알 수 없다. 흰 테두리 하나로는
+   * 밝은 타일에서 묻히므로, 바깥에 어두운 링을 한 겹 더 둘러 양쪽 배경에서
+   * 모두 경계가 보이게 한다.
+   */
+  border: 2.5px solid #fff;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.45),
+    0 2px 6px rgba(0, 0, 0, 0.45);
+}
+
+/*
+ * 마커 옆 일정 정보. 클릭은 원만 받도록 pointer-events를 끈다 —
+ * 라벨이 옆 마커를 덮어 클릭을 가로채면 안 된다.
+ */
+.mappin__label {
+  position: absolute;
+  left: calc(100% + 5px);
+  top: 50%;
+  transform: translateY(-50%);
+  max-width: 132px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  pointer-events: none;
+  font-family: var(--font);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--text);
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  padding: 2px 6px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
-  user-select: none;
+}
+
+.mappin__time {
+  font-weight: 800;
+  color: var(--accent);
+  margin-right: 4px;
 }
 
 /* Google은 content의 아래쪽 중앙을 좌표에 맞추므로 절반 내려 중심을 맞춘다 */

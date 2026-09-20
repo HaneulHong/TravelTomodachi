@@ -18,6 +18,8 @@ export interface MapStop {
   /** 마커에 표시할 순번 */
   label: string;
   title: string;
+  /** 마커 옆에 붙일 짧은 부가 정보 (보통 시각). 없으면 제목만 붙는다. */
+  caption?: string;
 }
 
 export interface MapHandle {
@@ -74,13 +76,35 @@ export function createPinElement(
   label: string,
   title: string,
   anchor: 'center' | 'bottom' = 'center',
+  caption?: string,
 ): HTMLElement {
   const el = document.createElement('div');
   el.className = anchor === 'bottom' ? 'mappin mappin--anchor-bottom' : 'mappin';
-  el.textContent = label;
-  el.title = title;
   el.setAttribute('role', 'img');
-  el.setAttribute('aria-label', `${label}번 지점: ${title}`);
+  el.setAttribute('aria-label', `${label}번 지점: ${caption ? `${caption} ` : ''}${title}`);
+
+  const dot = document.createElement('span');
+  dot.className = 'mappin__dot';
+  dot.textContent = label;
+  el.appendChild(dot);
+
+  /*
+   * 라벨은 절대배치로 원 밖에 띄운다. 일반 흐름에 넣으면 엘리먼트의 크기가
+   * 원보다 커지는데, 두 SDK 모두 **엘리먼트 상자 기준**으로 좌표를 맞추기
+   * 때문에(카카오는 xAnchor/yAnchor 비율, Google은 아래쪽 중앙) 원이 실제
+   * 좌표에서 밀려난다. 상자는 원 크기 그대로 두는 게 핵심이다.
+   */
+  const text = document.createElement('span');
+  text.className = 'mappin__label';
+  if (caption) {
+    const time = document.createElement('b');
+    time.className = 'mappin__time';
+    time.textContent = caption;
+    text.appendChild(time);
+  }
+  text.appendChild(document.createTextNode(title));
+  el.appendChild(text);
+
   return el;
 }
 

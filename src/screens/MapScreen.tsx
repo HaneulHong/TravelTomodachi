@@ -49,6 +49,7 @@ export function MapScreen() {
           coord: item.coord!,
           label: String(i + 1),
           title: item.placeName ?? item.title,
+          caption: item.localTime,
         })),
     [items],
   );

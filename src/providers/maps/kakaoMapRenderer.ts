@@ -100,7 +100,7 @@ export function createKakaoMapRenderer(jsKey: string): MapRenderer {
           clearOverlays();
           stops = next;
           overlays = next.map((stop) => {
-            const pin = createPinElement(stop.label, stop.title);
+            const pin = createPinElement(stop.label, stop.title, 'center', stop.caption);
             const onClick = options?.onStopClick;
             if (onClick) {
               pin.style.cursor = 'pointer';
