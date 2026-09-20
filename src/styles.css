@@ -1308,3 +1308,225 @@ a {
   white-space: nowrap;
   border: 0;
 }
+
+/* ── 일정 추가 · 수정 폼 ────────────────────────────────────────── */
+
+.header__action {
+  padding: 0 12px;
+  height: 44px;
+  font-size: 14px;
+  font-weight: 680;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+.header__action:disabled {
+  color: var(--text-3);
+}
+
+.form {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.form__row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* 시각과 체류 시간은 짧아서 한 줄에 둘이 들어간다 */
+.form__pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.form__label {
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--text-2);
+}
+
+.form__input {
+  width: 100%;
+  padding: 11px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 14.5px;
+}
+
+.form__input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.form__textarea {
+  resize: vertical;
+  min-height: 74px;
+  line-height: 1.5;
+}
+
+/*
+ * 단위는 입력칸 안쪽 오른쪽에 붙인다. 라벨에 "(분)"으로 적으면 숫자를 지운
+ * 뒤에 무슨 단위였는지 다시 확인해야 한다.
+ */
+.form__suffixed {
+  position: relative;
+  display: block;
+}
+
+.form__suffixed .form__input {
+  padding-right: 34px;
+}
+
+.form__suffix {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 13px;
+  color: var(--text-3);
+  pointer-events: none;
+}
+
+.form__hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-3);
+}
+
+.form__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+}
+
+.btn--danger {
+  background: transparent;
+  border-color: var(--border-strong);
+  color: var(--danger);
+}
+
+/* 종류 선택 — 탭처럼 붙여서 셋 중 하나임을 드러낸다 */
+.seg {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.seg__btn {
+  padding: 9px 4px;
+  font-size: 13px;
+  font-weight: 620;
+  color: var(--text-2);
+  border-right: 1px solid var(--border);
+}
+
+.seg__btn:last-child {
+  border-right: none;
+}
+
+.seg__btn--on {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+/* 장소 검색 결과 */
+.places {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.places__item {
+  width: 100%;
+  text-align: left;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-bottom: 1px solid var(--border);
+}
+
+.places li:last-child .places__item {
+  border-bottom: none;
+}
+
+.places__item:active {
+  background: var(--surface-2);
+}
+
+.places__name {
+  font-size: 14px;
+  font-weight: 620;
+}
+
+.places__addr {
+  font-size: 12px;
+  color: var(--text-3);
+}
+
+/* 선택된 장소 */
+.picked {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 9px 8px 9px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+
+.picked__name {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 14px;
+  font-weight: 620;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/*
+ * 목록 끝의 추가 버튼. 점선으로 두는 이유는 이게 일정 항목이 아니라
+ * 빈자리라는 걸 보여주기 위해서다. 실선 카드로 만들면 마지막 일정처럼 읽힌다.
+ */
+.tl-add {
+  margin: 12px 0 0 64px;
+  padding: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius);
+  color: var(--text-2);
+  font-size: 13.5px;
+  font-weight: 620;
+  background: transparent;
+}
+
+.tl-add:active {
+  background: var(--surface-2);
+}

@@ -5,15 +5,7 @@ import { BottomTabs } from '@/components/BottomTabs';
 import { DateStrip } from '@/components/DateStrip';
 import { MenuSheet } from '@/components/MenuSheet';
 import { TransportChip } from '@/components/TransportChip';
-import {
-  AlertIcon,
-  ClockIcon,
-  ListIcon,
-  PinIcon,
-  PlaneIcon,
-  ShareIcon,
-  TrainIcon,
-} from '@/components/icons';
+import { AlertIcon, ClockIcon, ListIcon, PinIcon, PlaneIcon, PlusIcon, ShareIcon, TrainIcon } from '@/components/icons';
 import { useDayLegs, type LegInfo } from '@/hooks/useDayLegs';
 import { useSwipe } from '@/hooks/useSwipe';
 import {
@@ -225,6 +217,17 @@ export function TripScreen() {
               </div>
             </div>
           ))}
+
+          {/*
+            추가 버튼을 목록 끝에 둔다. 띄우는 버튼(FAB)은 마지막 항목을 가려서,
+            일정이 꽉 찬 날일수록 방해가 된다.
+          */}
+          <button
+            className="tl-add"
+            onClick={() => navigate(`/trip/${trip.id}/item/new?date=${activeDate}`)}
+          >
+            <PlusIcon size={16} /> 일정 추가
+          </button>
         </div>
       </main>
 

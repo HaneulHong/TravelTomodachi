@@ -2,6 +2,7 @@ import { HashRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { HomeScreen } from '@/screens/HomeScreen';
 import { TripScreen } from '@/screens/TripScreen';
 import { ItemDetailScreen } from '@/screens/ItemDetailScreen';
+import { ItemEditScreen } from '@/screens/ItemEditScreen';
 import { MapScreen } from '@/screens/MapScreen';
 import { ChecklistScreen } from '@/screens/ChecklistScreen';
 
@@ -20,6 +21,9 @@ export function App() {
       <Routes>
         <Route path="/" element={<HomeScreen />} />
         <Route path="/trip/:tripId" element={<TripScreen />} />
+        {/* 'new'가 :itemId로 잡히지 않도록 상세보다 먼저 선언한다 */}
+        <Route path="/trip/:tripId/item/new" element={<ItemEditScreen />} />
+        <Route path="/trip/:tripId/item/:itemId/edit" element={<ItemEditScreen />} />
         <Route path="/trip/:tripId/item/:itemId" element={<ItemDetailScreen />} />
         <Route path="/trip/:tripId/map" element={<MapScreen />} />
         <Route path="/trip/:tripId/checklist" element={<ChecklistScreen />} />

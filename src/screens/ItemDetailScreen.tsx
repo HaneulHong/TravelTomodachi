@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { AppHeader } from '@/components/AppHeader';
 import { MODE_ICON } from '@/components/TransportChip';
 import { AlertIcon, PinIcon } from '@/components/icons';
@@ -20,6 +20,7 @@ const MODES: TransportMode[] = ['walk', 'transit', 'car'];
 
 export function ItemDetailScreen() {
   const { tripId = '', itemId = '' } = useParams();
+  const navigate = useNavigate();
 
   const trip = useTripStore((s) => s.getTrip(tripId));
   const allItems = useTripStore((s) => s.items);
@@ -77,7 +78,14 @@ export function ItemDetailScreen() {
 
   return (
     <div className="app">
-      <AppHeader title={item.title} back />
+      <AppHeader
+        title={item.title}
+        back
+        action={{
+          label: '수정',
+          onClick: () => navigate(`/trip/${tripId}/item/${itemId}/edit`),
+        }}
+      />
 
       <main className="main main--no-tabs">
         <div className="detail">
