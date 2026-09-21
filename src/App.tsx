@@ -11,6 +11,7 @@ import { MapScreen } from '@/screens/MapScreen';
 import { ChecklistScreen } from '@/screens/ChecklistScreen';
 import { ProfileScreen } from '@/screens/ProfileScreen';
 import { SignInScreen } from '@/screens/SignInScreen';
+import { TripCreateScreen } from '@/screens/TripCreateScreen';
 
 /**
  * HashRouter를 쓰는 이유 — Capacitor 전환 제약 #1·#2.
@@ -77,6 +78,8 @@ export function App() {
     <HashRouter>
       <Routes>
         <Route path="/" element={<HomeScreen />} />
+        {/* 'new'가 :tripId로 잡히지 않도록 먼저 선언한다 */}
+        <Route path="/trip/new" element={<TripCreateScreen />} />
         <Route path="/trip/:tripId" element={<TripScreen />} />
         {/* 'new'가 :itemId로 잡히지 않도록 상세보다 먼저 선언한다 */}
         <Route path="/trip/:tripId/item/new" element={<ItemEditRoute />} />
