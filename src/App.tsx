@@ -1,15 +1,19 @@
 import { useEffect } from 'react';
 import { HashRouter, Navigate, Route, Routes, useParams } from 'react-router-dom';
 import { getAuthProvider } from '@/auth';
+import { inviteCodeFromHash, stashInvite, takeStashedInvite } from '@/auth/pendingInvite';
 import { useAuthStore } from '@/store/authStore';
+import { useTripStore } from '@/store/tripStore';
 import { HomeScreen } from '@/screens/HomeScreen';
 import { TripScreen } from '@/screens/TripScreen';
 import { ItemDetailScreen } from '@/screens/ItemDetailScreen';
 import { ItemEditScreen } from '@/screens/ItemEditScreen';
 import { MapScreen } from '@/screens/MapScreen';
 import { ChecklistScreen } from '@/screens/ChecklistScreen';
+import { InviteScreen } from '@/screens/InviteScreen';
 import { ProfileScreen } from '@/screens/ProfileScreen';
 import { SignInScreen } from '@/screens/SignInScreen';
+import { TripCreateScreen } from '@/screens/TripCreateScreen';
 
 /**
  * HashRouter를 쓰는 이유 — Capacitor 전환 제약 #1·#2.
@@ -35,14 +39,58 @@ function ItemEditRoute() {
   return <ItemEditScreen key={itemId ?? 'new'} />;
 }
 
+/**
+ * 초대 화면을 코드마다 새로 만든다.
+ *
+ * 편집 화면과 같은 문제다(ItemEditRoute). 주소의 코드만 바뀌면 React가 같은
+ * 인스턴스를 재사용해서, 입력칸에는 이전 코드가, 오류에는 이전 실패가 남는다.
+ * "한 번만 자동 참가" 가드도 이미 켜진 채라 새 코드로는 시도조차 하지 않는다.
+ * 두 번째 초대 링크를 연 사람이 그대로 겪는 상황이다.
+ */
+function InviteRoute() {
+  const { code } = useParams();
+  return <InviteScreen key={code ?? 'manual'} />;
+}
+
 export function App() {
   const loading = useAuthStore((s) => s.loading);
   const account = useAuthStore((s) => s.account);
   const restore = useAuthStore((s) => s.restore);
 
+  const loadTrips = useTripStore((s) => s.load);
+
   useEffect(() => {
     void restore();
   }, [restore]);
+
+  /*
+   * 로그인한 뒤에 읽는다. 로그인 전에 부르면 RLS가 전부 막아 빈 목록이
+   * 돌아오고, 그 결과가 "여행이 없습니다"로 화면에 굳는다.
+   */
+  const subscribeTrips = useTripStore((s) => s.subscribe);
+
+  useEffect(() => {
+    if (account) void loadTrips(account.id);
+  }, [account, loadTrips]);
+
+  /*
+   * 다른 사람의 변경을 받는다. 로그인한 동안만 구독하고, 로그아웃하면 끊는다 —
+   * 안 끊으면 다음 사람이 이 기기로 로그인했을 때 앞사람 몫의 이벤트가 섞인다.
+   */
+  useEffect(() => {
+    if (!account) return;
+    return subscribeTrips();
+  }, [account, subscribeTrips]);
+
+  /*
+   * 초대 링크를 연 사람이 로그인하고 돌아왔으면 그 초대로 다시 보낸다.
+   * (왜 필요한지는 auth/pendingInvite.ts)
+   */
+  useEffect(() => {
+    if (!account) return;
+    const code = takeStashedInvite();
+    if (code) window.location.hash = `#/invite/${encodeURIComponent(code)}`;
+  }, [account]);
 
   /*
    * 세션 복구가 끝나기 전에는 아무것도 결정하지 않는다. 바로 로그인 화면을
@@ -59,13 +107,18 @@ export function App() {
   }
 
   if (!account) {
-    return <SignInScreen methods={getAuthProvider().methods} />;
+    // 초대 링크로 들어왔다면 로그인 동안 코드를 붙잡아 둔다
+    const code = inviteCodeFromHash(window.location.hash);
+    if (code) stashInvite(code);
+    return <SignInScreen methods={getAuthProvider().methods} invited={Boolean(code)} />;
   }
 
   return (
     <HashRouter>
       <Routes>
         <Route path="/" element={<HomeScreen />} />
+        {/* 'new'가 :tripId로 잡히지 않도록 먼저 선언한다 */}
+        <Route path="/trip/new" element={<TripCreateScreen />} />
         <Route path="/trip/:tripId" element={<TripScreen />} />
         {/* 'new'가 :itemId로 잡히지 않도록 상세보다 먼저 선언한다 */}
         <Route path="/trip/:tripId/item/new" element={<ItemEditRoute />} />
@@ -74,6 +127,8 @@ export function App() {
         <Route path="/trip/:tripId/map" element={<MapScreen />} />
         <Route path="/trip/:tripId/checklist" element={<ChecklistScreen />} />
         <Route path="/profile" element={<ProfileScreen />} />
+        <Route path="/invite" element={<InviteRoute />} />
+        <Route path="/invite/:code" element={<InviteRoute />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </HashRouter>

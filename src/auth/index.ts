@@ -14,18 +14,22 @@
  * RLS부터 켜야 한다.
  */
 
+import { hasBackend } from '@/supabase/client';
 import { mockAuthProvider } from './mockAuthProvider';
+import { createSupabaseAuthProvider } from './supabaseAuthProvider';
 import type { AuthProvider } from './types';
 
 export * from './types';
+export { hasBackend } from '@/supabase/client';
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL ?? '';
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY ?? '';
-
-/** 백엔드가 설정돼 있는지. 화면에서 "개발용" 안내를 띄울지 판단하는 데도 쓴다. */
-export const hasBackend = SUPABASE_URL.length > 0 && SUPABASE_ANON_KEY.length > 0;
+/**
+ * 한 번만 만든다. 매번 새로 만들면 Supabase 클라이언트가 여러 개 생기고
+ * 각자 세션을 들고 있어서, 한쪽에서 로그아웃해도 다른 쪽이 살아 있다.
+ */
+const provider: AuthProvider = hasBackend
+  ? createSupabaseAuthProvider()
+  : mockAuthProvider;
 
 export function getAuthProvider(): AuthProvider {
-  // TODO: hasBackend면 supabaseAuthProvider를 돌려준다
-  return mockAuthProvider;
+  return provider;
 }

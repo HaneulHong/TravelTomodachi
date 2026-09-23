@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { AppHeader } from '@/components/AppHeader';
 import { BottomTabs } from '@/components/BottomTabs';
-import { GlobeIcon } from '@/components/icons';
+import { GlobeIcon, PlusIcon } from '@/components/icons';
 import { daysUntil, formatDateLabel, tripLengthDays } from '@/domain/time';
 import { REGION_LABEL, resolveRegion } from '@/providers';
 import { useAuthStore } from '@/store/authStore';
@@ -46,7 +46,9 @@ export function HomeScreen() {
         <section className="section">
           <h2 className="section__title">일정 리스트</h2>
 
-          {trips.length === 0 && <p className="empty">아직 여행이 없습니다.</p>}
+          {trips.length === 0 && (
+            <p className="empty">아직 여행이 없습니다. 아래에서 첫 여행을 만들어 보세요.</p>
+          )}
 
           {trips.map((trip) => {
             const regions = tripRegions(trip, coords);
@@ -103,6 +105,22 @@ export function HomeScreen() {
               </button>
             );
           })}
+
+          {/*
+            점선으로 둔 이유는 일정 추가 버튼과 같다 — 이건 여행 카드가 아니라
+            빈자리다. 실선 카드로 만들면 마지막 여행처럼 읽힌다.
+          */}
+          <button className="tl-add trip-add" onClick={() => navigate('/trip/new')}>
+            <PlusIcon size={16} /> 새 여행 만들기
+          </button>
+
+          {/*
+            링크를 못 받고 코드만 전해 들은 경우(전화, 메신저 캡처 등)를 위한 길.
+            링크로 오면 이 화면을 거치지 않는다.
+          */}
+          <button className="btn btn--ghost trip-join" onClick={() => navigate('/invite')}>
+            초대 코드로 참가
+          </button>
         </section>
       </main>
 

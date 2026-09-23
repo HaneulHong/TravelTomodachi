@@ -40,10 +40,20 @@ npm run dev     # ⚠️ Vite는 시작할 때만 env를 읽으므로 재시작 
 친구 몇 명이 쓰는 정도로는 한도가 문제되지 않습니다. **일시정지만 신경
 쓰면 됩니다.**
 
-### anon 키는 공개해도 됩니다
+### 공개 키는 노출해도 됩니다 (키 이름이 두 가지입니다)
 
-`VITE_SUPABASE_ANON_KEY`는 브라우저에 노출되도록 설계된 키입니다.
-숨길 필요가 없고 숨길 수도 없습니다.
+브라우저에 넣는 키는 노출되도록 설계된 것입니다. 숨길 필요가 없고 숨길 수도
+없습니다.
+
+Supabase가 키 체계를 바꾸는 중이라 대시보드에서 두 가지를 볼 수 있습니다.
+
+| 이름 | 모양 | 비고 |
+|---|---|---|
+| **publishable** | `sb_publishable_...` | 새 이름. 새로 만든 프로젝트는 이걸 줍니다 |
+| anon | `eyJhbGciOi...` (JWT) | 옛 이름. **2026년 말 지원 종료 예정** |
+
+둘 다 같은 자리에 들어가고 하는 일도 같습니다. **대시보드에 보이는 걸 그대로
+붙여넣으면 됩니다** — 코드가 둘 다 받습니다.
 
 **접근 제어는 키가 아니라 RLS(행 수준 보안)가 합니다.** 그래서 아래 4번의
 RLS 설정이 이 문서에서 가장 중요합니다. 테이블을 만들고 RLS를 켜지 않으면,
@@ -67,20 +77,26 @@ anon 키를 가진 누구나 모든 사람의 일정을 읽고 고칠 수 있습
 
 ### 1-1. 키 두 개 복사
 
-**Project Settings** → **API**
+**Project Settings** → **API Keys**
+(빠른 길: 상단 **Connect** 버튼에도 공개 키가 있습니다)
 
-| 항목 | 넣을 곳 |
+| 대시보드에 보이는 것 | 넣을 곳 |
 |---|---|
 | Project URL | `VITE_SUPABASE_URL` |
-| `anon` `public` 키 | `VITE_SUPABASE_ANON_KEY` |
+| **Publishable key** (`sb_publishable_...`) | `VITE_SUPABASE_PUBLISHABLE_KEY` |
+| 또는 `anon` `public` (`eyJ...`) | `VITE_SUPABASE_ANON_KEY` |
 
 ```bash
-# .env.local
+# .env.local — 보이는 쪽 하나만 채우면 됩니다
 VITE_SUPABASE_URL=https://abcdefghijklm.supabase.co
-VITE_SUPABASE_ANON_KEY=eyJhbGciOi...
+VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
 ```
 
-> `service_role` 키도 같은 화면에 있습니다. **복사하지 마세요.**
+Project URL은 **Project Settings → General**이나 API Keys 화면 상단에 있습니다.
+
+> 같은 화면에 **Secret key**(`sb_secret_...`)와 **service_role**도 있습니다.
+> **복사하지 마세요.** RLS를 통째로 우회해서, 브라우저에 들어가는 순간
+> 누구나 모든 데이터를 읽고 지울 수 있습니다.
 
 ---
 
@@ -222,9 +238,14 @@ create trigger on_auth_user_created
 > 돌기 때문에, 함수가 호출자 권한으로 실행되면 RLS에 막혀 프로필이
 > 만들어지지 않습니다.
 
-여행·일정 테이블은 아직 만들지 않습니다. 로그인이 먼저 동작하는지 확인한
-뒤에 [ARCHITECTURE.md](../ARCHITECTURE.md)의 데이터 모델대로 추가합니다.
-**그때도 테이블마다 RLS부터 켭니다.**
+### 여행·일정 테이블
+
+로그인이 동작하는 걸 확인한 뒤, [`supabase/schema.sql`](../supabase/schema.sql)을
+같은 SQL Editor에 통째로 붙여넣고 실행합니다. 여행·멤버·날짜·항목·체크리스트
+테이블과 각각의 RLS 정책, 초대 코드로 참가하는 함수까지 한 번에 만듭니다.
+
+> ⚠️ 그 파일은 테이블을 **새로 만드는** 스크립트입니다. 이미 데이터가 있는
+> 상태에서 돌리면 전부 지워집니다. 마이그레이션이 아닙니다.
 
 ---
 
