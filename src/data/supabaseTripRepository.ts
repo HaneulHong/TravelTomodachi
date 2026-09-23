@@ -28,7 +28,12 @@ import type {
   TripDay,
 } from '@/domain/types';
 import { getSupabase } from '@/supabase/client';
-import type { TripDraft, TripRepository, TripSnapshot } from './tripRepository';
+import type {
+  RemoteChange,
+  TripDraft,
+  TripRepository,
+  TripSnapshot,
+} from './tripRepository';
 
 // ── DB 행 모양 ─────────────────────────────────────────────────────
 
@@ -373,6 +378,89 @@ export function createSupabaseTripRepository(): TripRepository {
     async removeChecklistItem(itemId: string): Promise<void> {
       const { error } = await client.from('checklist').delete().eq('id', itemId);
       if (error) throw new Error(`준비물을 지우지 못했습니다: ${error.message}`);
+    },
+
+    subscribe(onChange: (change: RemoteChange) => void): () => void {
+      /*
+       * 테이블별로 필터를 걸지 않는다. 받을 수 있는 행은 RLS가 이미 걸러준다
+       * (Postgres Changes는 구독자마다 권한을 확인한다). 여기서 trip_id로 한 번
+       * 더 거르려면 여행이 늘 때마다 구독을 다시 맺어야 한다.
+       *
+       * 단 DELETE에는 RLS가 적용되지 않아 남의 여행의 삭제도 id만 들고 온다.
+       * 스토어는 자기가 가진 id일 때만 지우므로 무해하다.
+       */
+      const channel = client
+        .channel('trip-changes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'items' }, (p) => {
+          if (p.eventType === 'DELETE') {
+            const id = (p.old as { id?: string }).id;
+            if (id) onChange({ kind: 'item-delete', id });
+            return;
+          }
+          onChange({ kind: 'item-upsert', item: toItem(p.new as ItemRow) });
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'checklist' }, (p) => {
+          if (p.eventType === 'DELETE') {
+            const id = (p.old as { id?: string }).id;
+            if (id) onChange({ kind: 'checklist-delete', id });
+            return;
+          }
+          const row = p.new as ChecklistRow;
+          onChange({
+            kind: 'checklist-upsert',
+            entry: {
+              id: row.id,
+              tripId: row.trip_id,
+              title: row.title,
+              checked: row.checked,
+              assigneeId: row.assignee_id ?? undefined,
+            },
+          });
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'trip_days' }, (p) => {
+          // 기본키가 (trip_id, date)라 삭제에도 이 둘은 들어온다
+          if (p.eventType === 'DELETE') {
+            const old = p.old as Partial<DayRow>;
+            if (old.trip_id && old.date) {
+              onChange({ kind: 'day-delete', tripId: old.trip_id, date: old.date });
+            }
+            return;
+          }
+          const row = p.new as DayRow;
+          onChange({
+            kind: 'day-upsert',
+            tripId: row.trip_id,
+            day: { date: row.date, timezone: row.timezone, cityLabel: row.city_label },
+          });
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'trips' }, (p) => {
+          if (p.eventType === 'DELETE') {
+            const id = (p.old as { id?: string }).id;
+            if (id) onChange({ kind: 'trip-delete', id });
+            return;
+          }
+          // 새 여행(INSERT)은 멤버십이 같이 생기므로 members-changed가 따라온다
+          if (p.eventType !== 'UPDATE') return;
+          const row = p.new as TripRow;
+          onChange({
+            kind: 'trip-update',
+            trip: {
+              id: row.id,
+              name: row.name,
+              startDate: row.start_date,
+              endDate: row.end_date,
+              coverEmoji: row.cover_emoji,
+            },
+          });
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'trip_members' }, () => {
+          onChange({ kind: 'members-changed' });
+        })
+        .subscribe();
+
+      return () => {
+        void client.removeChannel(channel);
+      };
     },
   };
 }

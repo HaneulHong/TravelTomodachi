@@ -17,7 +17,7 @@
  */
 
 import { create } from 'zustand';
-import { getTripRepository } from '@/data';
+import { getTripRepository, type RemoteChange } from '@/data';
 import { bySortKey, keyBetween, keyForMove } from '@/domain/fractionalIndex';
 import type { ChecklistItem, Item, Leg, TransportMode, Trip, TripDay } from '@/domain/types';
 
@@ -43,6 +43,12 @@ interface TripState {
 
   load(userId: string): Promise<void>;
   clearError(): void;
+  /**
+   * 다른 사람의 변경을 반영한다. 돌려준 함수로 구독을 끊는다.
+   * 내 편집도 서버를 한 바퀴 돌아 여기로 돌아오는데, id를 클라이언트에서
+   * 만들기 때문에 같은 항목으로 합쳐지고 두 번 생기지 않는다.
+   */
+  subscribe(): () => void;
 
   // ── 조회 ────────────────────────────────────────────────────────
   getTrip(tripId: string): Trip | undefined;
@@ -108,6 +114,81 @@ export const useTripStore = create<TripState>()((set, get) => {
     });
   }
 
+  /** 한 항목을 넣거나 같은 id가 있으면 바꾼다 */
+  function upsertById<T extends { id: string }>(list: T[], next: T): T[] {
+    const i = list.findIndex((x) => x.id === next.id);
+    if (i === -1) return [...list, next];
+    const copy = list.slice();
+    copy[i] = next;
+    return copy;
+  }
+
+  function applyRemote(change: RemoteChange): void {
+    switch (change.kind) {
+      case 'item-upsert':
+        set((state) => ({ items: upsertById(state.items, change.item) }));
+        return;
+
+      case 'item-delete':
+        // 남의 여행의 삭제도 id만 들고 온다 — 내게 없는 id면 아무 일도 없다
+        set((state) => ({ items: state.items.filter((i) => i.id !== change.id) }));
+        return;
+
+      case 'checklist-upsert':
+        set((state) => ({ checklist: upsertById(state.checklist, change.entry) }));
+        return;
+
+      case 'checklist-delete':
+        set((state) => ({ checklist: state.checklist.filter((c) => c.id !== change.id) }));
+        return;
+
+      case 'day-upsert':
+        set((state) => ({
+          trips: state.trips.map((t) => {
+            if (t.id !== change.tripId) return t;
+            const others = t.days.filter((d) => d.date !== change.day.date);
+            // 날짜 순서가 곧 화면의 날짜 칩 순서라 정렬을 지켜야 한다
+            const days = [...others, change.day].sort((a, b) => a.date.localeCompare(b.date));
+            return { ...t, days };
+          }),
+        }));
+        return;
+
+      case 'day-delete':
+        set((state) => ({
+          trips: state.trips.map((t) =>
+            t.id === change.tripId
+              ? { ...t, days: t.days.filter((d) => d.date !== change.date) }
+              : t,
+          ),
+        }));
+        return;
+
+      case 'trip-update':
+        set((state) => ({
+          trips: state.trips.map((t) => (t.id === change.trip.id ? { ...t, ...change.trip } : t)),
+        }));
+        return;
+
+      case 'trip-delete':
+        // 여행이 지워지면 딸린 항목·준비물도 함께 치운다 (DB의 cascade와 맞춘다)
+        set((state) => ({
+          trips: state.trips.filter((t) => t.id !== change.id),
+          items: state.items.filter((i) => i.tripId !== change.id),
+          checklist: state.checklist.filter((c) => c.tripId !== change.id),
+        }));
+        return;
+
+      case 'members-changed':
+        /*
+         * 누가 들어오거나 나갔다. 닉네임과 새로 보이게 된 여행까지 따라와야
+         * 해서 통째로 다시 읽는다. 드문 일이라 비용이 문제되지 않는다.
+         */
+        void repository.load().then((snapshot) => set({ ...snapshot }));
+        return;
+    }
+  }
+
   return {
     currentUserId: '',
     trips: [],
@@ -130,6 +211,8 @@ export const useTripStore = create<TripState>()((set, get) => {
     },
 
     clearError: () => set({ error: null }),
+
+    subscribe: () => repository.subscribe((change) => applyRemote(change)),
 
     getTrip: (tripId) => get().trips.find((t) => t.id === tripId),
 

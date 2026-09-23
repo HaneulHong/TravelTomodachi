@@ -74,4 +74,9 @@ export const mockTripRepository: TripRepository = {
   async removeChecklistItem(itemId): Promise<void> {
     checklist = checklist.filter((c) => c.id !== itemId);
   },
+
+  // 혼자 쓰는 메모리 저장소라 다른 사람의 변경이 올 일이 없다
+  subscribe(): () => void {
+    return () => {};
+  },
 };

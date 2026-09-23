@@ -67,9 +67,20 @@ export function App() {
    * 로그인한 뒤에 읽는다. 로그인 전에 부르면 RLS가 전부 막아 빈 목록이
    * 돌아오고, 그 결과가 "여행이 없습니다"로 화면에 굳는다.
    */
+  const subscribeTrips = useTripStore((s) => s.subscribe);
+
   useEffect(() => {
     if (account) void loadTrips(account.id);
   }, [account, loadTrips]);
+
+  /*
+   * 다른 사람의 변경을 받는다. 로그인한 동안만 구독하고, 로그아웃하면 끊는다 —
+   * 안 끊으면 다음 사람이 이 기기로 로그인했을 때 앞사람 몫의 이벤트가 섞인다.
+   */
+  useEffect(() => {
+    if (!account) return;
+    return subscribeTrips();
+  }, [account, subscribeTrips]);
 
   /*
    * 초대 링크를 연 사람이 로그인하고 돌아왔으면 그 초대로 다시 보낸다.

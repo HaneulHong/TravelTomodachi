@@ -42,6 +42,25 @@ export interface TripSnapshot {
   checklist: ChecklistItem[];
 }
 
+/**
+ * 다른 사람이 만든 변경. 도메인 모양으로 바꿔서 넘긴다 — 스토어가 DB 컬럼명을
+ * 알 필요가 없다.
+ *
+ * 삭제는 id만 온다. RLS가 DELETE 이벤트에는 적용되지 않아서, 지워진 행 전체를
+ * 싣게 하면 남의 여행 내용이 모든 구독자에게 간다(supabase/realtime.sql).
+ */
+export type RemoteChange =
+  | { kind: 'item-upsert'; item: Item }
+  | { kind: 'item-delete'; id: string }
+  | { kind: 'checklist-upsert'; entry: ChecklistItem }
+  | { kind: 'checklist-delete'; id: string }
+  | { kind: 'day-upsert'; tripId: string; day: TripDay }
+  | { kind: 'day-delete'; tripId: string; date: string }
+  | { kind: 'trip-update'; trip: Partial<Trip> & { id: string } }
+  | { kind: 'trip-delete'; id: string }
+  /** 누가 들어오거나 나갔다. 닉네임까지 다시 읽어야 해서 통째로 새로 받는다. */
+  | { kind: 'members-changed' };
+
 export interface TripRepository {
   readonly id: string;
   /** 백엔드에 붙어 있는지. 화면에서 "목 데이터" 안내를 띄울지 판단한다. */
@@ -65,4 +84,10 @@ export interface TripRepository {
   addChecklistItem(entry: ChecklistItem): Promise<void>;
   updateChecklistItem(itemId: string, checked: boolean): Promise<void>;
   removeChecklistItem(itemId: string): Promise<void>;
+
+  /**
+   * 다른 사람의 변경을 받는다. 돌려준 함수를 부르면 구독을 끊는다.
+   * 목은 혼자 쓰는 저장소라 아무것도 하지 않는다.
+   */
+  subscribe(onChange: (change: RemoteChange) => void): () => void;
 }
