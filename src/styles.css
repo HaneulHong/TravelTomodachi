@@ -1828,3 +1828,35 @@ select.form__input {
   background-repeat: no-repeat;
   padding-right: 32px;
 }
+
+/* ── 초대 참가 ─────────────────────────────────────────────────── */
+
+.trip-join {
+  margin-top: 6px;
+  width: 100%;
+}
+
+/*
+ * 초대받아 온 사람에게 먼저 보이는 문장. 처음 보는 앱에서 왜 로그인해야
+ * 하는지 모르면 그냥 닫는다. 로그인 버튼보다 눈에 먼저 들어와야 한다.
+ */
+.signin__invited {
+  margin: 0;
+  padding: 11px 13px;
+  border-radius: var(--radius);
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-border);
+  color: var(--accent);
+  font-size: 13px;
+  line-height: 1.55;
+  text-align: center;
+}
+
+/* 코드는 사람이 불러주는 것이라 한 글자씩 또렷하게 보여야 한다 */
+.invite__code {
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  font-size: 19px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  text-align: center;
+}

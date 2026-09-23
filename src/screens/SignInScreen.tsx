@@ -23,9 +23,11 @@ function MethodIcon({ method }: { method: SignInMethod }) {
 
 interface Props {
   methods: readonly SignInMethod[];
+  /** 초대 링크로 들어왔는지. 로그인하면 바로 그 여행에 들어간다고 알려준다. */
+  invited?: boolean;
 }
 
-export function SignInScreen({ methods }: Props) {
+export function SignInScreen({ methods, invited = false }: Props) {
   const signIn = useAuthStore((s) => s.signIn);
   const error = useAuthStore((s) => s.error);
 
@@ -37,6 +39,16 @@ export function SignInScreen({ methods }: Props) {
           <h1 className="signin__title">TravelTomodachi</h1>
           <p className="signin__sub">친구들과 함께 만드는 여행 일정</p>
         </div>
+
+        {/*
+          초대받아 온 사람은 이 앱을 처음 본다. 왜 로그인해야 하는지 모르면
+          그냥 닫는다. 로그인하면 바로 그 여행에 들어간다는 걸 먼저 말해준다.
+        */}
+        {invited && (
+          <p className="signin__invited">
+            여행에 초대받았습니다. 로그인하면 바로 그 일정으로 들어갑니다.
+          </p>
+        )}
 
         <div className="signin__methods">
           {methods.map((method) => (

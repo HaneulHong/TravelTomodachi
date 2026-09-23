@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { HashRouter, Navigate, Route, Routes, useParams } from 'react-router-dom';
 import { getAuthProvider } from '@/auth';
+import { inviteCodeFromHash, stashInvite, takeStashedInvite } from '@/auth/pendingInvite';
 import { useAuthStore } from '@/store/authStore';
 import { useTripStore } from '@/store/tripStore';
 import { HomeScreen } from '@/screens/HomeScreen';
@@ -9,6 +10,7 @@ import { ItemDetailScreen } from '@/screens/ItemDetailScreen';
 import { ItemEditScreen } from '@/screens/ItemEditScreen';
 import { MapScreen } from '@/screens/MapScreen';
 import { ChecklistScreen } from '@/screens/ChecklistScreen';
+import { InviteScreen } from '@/screens/InviteScreen';
 import { ProfileScreen } from '@/screens/ProfileScreen';
 import { SignInScreen } from '@/screens/SignInScreen';
 import { TripCreateScreen } from '@/screens/TripCreateScreen';
@@ -37,6 +39,19 @@ function ItemEditRoute() {
   return <ItemEditScreen key={itemId ?? 'new'} />;
 }
 
+/**
+ * 초대 화면을 코드마다 새로 만든다.
+ *
+ * 편집 화면과 같은 문제다(ItemEditRoute). 주소의 코드만 바뀌면 React가 같은
+ * 인스턴스를 재사용해서, 입력칸에는 이전 코드가, 오류에는 이전 실패가 남는다.
+ * "한 번만 자동 참가" 가드도 이미 켜진 채라 새 코드로는 시도조차 하지 않는다.
+ * 두 번째 초대 링크를 연 사람이 그대로 겪는 상황이다.
+ */
+function InviteRoute() {
+  const { code } = useParams();
+  return <InviteScreen key={code ?? 'manual'} />;
+}
+
 export function App() {
   const loading = useAuthStore((s) => s.loading);
   const account = useAuthStore((s) => s.account);
@@ -57,6 +72,16 @@ export function App() {
   }, [account, loadTrips]);
 
   /*
+   * 초대 링크를 연 사람이 로그인하고 돌아왔으면 그 초대로 다시 보낸다.
+   * (왜 필요한지는 auth/pendingInvite.ts)
+   */
+  useEffect(() => {
+    if (!account) return;
+    const code = takeStashedInvite();
+    if (code) window.location.hash = `#/invite/${encodeURIComponent(code)}`;
+  }, [account]);
+
+  /*
    * 세션 복구가 끝나기 전에는 아무것도 결정하지 않는다. 바로 로그인 화면을
    * 띄우면 이미 로그인한 사람에게도 한 번 깜빡이고 지나간다.
    */
@@ -71,7 +96,10 @@ export function App() {
   }
 
   if (!account) {
-    return <SignInScreen methods={getAuthProvider().methods} />;
+    // 초대 링크로 들어왔다면 로그인 동안 코드를 붙잡아 둔다
+    const code = inviteCodeFromHash(window.location.hash);
+    if (code) stashInvite(code);
+    return <SignInScreen methods={getAuthProvider().methods} invited={Boolean(code)} />;
   }
 
   return (
@@ -88,6 +116,8 @@ export function App() {
         <Route path="/trip/:tripId/map" element={<MapScreen />} />
         <Route path="/trip/:tripId/checklist" element={<ChecklistScreen />} />
         <Route path="/profile" element={<ProfileScreen />} />
+        <Route path="/invite" element={<InviteRoute />} />
+        <Route path="/invite/:code" element={<InviteRoute />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </HashRouter>

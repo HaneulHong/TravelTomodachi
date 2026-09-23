@@ -113,6 +113,14 @@ export function HomeScreen() {
           <button className="tl-add trip-add" onClick={() => navigate('/trip/new')}>
             <PlusIcon size={16} /> 새 여행 만들기
           </button>
+
+          {/*
+            링크를 못 받고 코드만 전해 들은 경우(전화, 메신저 캡처 등)를 위한 길.
+            링크로 오면 이 화면을 거치지 않는다.
+          */}
+          <button className="btn btn--ghost trip-join" onClick={() => navigate('/invite')}>
+            초대 코드로 참가
+          </button>
         </section>
       </main>
 
