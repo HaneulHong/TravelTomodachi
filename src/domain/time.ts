@@ -86,6 +86,26 @@ export function timezoneShift(
   return { changed: true, deltaMinutes: delta };
 }
 
+/**
+ * 이 날 바로 뒤로 이어지는, 같은 도시·타임존인 날짜들.
+ *
+ * 도시를 옮기는 날을 고칠 때 보통 그 뒤 며칠도 같이 바뀌어야 한다. 그렇다고
+ * "여행 끝까지"를 다 바꾸면 이미 따로 정해 둔 다음 도시까지 덮어버린다.
+ * 그래서 지금과 똑같은 설정이 끊기지 않고 이어지는 날까지만 모은다.
+ * 날짜는 정렬돼 있다고 가정한다(여행의 days는 항상 날짜순).
+ */
+export function followingSameDays(days: TripDay[], date: string): string[] {
+  const i = days.findIndex((d) => d.date === date);
+  const base = days[i];
+  if (!base) return [];
+  const out: string[] = [];
+  for (const d of days.slice(i + 1)) {
+    if (d.timezone !== base.timezone || d.cityLabel !== base.cityLabel) break;
+    out.push(d.date);
+  }
+  return out;
+}
+
 /** 540 → '+9시간', -180 → '-3시간', 90 → '+1시간 30분' */
 export function formatOffsetDelta(minutes: number): string {
   if (minutes === 0) return '동일';

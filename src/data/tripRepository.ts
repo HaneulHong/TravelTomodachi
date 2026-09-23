@@ -36,6 +36,9 @@ export interface ItemDraft {
   carrierCode?: string;
 }
 
+/** 날짜에서 고칠 수 있는 것. 날짜 자체는 여행 기간이 정한다. */
+export type DayPatch = Partial<Pick<TripDay, 'timezone' | 'cityLabel'>>;
+
 export interface TripSnapshot {
   trips: Trip[];
   items: Item[];
@@ -80,6 +83,12 @@ export interface TripRepository {
   addItem(item: Item): Promise<void>;
   updateItem(itemId: string, patch: Partial<Item>): Promise<void>;
   removeItem(itemId: string): Promise<void>;
+
+  /**
+   * 날짜의 타임존·도시를 고친다. 도시를 옮기면 보통 그 뒤 며칠이 같이
+   * 바뀌어서 여러 날짜를 한 번에 받는다.
+   */
+  updateDays(tripId: string, dates: string[], patch: DayPatch): Promise<void>;
 
   addChecklistItem(entry: ChecklistItem): Promise<void>;
   updateChecklistItem(itemId: string, checked: boolean): Promise<void>;

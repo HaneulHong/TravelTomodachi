@@ -17,7 +17,7 @@
  */
 
 import { create } from 'zustand';
-import { getTripRepository, type RemoteChange } from '@/data';
+import { getTripRepository, type DayPatch, type RemoteChange } from '@/data';
 import { bySortKey, keyBetween, keyForMove } from '@/domain/fractionalIndex';
 import type { ChecklistItem, Item, Leg, TransportMode, Trip, TripDay } from '@/domain/types';
 
@@ -78,6 +78,8 @@ interface TripState {
     days: TripDay[];
   }): Promise<string>;
   joinTrip(code: string): Promise<string>;
+  /** 날짜들의 타임존·도시를 고친다. 항목의 벽시계 시간은 그대로 둔다. */
+  updateDays(tripId: string, dates: string[], patch: DayPatch): void;
 
   toggleChecklistItem(itemId: string): void;
   addChecklistItem(tripId: string, title: string): void;
@@ -334,6 +336,22 @@ export const useTripStore = create<TripState>()((set, get) => {
       const snapshot = await repository.load();
       set({ ...snapshot });
       return tripId;
+    },
+
+    updateDays: (tripId, dates, patch) => {
+      if (dates.length === 0) return;
+      const previous = { trips: get().trips };
+      set((state) => ({
+        trips: state.trips.map((t) =>
+          t.id === tripId
+            ? {
+                ...t,
+                days: t.days.map((d) => (dates.includes(d.date) ? { ...d, ...patch } : d)),
+              }
+            : t,
+        ),
+      }));
+      rollbackOn(repository.updateDays(tripId, dates, patch), previous);
     },
 
     toggleChecklistItem: (itemId) => {

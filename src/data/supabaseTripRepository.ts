@@ -29,6 +29,7 @@ import type {
 } from '@/domain/types';
 import { getSupabase } from '@/supabase/client';
 import type {
+  DayPatch,
   RemoteChange,
   TripDraft,
   TripRepository,
@@ -357,6 +358,20 @@ export function createSupabaseTripRepository(): TripRepository {
     async removeItem(itemId: string): Promise<void> {
       const { error } = await client.from('items').delete().eq('id', itemId);
       if (error) throw new Error(`일정을 지우지 못했습니다: ${error.message}`);
+    },
+
+    async updateDays(tripId: string, dates: string[], patch: DayPatch): Promise<void> {
+      const row: { timezone?: string; city_label?: string } = {};
+      if (patch.timezone !== undefined) row.timezone = patch.timezone;
+      if (patch.cityLabel !== undefined) row.city_label = patch.cityLabel;
+      if (dates.length === 0 || Object.keys(row).length === 0) return;
+
+      const { error } = await client
+        .from('trip_days')
+        .update(row)
+        .eq('trip_id', tripId)
+        .in('date', dates);
+      if (error) throw new Error(`날짜를 고치지 못했습니다: ${error.message}`);
     },
 
     async addChecklistItem(entry: ChecklistItem): Promise<void> {

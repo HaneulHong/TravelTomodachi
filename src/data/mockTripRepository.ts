@@ -63,6 +63,14 @@ export const mockTripRepository: TripRepository = {
     items = items.filter((i) => i.id !== itemId);
   },
 
+  async updateDays(tripId, dates, patch): Promise<void> {
+    trips = trips.map((t) =>
+      t.id === tripId
+        ? { ...t, days: t.days.map((d) => (dates.includes(d.date) ? { ...d, ...patch } : d)) }
+        : t,
+    );
+  },
+
   async addChecklistItem(entry: ChecklistItem): Promise<void> {
     checklist = [...checklist, entry];
   },

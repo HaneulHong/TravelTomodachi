@@ -19,6 +19,7 @@ import {
   addMinutesToWallClock,
   dayNumber,
   formatDateLabel,
+  followingSameDays,
 } from '../src/domain/time';
 import { haversineMeters, formatDistance, normalizePoints } from '../src/domain/geo';
 import type { TripDay } from '../src/domain/types';
@@ -259,6 +260,30 @@ console.log('\n── 거리 ──');
     pts.every((p) => p.x >= 0 && p.x <= 1 && p.y >= 0 && p.y <= 1),
     JSON.stringify(pts),
   );
+}
+
+console.log('\n── 날짜별 타임존 편집 ──');
+{
+  const d = (date: string, timezone: string, cityLabel: string): TripDay => ({
+    date,
+    timezone,
+    cityLabel,
+  });
+  const days = [
+    d('2026-11-03', 'Asia/Seoul', '서울'),
+    d('2026-11-04', 'Asia/Seoul', '서울'),
+    d('2026-11-05', 'Asia/Seoul', '서울'),
+    d('2026-11-06', 'Asia/Tokyo', '도쿄'),
+    d('2026-11-07', 'Asia/Seoul', '서울'),
+  ];
+  eq('뒤로 이어지는 같은 날만', followingSameDays(days, '2026-11-04').join(','), '2026-11-05');
+  eq('첫날부터 끊기는 곳까지', followingSameDays(days, '2026-11-03').length, 2);
+  eq('다른 도시에서 멈춘다 — 그 뒤 서울은 안 건드린다', followingSameDays(days, '2026-11-06').length, 0);
+  eq('마지막 날은 뒤가 없다', followingSameDays(days, '2026-11-07').length, 0);
+  eq('없는 날짜', followingSameDays(days, '2026-12-01').length, 0);
+  // 타임존은 같아도 도시가 다르면 다른 날로 본다 (오사카 → 도쿄)
+  const jp = [d('2026-11-03', 'Asia/Tokyo', '오사카'), d('2026-11-04', 'Asia/Tokyo', '도쿄')];
+  eq('같은 타임존, 다른 도시', followingSameDays(jp, '2026-11-03').length, 0);
 }
 
 console.log(`\n${failed === 0 ? '✓ 전부 통과' : '✗ 실패 있음'} — ${passed} passed, ${failed} failed\n`);

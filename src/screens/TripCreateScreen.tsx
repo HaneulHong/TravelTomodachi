@@ -16,41 +16,11 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppHeader } from '@/components/AppHeader';
 import { formatDateLabel, tzShortLabel } from '@/domain/time';
+import { deviceTimezone, zoneLabel, zoneOptions } from '@/domain/timezones';
 import type { TripDay } from '@/domain/types';
 import { useTripStore } from '@/store/tripStore';
 
-/** 여행에서 자주 쓰는 곳만. 목록이 길면 고르는 게 더 일이 된다. */
-const TIMEZONES = [
-  'Asia/Seoul',
-  'Asia/Tokyo',
-  'Asia/Shanghai',
-  'Asia/Taipei',
-  'Asia/Hong_Kong',
-  'Asia/Bangkok',
-  'Asia/Ho_Chi_Minh',
-  'Asia/Singapore',
-  'Asia/Jakarta',
-  'Asia/Kolkata',
-  'Asia/Dubai',
-  'Europe/London',
-  'Europe/Paris',
-  'Europe/Berlin',
-  'America/New_York',
-  'America/Los_Angeles',
-  'Australia/Sydney',
-  'Pacific/Auckland',
-];
-
 const EMOJIS = ['🧳', '🏝️', '🍊', '🗼', '🏔️', '🚄', '⛴️', '🎒'];
-
-/** 기기 타임존. 목록에 없으면 맨 앞에 끼워 넣는다. */
-function deviceTimezone(): string {
-  try {
-    return Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Seoul';
-  } catch {
-    return 'Asia/Seoul';
-  }
-}
 
 /** 'YYYY-MM-DD' 오늘 (기기 기준) */
 function today(): string {
@@ -88,10 +58,7 @@ export function TripCreateScreen() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const zones = useMemo(() => {
-    const device = deviceTimezone();
-    return TIMEZONES.includes(device) ? TIMEZONES : [device, ...TIMEZONES];
-  }, []);
+  const zones = useMemo(() => zoneOptions(deviceTimezone()), []);
 
   const dates = useMemo(() => datesBetween(startDate, endDate), [startDate, endDate]);
   const canSave = name.trim().length > 0 && dates.length > 0 && !saving;
@@ -101,7 +68,10 @@ export function TripCreateScreen() {
     setSaving(true);
     setError(null);
     try {
-      const days: TripDay[] = dates.map((date) => ({ date, timezone, cityLabel: '' }));
+      // 도시 이름은 타임존의 대표 도시로 채워 둔다. 비워 두면 일정 화면 머리에
+      // 아무것도 안 떠서, 어디를 눌러 고치는지조차 안 보인다.
+      const cityLabel = zoneLabel(timezone);
+      const days: TripDay[] = dates.map((date) => ({ date, timezone, cityLabel }));
       const tripId = await createTrip({
         name: name.trim(),
         startDate,
@@ -190,14 +160,14 @@ export function TripCreateScreen() {
               onChange={(e) => setTimezone(e.target.value)}
             >
               {zones.map((z) => (
-                <option key={z} value={z}>
-                  {z} ({tzShortLabel(z, startDate)})
+                <option key={z.id} value={z.id}>
+                  {z.label} ({tzShortLabel(z.id, startDate)})
                 </option>
               ))}
             </select>
             <p className="form__hint">
-              모든 날짜에 이 타임존이 붙습니다. 도시를 옮기는 날은 나중에 그 날만 고치면
-              됩니다.
+              모든 날짜에 이 타임존이 붙습니다. 도시를 옮기는 날은 일정 화면에서 도시
+              이름을 눌러 그 날부터 고치면 됩니다.
             </p>
           </label>
 

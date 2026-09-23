@@ -4,6 +4,7 @@ import { AppHeader } from '@/components/AppHeader';
 import { BottomTabs } from '@/components/BottomTabs';
 import { DateStrip } from '@/components/DateStrip';
 import { DataCredits } from '@/components/DataCredits';
+import { DayEditSheet } from '@/components/DayEditSheet';
 import { MenuSheet } from '@/components/MenuSheet';
 import { TransportChip } from '@/components/TransportChip';
 import {
@@ -12,6 +13,7 @@ import {
   ClockIcon,
   FerryIcon,
   ListIcon,
+  PencilIcon,
   PinIcon,
   PlaneIcon,
   PlusIcon,
@@ -27,6 +29,7 @@ import {
   timezoneShift,
   tzShortLabel,
 } from '@/domain/time';
+import { zoneLabel } from '@/domain/timezones';
 import { ITEM_KIND_LABEL, isSegmentKind, type Item } from '@/domain/types';
 import { platform } from '@/platform';
 import { useTripStore } from '@/store/tripStore';
@@ -103,6 +106,7 @@ export function TripScreen() {
   const [search, setSearch] = useSearchParams();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [dayEditOpen, setDayEditOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
   const trip = useTripStore((s) => s.getTrip(tripId));
@@ -163,6 +167,7 @@ export function TripScreen() {
   }
 
   const shift = timezoneShift(prevDay, day);
+  const cityName = day.cityLabel || zoneLabel(day.timezone);
 
   return (
     <div className="app">
@@ -176,15 +181,20 @@ export function TripScreen() {
 
       {/* 가로 스와이프로 날짜 전환. 세로 스크롤은 그대로 동작한다. */}
       <main className="main" {...swipe} style={{ touchAction: 'pan-y' }}>
-        <div className="dayhead">
+        {/*
+          도시·타임존은 머리를 눌러 고친다. 도시를 옮기는 날만 고치는 값이라
+          화면에 따로 버튼을 두기보다 그 값이 보이는 자리를 누르게 한다.
+        */}
+        <button className="dayhead dayhead--edit" onClick={() => setDayEditOpen(true)}>
           <div className="dayhead__row">
-            <h2 className="dayhead__city">{day.cityLabel}</h2>
+            <span className="dayhead__city">{cityName}</span>
             <span className="chip">{tzShortLabel(day.timezone, day.date)}</span>
+            <PencilIcon size={14} className="dayhead__pencil" />
           </div>
           <div className="dayhead__date">
             {dayIndex + 1}일차 · {formatDateLabel(day.date)}
           </div>
-        </div>
+        </button>
 
         {/* 타임존이 바뀌는 날 경고. 전세계 여행에서 제일 조용히 터지는 부분. */}
         {shift.changed && (
@@ -193,7 +203,7 @@ export function TripScreen() {
               <AlertIcon className="banner__icon" />
               <div>
                 어제와 시차가 <strong>{formatOffsetDelta(shift.deltaMinutes)}</strong> 있습니다.
-                아래 시간은 모두 <strong>{day.cityLabel} 현지 시각</strong>입니다.
+                아래 시간은 모두 <strong>{cityName} 현지 시각</strong>입니다.
               </div>
             </div>
           </div>
@@ -273,6 +283,17 @@ export function TripScreen() {
         {/* 라이선스 의무라 메뉴에 상시 노출한다 — DataCredits 주석 참고 */}
         <DataCredits />
       </MenuSheet>
+
+      {/* 열 때마다 새로 만든다 — 지난번에 고치다 만 값이 남지 않게 */}
+      {dayEditOpen && (
+        <DayEditSheet
+          key={activeDate}
+          tripId={trip.id}
+          days={trip.days}
+          date={activeDate}
+          onClose={() => setDayEditOpen(false)}
+        />
+      )}
 
       {toast && <div className="toast">{toast}</div>}
 
