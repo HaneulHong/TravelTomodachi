@@ -354,6 +354,13 @@ export function createSupabaseTripRepository(): TripRepository {
       if (count === 0) throw new Error('여행을 만든 사람만 지울 수 있습니다');
     },
 
+    async regenerateInviteCode(tripId: string): Promise<string> {
+      // 멤버는 invite_code 칸을 고칠 권한이 없다(sharing.sql). 소유자 확인은 함수가 한다.
+      const { data, error } = await client.rpc('regenerate_invite_code', { trip: tripId });
+      if (error) throw new Error(error.message);
+      return data as string;
+    },
+
     async addItem(item: Item): Promise<void> {
       const { error } = await client.from('items').insert({
         id: item.id,
@@ -493,6 +500,8 @@ export function createSupabaseTripRepository(): TripRepository {
               startDate: row.start_date,
               endDate: row.end_date,
               coverEmoji: row.cover_emoji,
+              // 소유자가 코드를 바꾸면 다른 멤버의 공유 링크도 바로 새 코드가 된다
+              inviteCode: row.invite_code,
             },
           });
         })

@@ -1971,3 +1971,111 @@ select.form__input {
   text-transform: uppercase;
   text-align: center;
 }
+
+/* ── 멤버 · 초대 ────────────────────────────────────────────────── */
+
+.invitecard {
+  padding: 18px 16px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+  text-align: center;
+}
+
+.invitecard__label {
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--text-2);
+}
+
+/* 전화로 불러줄 수 있게 크게, 한 글자씩 떨어뜨린다 */
+.invitecard__code {
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  /* letter-spacing이 마지막 글자 뒤에도 붙어 가운데가 밀리는 걸 되돌린다 */
+  padding-left: 0.2em;
+  user-select: all;
+}
+
+.invitecard .btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
+.invitecard__reset {
+  align-self: center;
+  font-size: 12.5px;
+  color: var(--text-3);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  padding: 4px 8px;
+}
+
+.members__head {
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--text-2);
+  margin: 0 2px 8px;
+}
+
+.members {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.member {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 13px;
+}
+
+.member + .member {
+  border-top: 1px solid var(--border);
+}
+
+.member .avatar {
+  width: 30px;
+  height: 30px;
+  font-size: 12.5px;
+  margin-left: 0;
+}
+
+.member__name {
+  flex: 1;
+  min-width: 0;
+  font-size: 14.5px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.member__me {
+  font-weight: 450;
+  color: var(--text-3);
+}
+
+.member__kick {
+  font-size: 12.5px;
+  color: var(--danger);
+  padding: 5px 8px;
+  border-radius: var(--radius-sm);
+}
+
+.member__kick:active {
+  background: var(--surface-3);
+}
+
+.members__alone {
+  margin-top: 10px;
+}

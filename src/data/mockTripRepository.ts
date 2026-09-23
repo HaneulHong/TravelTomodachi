@@ -65,6 +65,12 @@ export const mockTripRepository: TripRepository = {
     checklist = checklist.filter((c) => c.tripId !== tripId);
   },
 
+  async regenerateInviteCode(tripId): Promise<string> {
+    const code = Math.random().toString(36).slice(2, 10).toUpperCase();
+    trips = trips.map((t) => (t.id === tripId ? { ...t, inviteCode: code } : t));
+    return code;
+  },
+
   async addItem(item: Item): Promise<void> {
     items = [...items, item];
   },

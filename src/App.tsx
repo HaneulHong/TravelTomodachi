@@ -9,6 +9,7 @@ import { TripScreen } from '@/screens/TripScreen';
 import { ItemDetailScreen } from '@/screens/ItemDetailScreen';
 import { ItemEditScreen } from '@/screens/ItemEditScreen';
 import { MapScreen } from '@/screens/MapScreen';
+import { MembersScreen } from '@/screens/MembersScreen';
 import { ChecklistScreen } from '@/screens/ChecklistScreen';
 import { InviteScreen } from '@/screens/InviteScreen';
 import { ProfileScreen } from '@/screens/ProfileScreen';
@@ -126,6 +127,7 @@ export function App() {
         <Route path="/trip/:tripId/item/:itemId" element={<ItemDetailScreen />} />
         <Route path="/trip/:tripId/map" element={<MapScreen />} />
         <Route path="/trip/:tripId/checklist" element={<ChecklistScreen />} />
+        <Route path="/trip/:tripId/members" element={<MembersScreen />} />
         <Route path="/profile" element={<ProfileScreen />} />
         <Route path="/invite" element={<InviteRoute />} />
         <Route path="/invite/:code" element={<InviteRoute />} />

@@ -85,6 +85,8 @@ export interface TripRepository {
   removeMember(tripId: string, userId: string): Promise<void>;
   /** 여행을 통째로 지운다. 소유자만. 날짜·항목·준비물·멤버가 함께 지워진다. */
   deleteTrip(tripId: string): Promise<void>;
+  /** 초대 코드를 새로 만든다. 소유자만. 새 코드를 돌려준다. 옛 링크는 막힌다. */
+  regenerateInviteCode(tripId: string): Promise<string>;
 
   /*
    * id와 sortKey는 스토어가 만들어서 넘긴다. 서버가 id를 정하면 화면에

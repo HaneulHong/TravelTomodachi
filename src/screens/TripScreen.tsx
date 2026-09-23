@@ -23,8 +23,10 @@ import {
   ShareIcon,
   TrainIcon,
   TrashIcon,
+  UsersIcon,
 } from '@/components/icons';
 import { useDayLegs, type LegInfo } from '@/hooks/useDayLegs';
+import { useInviteShare } from '@/hooks/useInviteShare';
 import { useSwipe } from '@/hooks/useSwipe';
 import {
   formatDateLabel,
@@ -115,7 +117,7 @@ export function TripScreen() {
   const me = useTripStore((s) => s.currentUserId);
   const leaveTrip = useTripStore((s) => s.leaveTrip);
   const deleteTrip = useTripStore((s) => s.deleteTrip);
-  const [toast, setToast] = useState<string | null>(null);
+  const { share: shareInvite, toast } = useInviteShare();
 
   const trip = useTripStore((s) => s.getTrip(tripId));
   const allItems = useTripStore((s) => s.items);
@@ -152,14 +154,7 @@ export function TripScreen() {
   async function onShare() {
     if (!trip) return;
     setMenuOpen(false);
-    const result = await platform.share({
-      title: trip.name,
-      text: `${trip.name} 일정을 함께 봐요`,
-      url: `${platform.publicBaseUrl}/#/invite/${trip.inviteCode}`,
-    });
-    if (result === 'copied') setToast('초대 링크를 복사했습니다');
-    else if (result === 'unavailable') setToast(`초대 코드: ${trip.inviteCode}`);
-    setTimeout(() => setToast(null), 2400);
+    await shareInvite(trip);
   }
 
   if (!trip || !day) {
@@ -292,6 +287,16 @@ export function TripScreen() {
         <button className="sheet__item" onClick={onShare}>
           <ShareIcon />
           친구에게 공유
+        </button>
+        <button
+          className="sheet__item"
+          onClick={() => {
+            setMenuOpen(false);
+            navigate(`/trip/${trip.id}/members`);
+          }}
+        >
+          <UsersIcon />
+          멤버 · 초대 코드
         </button>
 
         <div className="sheet__sep" />

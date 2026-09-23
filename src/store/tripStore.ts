@@ -84,6 +84,8 @@ interface TripState {
   removeMember(tripId: string, userId: string): Promise<void>;
   /** 여행을 지운다. 소유자만. */
   deleteTrip(tripId: string): Promise<void>;
+  /** 초대 코드를 새로 만든다. 소유자만. */
+  regenerateInviteCode(tripId: string): Promise<void>;
   /** 날짜들의 타임존·도시를 고친다. 항목의 벽시계 시간은 그대로 둔다. */
   updateDays(tripId: string, dates: string[], patch: DayPatch): void;
 
@@ -393,6 +395,13 @@ export const useTripStore = create<TripState>()((set, get) => {
     deleteTrip: async (tripId) => {
       await repository.deleteTrip(tripId);
       set((state) => dropTrip(state, tripId));
+    },
+
+    regenerateInviteCode: async (tripId) => {
+      const inviteCode = await repository.regenerateInviteCode(tripId);
+      set((state) => ({
+        trips: state.trips.map((t) => (t.id === tripId ? { ...t, inviteCode } : t)),
+      }));
     },
 
     updateDays: (tripId, dates, patch) => {
