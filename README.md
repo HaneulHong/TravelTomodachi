@@ -141,8 +141,7 @@ mount하고, 이후에는 `setStops` / `setPath` / `fit` 명령형 핸들로 갱
 
 1. **앱 실행 확인** — Xcode·Android Studio 설치 후 [docs/APP_SETUP.md](./docs/APP_SETUP.md)의
    확인 목록
-2. **웹 배포** — 초대 링크가 친구에게 열리려면 공개 주소가 필요하다
-   (`VITE_PUBLIC_BASE_URL`). 무료 정적 호스팅이면 충분하다
+2. **웹 배포** — Cloudflare Pages(무료). 절차는 [docs/DEPLOY.md](./docs/DEPLOY.md)
 3. **Apple 로그인** — Apple Developer($99/년) 가입 후
 
 ## Capacitor 전환 제약 (계속 지켜야 함)
