@@ -1,0 +1,12 @@
+// Cloudflare 배포 설정 — 정적 파일만 올린다 (docs/DEPLOY.md)
+//
+// 이 파일이 없으면 `wrangler deploy`가 프로젝트를 자동으로 설정하려 드는데,
+// 그 기능은 Vite 6 이상만 지원해서 배포가 실패한다.
+// 서버 코드(Worker 스크립트)는 없다. dist/의 파일을 그대로 내보낸다.
+{
+  "name": "traveltomodachi",
+  "compatibility_date": "2026-09-01",
+  "assets": {
+    "directory": "./dist"
+  }
+}
