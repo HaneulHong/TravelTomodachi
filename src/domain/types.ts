@@ -98,6 +98,12 @@ export interface Item {
    */
   toCoord?: Coord;
   toPlaceName?: string;
+  /**
+   * 마지막으로 고친 사람(멤버 id)과 시각(ISO). 같이 짜는 일정에서 "이거
+   * 누가 바꿨어?"에 답한다. DB 트리거가 채우므로 앱이 보내지 않는다.
+   */
+  updatedBy?: string;
+  updatedAt?: string;
 }
 
 export interface Trip {

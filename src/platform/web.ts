@@ -43,15 +43,16 @@ export const webPlatform: Platform = {
       try {
         await navigator.share(payload);
         return 'shared';
-      } catch {
-        // 사용자가 취소한 경우도 여기로 온다 — 복사로 넘어가지 않고 조용히 끝낸다
+      } catch (err: unknown) {
+        // 사용자가 닫은 건 실패가 아니다 — 복사로 넘어가지도, 알리지도 않는다
+        if (err instanceof DOMException && err.name === 'AbortError') return 'cancelled';
         return 'unavailable';
       }
     }
 
     if (typeof navigator.clipboard?.writeText === 'function') {
       try {
-        await navigator.clipboard.writeText(payload.url);
+        await navigator.clipboard.writeText(payload.url ?? payload.text);
         return 'copied';
       } catch {
         return 'unavailable';

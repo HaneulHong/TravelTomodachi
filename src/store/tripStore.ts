@@ -78,6 +78,14 @@ interface TripState {
     days: TripDay[];
   }): Promise<string>;
   joinTrip(code: string): Promise<string>;
+  /** 이 여행에서 나간다. 소유자는 못 나간다(대신 지운다). */
+  leaveTrip(tripId: string): Promise<void>;
+  /** 소유자가 다른 멤버를 내보낸다. */
+  removeMember(tripId: string, userId: string): Promise<void>;
+  /** 여행을 지운다. 소유자만. */
+  deleteTrip(tripId: string): Promise<void>;
+  /** 초대 코드를 새로 만든다. 소유자만. */
+  regenerateInviteCode(tripId: string): Promise<void>;
   /** 날짜들의 타임존·도시를 고친다. 항목의 벽시계 시간은 그대로 둔다. */
   updateDays(tripId: string, dates: string[], patch: DayPatch): void;
 
@@ -116,6 +124,15 @@ export const useTripStore = create<TripState>()((set, get) => {
     });
   }
 
+  /** 여행과 딸린 항목·준비물을 함께 치운다 (DB의 cascade와 맞춘다) */
+  function dropTrip(state: TripState, tripId: string): Partial<TripState> {
+    return {
+      trips: state.trips.filter((t) => t.id !== tripId),
+      items: state.items.filter((i) => i.tripId !== tripId),
+      checklist: state.checklist.filter((c) => c.tripId !== tripId),
+    };
+  }
+
   /** 한 항목을 넣거나 같은 id가 있으면 바꾼다 */
   function upsertById<T extends { id: string }>(list: T[], next: T): T[] {
     const i = list.findIndex((x) => x.id === next.id);
@@ -123,6 +140,14 @@ export const useTripStore = create<TripState>()((set, get) => {
     const copy = list.slice();
     copy[i] = next;
     return copy;
+  }
+
+  /**
+   * 내가 고친 항목에 붙일 "누가·언제". DB 트리거도 같은 값을 채우지만,
+   * 서버가 돌려줄 때까지 기다리면 방금 고친 항목에 남의 아바타가 잠깐 남는다.
+   */
+  function editedNow(): Pick<Item, 'updatedBy' | 'updatedAt'> {
+    return { updatedBy: get().currentUserId || undefined, updatedAt: new Date().toISOString() };
   }
 
   function applyRemote(change: RemoteChange): void {
@@ -173,21 +198,26 @@ export const useTripStore = create<TripState>()((set, get) => {
         return;
 
       case 'trip-delete':
-        // 여행이 지워지면 딸린 항목·준비물도 함께 치운다 (DB의 cascade와 맞춘다)
-        set((state) => ({
-          trips: state.trips.filter((t) => t.id !== change.id),
-          items: state.items.filter((i) => i.tripId !== change.id),
-          checklist: state.checklist.filter((c) => c.tripId !== change.id),
-        }));
+        set((state) => dropTrip(state, change.id));
         return;
 
-      case 'members-changed':
+      case 'members-changed': {
         /*
          * 누가 들어오거나 나갔다. 닉네임과 새로 보이게 된 여행까지 따라와야
-         * 해서 통째로 다시 읽는다. 드문 일이라 비용이 문제되지 않는다.
+         * 해서 통째로 다시 읽는다.
+         * 나간 이벤트는 모든 여행 것이 다 오므로(RLS 미적용) 내 여행이거나
+         * 나에 관한 것일 때만 읽는다. 안 거르면 누가 어디서 나갈 때마다 모든
+         * 사용자가 전체를 다시 읽는다.
          */
+        const { trips, currentUserId } = get();
+        const mine =
+          !change.tripId ||
+          change.userId === currentUserId ||
+          trips.some((t) => t.id === change.tripId);
+        if (!mine) return;
         void repository.load().then((snapshot) => set({ ...snapshot }));
         return;
+      }
     }
   }
 
@@ -248,7 +278,9 @@ export const useTripStore = create<TripState>()((set, get) => {
       const leg: Leg = { mode, minutes: Math.max(0, Math.round(minutes)), isManual: true };
       const previous = { items: get().items };
       set((state) => ({
-        items: state.items.map((item) => (item.id === itemId ? { ...item, leg } : item)),
+        items: state.items.map((item) =>
+          item.id === itemId ? { ...item, leg, ...editedNow() } : item,
+        ),
       }));
       rollbackOn(repository.updateItem(itemId, { leg }), previous);
     },
@@ -257,7 +289,7 @@ export const useTripStore = create<TripState>()((set, get) => {
       const previous = { items: get().items };
       set((state) => ({
         items: state.items.map((item) =>
-          item.id === itemId ? { ...item, leg: undefined } : item,
+          item.id === itemId ? { ...item, leg: undefined, ...editedNow() } : item,
         ),
       }));
       rollbackOn(repository.updateItem(itemId, { leg: undefined }), previous);
@@ -266,7 +298,9 @@ export const useTripStore = create<TripState>()((set, get) => {
     updateItem: (itemId, patch) => {
       const previous = { items: get().items };
       set((state) => ({
-        items: state.items.map((item) => (item.id === itemId ? { ...item, ...patch } : item)),
+        items: state.items.map((item) =>
+          item.id === itemId ? { ...item, ...patch, ...editedNow() } : item,
+        ),
       }));
       rollbackOn(repository.updateItem(itemId, patch), previous);
     },
@@ -280,7 +314,7 @@ export const useTripStore = create<TripState>()((set, get) => {
       const previous = { items: get().items };
       set((state) => ({
         items: state.items.map((item) =>
-          item.id === target.id ? { ...item, sortKey: newKey } : item,
+          item.id === target.id ? { ...item, sortKey: newKey, ...editedNow() } : item,
         ),
       }));
       rollbackOn(repository.updateItem(target.id, { sortKey: newKey }), previous);
@@ -305,6 +339,7 @@ export const useTripStore = create<TripState>()((set, get) => {
         durationMin: draft.durationMin,
         description: draft.description,
         carrierCode: draft.carrierCode,
+        ...editedNow(),
       };
 
       const previous = { items: get().items };
@@ -336,6 +371,37 @@ export const useTripStore = create<TripState>()((set, get) => {
       const snapshot = await repository.load();
       set({ ...snapshot });
       return tripId;
+    },
+
+    /*
+     * 나가기·내보내기·삭제는 기다린다. 낙관적으로 먼저 지웠다가 실패해서
+     * 여행이 되살아나면, 그 사이 홈으로 이동한 사용자는 무슨 일인지 모른다.
+     * 되돌릴 수 없는 동작은 결과를 확인하고 나서 화면을 바꾼다.
+     */
+    leaveTrip: async (tripId) => {
+      await repository.removeMember(tripId, get().currentUserId);
+      set((state) => dropTrip(state, tripId));
+    },
+
+    removeMember: async (tripId, userId) => {
+      await repository.removeMember(tripId, userId);
+      set((state) => ({
+        trips: state.trips.map((t) =>
+          t.id === tripId ? { ...t, members: t.members.filter((m) => m.id !== userId) } : t,
+        ),
+      }));
+    },
+
+    deleteTrip: async (tripId) => {
+      await repository.deleteTrip(tripId);
+      set((state) => dropTrip(state, tripId));
+    },
+
+    regenerateInviteCode: async (tripId) => {
+      const inviteCode = await repository.regenerateInviteCode(tripId);
+      set((state) => ({
+        trips: state.trips.map((t) => (t.id === tripId ? { ...t, inviteCode } : t)),
+      }));
     },
 
     updateDays: (tripId, dates, patch) => {

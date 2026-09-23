@@ -4,7 +4,9 @@ import { AppHeader } from '@/components/AppHeader';
 import { BottomTabs } from '@/components/BottomTabs';
 import { DateStrip } from '@/components/DateStrip';
 import { DataCredits } from '@/components/DataCredits';
+import { ConfirmSheet } from '@/components/ConfirmSheet';
 import { DayEditSheet } from '@/components/DayEditSheet';
+import { EditedBy } from '@/components/EditedBy';
 import { MenuSheet } from '@/components/MenuSheet';
 import { TransportChip } from '@/components/TransportChip';
 import {
@@ -12,6 +14,7 @@ import {
   BusIcon,
   ClockIcon,
   FerryIcon,
+  LeaveIcon,
   ListIcon,
   PencilIcon,
   PinIcon,
@@ -19,8 +22,11 @@ import {
   PlusIcon,
   ShareIcon,
   TrainIcon,
+  TrashIcon,
+  UsersIcon,
 } from '@/components/icons';
 import { useDayLegs, type LegInfo } from '@/hooks/useDayLegs';
+import { useInviteShare } from '@/hooks/useInviteShare';
 import { useSwipe } from '@/hooks/useSwipe';
 import {
   formatDateLabel,
@@ -107,7 +113,11 @@ export function TripScreen() {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const [dayEditOpen, setDayEditOpen] = useState(false);
-  const [toast, setToast] = useState<string | null>(null);
+  const [confirm, setConfirm] = useState<'leave' | 'delete' | null>(null);
+  const me = useTripStore((s) => s.currentUserId);
+  const leaveTrip = useTripStore((s) => s.leaveTrip);
+  const deleteTrip = useTripStore((s) => s.deleteTrip);
+  const { share: shareInvite, toast } = useInviteShare();
 
   const trip = useTripStore((s) => s.getTrip(tripId));
   const allItems = useTripStore((s) => s.items);
@@ -144,14 +154,7 @@ export function TripScreen() {
   async function onShare() {
     if (!trip) return;
     setMenuOpen(false);
-    const result = await platform.share({
-      title: trip.name,
-      text: `${trip.name} 일정을 함께 봐요`,
-      url: `${platform.publicBaseUrl}/#/invite/${trip.inviteCode}`,
-    });
-    if (result === 'copied') setToast('초대 링크를 복사했습니다');
-    else if (result === 'unavailable') setToast(`초대 코드: ${trip.inviteCode}`);
-    setTimeout(() => setToast(null), 2400);
+    await shareInvite(trip);
   }
 
   if (!trip || !day) {
@@ -159,7 +162,10 @@ export function TripScreen() {
       <div className="app">
         <AppHeader title="일정" back />
         <main className="main">
-          <p className="empty">여행을 찾을 수 없습니다.</p>
+          {/* 보고 있던 여행이 지워지거나 내보내졌을 때도 여기로 온다 */}
+          <p className="empty">
+            여행을 찾을 수 없습니다. 삭제됐거나 더 이상 멤버가 아닐 수 있습니다.
+          </p>
         </main>
         <BottomTabs />
       </div>
@@ -168,6 +174,8 @@ export function TripScreen() {
 
   const shift = timezoneShift(prevDay, day);
   const cityName = day.cityLabel || zoneLabel(day.timezone);
+  const isOwner = trip.ownerId === me;
+  const others = trip.members.filter((m) => m.id !== me).length;
 
   return (
     <div className="app">
@@ -236,6 +244,7 @@ export function TripScreen() {
                         {item.carrierCode ?? ITEM_KIND_LABEL[item.kind]}
                       </span>
                     )}
+                    <EditedBy item={item} members={trip.members} variant="avatar" />
                   </div>
 
                   {item.placeName && (
@@ -279,10 +288,86 @@ export function TripScreen() {
           <ShareIcon />
           친구에게 공유
         </button>
+        <button
+          className="sheet__item"
+          onClick={() => {
+            setMenuOpen(false);
+            navigate(`/trip/${trip.id}/members`);
+          }}
+        >
+          <UsersIcon />
+          멤버 · 초대 코드
+        </button>
+
+        <div className="sheet__sep" />
+        {/*
+          소유자는 나갈 수 없다(주인 없는 여행이 남는다). 대신 지운다.
+          멤버는 지울 수 없다. 남이 만든 여행을 통째로 날리면 안 된다.
+        */}
+        {isOwner ? (
+          <button
+            className="sheet__item sheet__item--danger"
+            onClick={() => {
+              setMenuOpen(false);
+              setConfirm('delete');
+            }}
+          >
+            <TrashIcon />
+            여행 삭제
+          </button>
+        ) : (
+          <button
+            className="sheet__item sheet__item--danger"
+            onClick={() => {
+              setMenuOpen(false);
+              setConfirm('leave');
+            }}
+          >
+            <LeaveIcon />
+            여행에서 나가기
+          </button>
+        )}
 
         {/* 라이선스 의무라 메뉴에 상시 노출한다 — DataCredits 주석 참고 */}
         <DataCredits />
       </MenuSheet>
+
+      {confirm === 'delete' && (
+        <ConfirmSheet
+          title="여행을 삭제할까요?"
+          confirmLabel="삭제"
+          danger
+          onClose={() => setConfirm(null)}
+          onConfirm={async () => {
+            await deleteTrip(trip.id);
+            navigate('/', { replace: true });
+          }}
+        >
+          <p>
+            <strong>{trip.name}</strong>의 일정·준비물이 모두 지워집니다. 되돌릴 수 없습니다.
+          </p>
+          {others > 0 && <p>함께하던 {others}명도 더 이상 이 여행을 볼 수 없습니다.</p>}
+        </ConfirmSheet>
+      )}
+
+      {confirm === 'leave' && (
+        <ConfirmSheet
+          title="여행에서 나갈까요?"
+          confirmLabel="나가기"
+          danger
+          onClose={() => setConfirm(null)}
+          onConfirm={async () => {
+            await leaveTrip(trip.id);
+            navigate('/', { replace: true });
+          }}
+        >
+          <p>
+            내 목록에서 <strong>{trip.name}</strong> 여행이 사라집니다. 일정은 남은
+            사람들에게 그대로 남습니다.
+          </p>
+          <p>다시 들어오려면 초대 링크를 새로 받아야 합니다.</p>
+        </ConfirmSheet>
+      )}
 
       {/* 열 때마다 새로 만든다 — 지난번에 고치다 만 값이 남지 않게 */}
       {dayEditOpen && (

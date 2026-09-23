@@ -20,9 +20,11 @@ import {
   dayNumber,
   formatDateLabel,
   followingSameDays,
+  formatRelative,
 } from '../src/domain/time';
 import { haversineMeters, formatDistance, normalizePoints } from '../src/domain/geo';
 import type { TripDay } from '../src/domain/types';
+import { inviteCodeFromAppUrl, inviteCodeFromHash } from '../src/auth/pendingInvite';
 
 let passed = 0;
 let failed = 0;
@@ -284,6 +286,31 @@ console.log('\n── 날짜별 타임존 편집 ──');
   // 타임존은 같아도 도시가 다르면 다른 날로 본다 (오사카 → 도쿄)
   const jp = [d('2026-11-03', 'Asia/Tokyo', '오사카'), d('2026-11-04', 'Asia/Tokyo', '도쿄')];
   eq('같은 타임존, 다른 도시', followingSameDays(jp, '2026-11-03').length, 0);
+}
+
+console.log('\n── 고친 시각 ──');
+{
+  const now = Date.parse('2026-09-24T12:00:00Z');
+  const ago = (ms: number) => new Date(now - ms).toISOString();
+  eq('30초 전은 방금', formatRelative(ago(30_000), now), '방금');
+  eq('미래 시각(시계 오차)도 방금', formatRelative(ago(-90_000), now), '방금');
+  eq('분', formatRelative(ago(5 * 60_000), now), '5분 전');
+  eq('시간', formatRelative(ago(3 * 3_600_000), now), '3시간 전');
+  eq('일', formatRelative(ago(2 * 86_400_000), now), '2일 전');
+  ok('일주일 넘으면 날짜', formatRelative(ago(10 * 86_400_000), now).endsWith('일'));
+  eq('깨진 값', formatRelative('nope', now), '');
+}
+
+console.log('\n── 초대 링크 파싱 ──');
+{
+  const S = 'com.traveltomodachi.app';
+  eq('앱 딥링크', inviteCodeFromAppUrl(`${S}://invite/5G5D5UNX`, S), '5G5D5UNX');
+  eq('뒤에 쿼리가 붙어도', inviteCodeFromAppUrl(`${S}://invite/5G5D5UNX?from=kakao`, S), '5G5D5UNX');
+  eq('로그인 콜백은 초대가 아니다', inviteCodeFromAppUrl(`${S}://auth?code=abc`, S), null);
+  eq('다른 앱 스킴', inviteCodeFromAppUrl('other.app://invite/X', S), null);
+  eq('코드 없는 링크', inviteCodeFromAppUrl(`${S}://invite/`, S), null);
+  eq('웹 해시', inviteCodeFromHash('#/invite/ABCD1234'), 'ABCD1234');
+  eq('웹 해시 — 초대 아님', inviteCodeFromHash('#/trip/1'), null);
 }
 
 console.log(`\n${failed === 0 ? '✓ 전부 통과' : '✗ 실패 있음'} — ${passed} passed, ${failed} failed\n`);

@@ -81,6 +81,9 @@ interface ItemRow {
   leg_mode: string | null;
   leg_minutes: number | null;
   leg_is_manual: boolean;
+  /** sharing.sql을 돌리기 전 DB에는 없다 */
+  updated_by?: string | null;
+  updated_at?: string | null;
 }
 
 interface ChecklistRow {
@@ -124,6 +127,8 @@ function toItem(row: ItemRow): Item {
     durationMin: row.duration_min ?? undefined,
     description: row.description ?? undefined,
     carrierCode: row.carrier_code ?? undefined,
+    updatedBy: row.updated_by ?? undefined,
+    updatedAt: row.updated_at ?? undefined,
     /*
      * 저장된 leg은 사용자가 직접 고친 값뿐이다. 길찾기 조회 결과는 캐시라
      * DB에 넣지 않으므로, 여기서 복원되는 건 항상 isManual = true다.
@@ -326,6 +331,36 @@ export function createSupabaseTripRepository(): TripRepository {
       return data as string;
     },
 
+    async removeMember(tripId: string, userId: string): Promise<void> {
+      /*
+       * 권한이 없으면 RLS는 오류 없이 0행을 지운다. 그걸 성공으로 알면
+       * "나갔는데 여전히 들어가 있는" 상태가 된다. 지운 행 수로 확인한다.
+       */
+      const { error, count } = await client
+        .from('trip_members')
+        .delete({ count: 'exact' })
+        .eq('trip_id', tripId)
+        .eq('user_id', userId);
+      if (error) throw new Error(`멤버를 빼지 못했습니다: ${error.message}`);
+      if (count === 0) throw new Error('권한이 없거나 이미 빠진 멤버입니다');
+    },
+
+    async deleteTrip(tripId: string): Promise<void> {
+      const { error, count } = await client
+        .from('trips')
+        .delete({ count: 'exact' })
+        .eq('id', tripId);
+      if (error) throw new Error(`여행을 지우지 못했습니다: ${error.message}`);
+      if (count === 0) throw new Error('여행을 만든 사람만 지울 수 있습니다');
+    },
+
+    async regenerateInviteCode(tripId: string): Promise<string> {
+      // 멤버는 invite_code 칸을 고칠 권한이 없다(sharing.sql). 소유자 확인은 함수가 한다.
+      const { data, error } = await client.rpc('regenerate_invite_code', { trip: tripId });
+      if (error) throw new Error(error.message);
+      return data as string;
+    },
+
     async addItem(item: Item): Promise<void> {
       const { error } = await client.from('items').insert({
         id: item.id,
@@ -465,11 +500,15 @@ export function createSupabaseTripRepository(): TripRepository {
               startDate: row.start_date,
               endDate: row.end_date,
               coverEmoji: row.cover_emoji,
+              // 소유자가 코드를 바꾸면 다른 멤버의 공유 링크도 바로 새 코드가 된다
+              inviteCode: row.invite_code,
             },
           });
         })
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'trip_members' }, () => {
-          onChange({ kind: 'members-changed' });
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'trip_members' }, (p) => {
+          // 기본키가 (trip_id, user_id)라 삭제 이벤트에도 이 둘은 들어온다
+          const row = (p.eventType === 'DELETE' ? p.old : p.new) as Partial<MemberRow>;
+          onChange({ kind: 'members-changed', tripId: row.trip_id, userId: row.user_id });
         })
         .subscribe();
 

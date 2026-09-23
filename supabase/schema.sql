@@ -36,6 +36,8 @@ drop table if exists public.trips cascade;
 -- 테이블과 함께 이미 사라진 뒤라 걸리는 게 없다.
 drop function if exists public.handle_new_trip();
 drop function if exists public.touch_updated_at();
+drop function if exists public.stamp_item_editor();
+drop function if exists public.regenerate_invite_code(uuid);
 drop function if exists public.join_trip_by_code(text);
 drop function if exists public.is_trip_member(uuid);
 drop function if exists public.is_trip_owner(uuid);
@@ -126,7 +128,9 @@ create table public.items (
   leg_is_manual boolean not null default false,
 
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  -- 마지막으로 고친 사람. 트리거가 auth.uid()로 채운다 (앱이 보낸 값은 안 믿는다)
+  updated_by uuid references auth.users on delete set null
 );
 
 create index items_trip_date_idx on public.items (trip_id, date, sort_key);
@@ -209,6 +213,12 @@ create policy "멤버는 여행 정보를 고친다"
   using (public.is_trip_member(id) or owner_id = auth.uid())
   with check (public.is_trip_member(id) or owner_id = auth.uid());
 
+-- RLS는 "어느 행"만 거르고 "어느 칸"은 못 거른다. 칸을 안 막으면 초대받은
+-- 사람이 owner_id를 자기로 바꿔 여행을 빼앗은 뒤 지울 수 있다.
+-- 멤버는 이름·기간·이모지만 고치고, 초대 코드는 regenerate_invite_code로만.
+revoke update on public.trips from anon, authenticated;
+grant update (name, start_date, end_date, cover_emoji) on public.trips to authenticated;
+
 -- 지우는 건 소유자만. 초대받아 들어온 사람이 남의 여행을 지우면 안 된다.
 create policy "소유자만 여행을 지운다"
   on public.trips for delete to authenticated
@@ -225,9 +235,14 @@ create policy "소유자만 멤버를 추가한다"
   with check (public.is_trip_owner(trip_id));
 
 -- 내보내기는 소유자, 나가기는 본인.
+-- 소유자는 자기를 지우지 못한다 — 주인은 있는데 멤버가 아닌 여행이 남는다.
+-- 소유자는 나가는 대신 여행을 지운다(멤버 행은 cascade로 함께 지워진다).
 create policy "소유자가 내보내거나 본인이 나간다"
   on public.trip_members for delete to authenticated
-  using (public.is_trip_owner(trip_id) or user_id = auth.uid());
+  using (
+    (public.is_trip_owner(trip_id) and user_id <> auth.uid())
+    or (user_id = auth.uid() and not public.is_trip_owner(trip_id))
+  );
 
 -- ── trip_days · items · checklist ─────────────────────────────────
 -- 셋 다 규칙이 같다: 그 여행의 멤버면 읽고 쓴다.
@@ -297,21 +312,25 @@ create trigger on_trip_created
   after insert on public.trips
   for each row execute procedure public.handle_new_trip();
 
--- 항목이 바뀐 시각. 누가 먼저 고쳤는지 볼 때 쓴다.
-create function public.touch_updated_at()
+-- 항목을 누가 언제 마지막으로 고쳤는지.
+-- SQL Editor처럼 로그인 없이 고친 경우엔 updated_by를 원래대로 둔다.
+create function public.stamp_item_editor()
 returns trigger
 language plpgsql
 set search_path = ''
 as $$
 begin
-  new.updated_at = now();
+  new.updated_by := coalesce(auth.uid(), new.updated_by);
+  if tg_op = 'UPDATE' then
+    new.updated_at := now();
+  end if;
   return new;
 end;
 $$;
 
-create trigger on_item_updated
-  before update on public.items
-  for each row execute procedure public.touch_updated_at();
+create trigger on_item_stamped
+  before insert or update on public.items
+  for each row execute procedure public.stamp_item_editor();
 
 -- ═══════════════════════════════════════════════════════════════════
 -- 초대 코드로 참가
@@ -353,6 +372,44 @@ $$;
 -- 로그인한 사람만 부를 수 있게 한다
 revoke execute on function public.join_trip_by_code(text) from public, anon;
 grant execute on function public.join_trip_by_code(text) to authenticated;
+
+-- ═══════════════════════════════════════════════════════════════════
+-- 초대 코드 다시 만들기 (소유자만)
+-- 링크가 엉뚱한 곳에 퍼졌을 때. 옛 링크는 막히고 이미 들어온 멤버는 그대로다.
+-- ═══════════════════════════════════════════════════════════════════
+
+create function public.regenerate_invite_code(trip uuid)
+returns text
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  code text;
+begin
+  if not public.is_trip_owner(trip) then
+    raise exception '여행을 만든 사람만 초대 코드를 바꿀 수 있습니다';
+  end if;
+
+  -- 겹칠 일은 거의 없지만 겹치면 unique에 걸리니 몇 번 다시 뽑는다
+  for attempt in 1..5 loop
+    begin
+      update public.trips
+        set invite_code = public.new_invite_code()
+        where id = trip
+        returning invite_code into code;
+      return code;
+    exception when unique_violation then
+      -- 다음 시도
+    end;
+  end loop;
+
+  raise exception '초대 코드를 만들지 못했습니다. 다시 시도해 주세요';
+end;
+$$;
+
+revoke execute on function public.regenerate_invite_code(uuid) from public, anon;
+grant execute on function public.regenerate_invite_code(uuid) to authenticated;
 
 -- API가 새 테이블을 알아보게 캐시를 새로고침한다
 notify pgrst, 'reload schema';

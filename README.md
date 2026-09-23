@@ -36,8 +36,9 @@ cp .env.example .env.local
 
 ## 지금 상태
 
-화면 흐름과 도메인 로직이 완성됐고, **외부 연동은 지도·장소검색·길찾기까지
-실제로 붙어 있습니다.** 남은 목(mock)은 데이터 저장과 로그인입니다.
+화면 흐름과 도메인 로직, 지도·장소검색·길찾기, **로그인·저장·공유·실시간
+동기화까지 실제로 붙어 있습니다.** iOS·Android 앱 프로젝트도 만들어 두었습니다
+(실행 확인은 Xcode 설치 후 — [docs/APP_SETUP.md](./docs/APP_SETUP.md)).
 
 **되는 것**
 
@@ -55,7 +56,12 @@ cp .env.example .env.local
   "아직 모른다"를 숨기지 않는다.
 - **터미널 이동** — 기차·시외버스·배편을 구간 항목으로 넣으면 출발·도착
   터미널을 잇는 선이 그려진다. 지도에 그려진 선의 출처도 상세에서 밝힌다.
-- 로그인·프로필(닉네임) 화면 — **단, 아래 참고**
+- **Google 로그인 + 닉네임 프로필** (Supabase). 닉네임 외에는 저장하지 않는다
+- **여행 만들기, 초대 링크·코드로 참가**, 로그인 도중에도 초대 코드 유지
+- **실시간 동기화** — 친구가 고친 일정이 새로고침 없이 반영된다
+- **누가 고쳤는지** — 일정 카드에 마지막으로 고친 사람 아바타
+- **멤버 · 초대 코드 화면** — 내보내기, 초대 코드 바꾸기(소유자), 나가기·삭제
+- **날짜별 도시·타임존 편집** — 도시를 옮기는 날(과 이어지는 날)만 고친다
 
 **외부 서비스 (전부 무료)**
 
@@ -67,13 +73,10 @@ cp .env.example .env.local
 | 도보·차량 길찾기 | Valhalla (OSM) | 불필요 |
 | 대중교통 | Transitous | 불필요 |
 
-**아직 목(mock)인 것**
-
-- 데이터 — 메모리 상태 (`src/store/tripStore.ts`). 새로고침하면 초기화된다
-- 로그인 — 개발용 목. 세션이 **이 브라우저에만** 남아서 친구 초대와 공동
-  편집이 동작하지 않는다. 실제로 쓰려면
-  [docs/AUTH_SETUP.md](./docs/AUTH_SETUP.md)를 따라 Supabase를 연결한다
-- 실시간 동기화 — 없음
+**Supabase를 연결하지 않으면** 로그인과 데이터가 목(mock)으로 돈다. 세션은
+이 브라우저에만 남고 새로고침하면 데이터가 초기화된다. 연결 절차는
+[docs/AUTH_SETUP.md](./docs/AUTH_SETUP.md), DB는 `supabase/schema.sql`(새 DB) →
+`supabase/realtime.sql` 순서. 이미 쓰던 DB는 `supabase/sharing.sql`만 덧붙인다.
 
 ## 구조
 
@@ -136,17 +139,10 @@ mount하고, 이후에는 `setStops` / `setPath` / `fit` 명령형 핸들로 갱
 
 ## 다음에 붙일 것
 
-순서대로 하는 게 좋습니다.
-
-1. **Supabase** — 스키마는 ARCHITECTURE.md의 데이터 모델 그대로. RLS 먼저.
-   `tripStore.ts`의 각 액션이 낙관적 업데이트 지점입니다.
-2. **실시간 동기화** — `postgres_changes` 구독. `sortKey`가 fractional index라
-   동시 순서 변경에도 충돌하지 않습니다.
-3. ~~**지도 SDK**~~ — 완료. `src/providers/maps/` 참고.
-4. **실제 길찾기** — `mockRouteProvider.ts`를 대체.
-   API 키는 클라이언트에 두지 말고 Supabase Edge Function 프록시를 쓰고,
-   결과는 `routes` 테이블에 캐시합니다. (친구 5명이 같은 일정을 봐도 호출 1회)
-5. **Capacitor** — `npx cap add ios android`. 아래 제약을 지켜왔다면 그대로 붙습니다.
+1. **앱 실행 확인** — Xcode·Android Studio 설치 후 [docs/APP_SETUP.md](./docs/APP_SETUP.md)의
+   확인 목록
+2. **웹 배포** — Cloudflare Pages(무료). 절차는 [docs/DEPLOY.md](./docs/DEPLOY.md)
+3. **Apple 로그인** — Apple Developer($99/년) 가입 후
 
 ## Capacitor 전환 제약 (계속 지켜야 함)
 
@@ -154,6 +150,5 @@ mount하고, 이후에는 `setStops` / `setPath` / `fit` 명령형 핸들로 갱
 2. `vite.config.ts`의 `base: './'` 유지.
 3. 라우팅은 HashRouter. (`src/App.tsx`에 이유 적어둠)
 4. `window.location.origin`을 직접 쓰지 말고 `platform.publicBaseUrl` 사용.
-5. 위치·공유·햅틱·외부링크는 `src/platform/` 뒤에서만.
-   네이티브 구현은 `platform/native.ts`를 추가하고 `platform/index.ts`의
-   분기만 바꾸면 됩니다.
+5. 위치·공유·햅틱·외부링크·로그인 브라우저는 `src/platform/` 뒤에서만.
+   웹은 `platform/web.ts`, 앱은 `platform/native.ts`.

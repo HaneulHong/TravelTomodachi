@@ -61,8 +61,12 @@ export type RemoteChange =
   | { kind: 'day-delete'; tripId: string; date: string }
   | { kind: 'trip-update'; trip: Partial<Trip> & { id: string } }
   | { kind: 'trip-delete'; id: string }
-  /** 누가 들어오거나 나갔다. 닉네임까지 다시 읽어야 해서 통째로 새로 받는다. */
-  | { kind: 'members-changed' };
+  /**
+   * 누가 들어오거나 나갔다. 닉네임까지 다시 읽어야 해서 통째로 새로 받는다.
+   * 나간 이벤트는 RLS를 안 거쳐 남의 여행 것도 오므로, 스토어가 자기와
+   * 상관있는지(내 여행인지, 나인지) 보고 거른다.
+   */
+  | { kind: 'members-changed'; tripId?: string; userId?: string };
 
 export interface TripRepository {
   readonly id: string;
@@ -74,6 +78,15 @@ export interface TripRepository {
   createTrip(draft: TripDraft): Promise<Trip>;
   /** 초대 코드로 참가. 참가한 여행의 id를 돌려준다. */
   joinTrip(code: string): Promise<string>;
+  /**
+   * 멤버를 여행에서 뺀다. 본인이면 나가기, 소유자가 남을 빼면 내보내기.
+   * 소유자 자신은 뺄 수 없다 — 소유자는 deleteTrip을 쓴다.
+   */
+  removeMember(tripId: string, userId: string): Promise<void>;
+  /** 여행을 통째로 지운다. 소유자만. 날짜·항목·준비물·멤버가 함께 지워진다. */
+  deleteTrip(tripId: string): Promise<void>;
+  /** 초대 코드를 새로 만든다. 소유자만. 새 코드를 돌려준다. 옛 링크는 막힌다. */
+  regenerateInviteCode(tripId: string): Promise<string>;
 
   /*
    * id와 sortKey는 스토어가 만들어서 넘긴다. 서버가 id를 정하면 화면에
