@@ -7,9 +7,9 @@ dist-ssr
 .env.local
 .env.*.local
 
-# Capacitor (2단계에서 생성)
-android
-ios
+# Capacitor
+# ios/·android/는 커밋한다. 딥링크 스킴 같은 설정이 그 안에 있다.
+# 빌드 결과물과 복사된 웹 파일은 각 폴더의 .gitignore가 거른다.
 .capacitor
 
 # 에디터

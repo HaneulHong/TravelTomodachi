@@ -21,6 +21,17 @@ export function inviteCodeFromHash(hash: string): string | null {
   return m ? decodeURIComponent(m[1]!) : null;
 }
 
+/**
+ * 앱 딥링크에서 초대 코드를 뽑는다. com.traveltomodachi.app://invite/ABCD1234
+ * 로그인 콜백(…://auth) 같은 다른 딥링크면 null.
+ */
+export function inviteCodeFromAppUrl(url: string, scheme: string): string | null {
+  const prefix = `${scheme}://invite/`;
+  if (!url.startsWith(prefix)) return null;
+  const code = url.slice(prefix.length).split(/[/?#]/)[0];
+  return code ? decodeURIComponent(code) : null;
+}
+
 export function stashInvite(code: string): void {
   try {
     localStorage.setItem(KEY, code);

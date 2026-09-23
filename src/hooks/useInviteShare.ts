@@ -10,8 +10,12 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Trip } from '@/domain/types';
 import { platform } from '@/platform';
 
-export function inviteUrl(code: string): string {
-  return `${platform.publicBaseUrl}/#/invite/${code}`;
+/**
+ * 초대 링크. 공개 웹 주소가 없으면(배포 전 앱) undefined — 친구가 열 수 없는
+ * capacitor://localhost 링크를 보내느니 코드만 보내는 게 낫다.
+ */
+export function inviteUrl(code: string): string | undefined {
+  return platform.publicBaseUrl ? `${platform.publicBaseUrl}/#/invite/${code}` : undefined;
 }
 
 export function useInviteShare(): {
@@ -24,12 +28,16 @@ export function useInviteShare(): {
   useEffect(() => () => clearTimeout(timer.current), []);
 
   const share = useCallback(async (trip: Pick<Trip, 'name' | 'inviteCode'>) => {
+    const url = inviteUrl(trip.inviteCode);
     const result = await platform.share({
       title: trip.name,
-      text: `${trip.name} 일정을 함께 봐요`,
-      url: inviteUrl(trip.inviteCode),
+      // 코드는 링크가 있어도 적는다. 앱을 쓰는 친구는 링크 대신 코드를 입력한다.
+      text: url
+        ? `${trip.name} 일정을 함께 봐요 (초대 코드 ${trip.inviteCode})`
+        : `${trip.name} 일정을 함께 봐요\n초대 코드: ${trip.inviteCode}\n앱에서 "초대 코드로 참가"를 누르고 입력하세요.`,
+      url,
     });
-    if (result === 'copied') setToast('초대 링크를 복사했습니다');
+    if (result === 'copied') setToast(url ? '초대 링크를 복사했습니다' : '초대 코드를 복사했습니다');
     else if (result === 'unavailable') setToast(`초대 코드: ${trip.inviteCode}`);
     else return;
     clearTimeout(timer.current);

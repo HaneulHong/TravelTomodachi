@@ -54,6 +54,37 @@ export function createSupabaseAuthProvider(): AuthProvider {
     };
   }
 
+  /**
+   * 앱 로그인 (platform/native.ts 머리말 참고).
+   *
+   * 웹과 달리 페이지가 새로 뜨지 않으므로 restore()가 세션을 집어 주지 않는다.
+   * 코드 교환까지 여기서 끝내고 계정을 돌려준다.
+   */
+  async function signInNative(
+    method: 'google' | 'apple',
+    openAuthSession: (url: string) => Promise<string | null>,
+  ): Promise<Account> {
+    const { data, error } = await client.auth.signInWithOAuth({
+      provider: method,
+      options: { redirectTo: platform.authRedirectUrl, skipBrowserRedirect: true },
+    });
+    if (error || !data.url) throw new Error(`로그인하지 못했습니다: ${error?.message ?? '주소 없음'}`);
+
+    const callback = await openAuthSession(data.url);
+    if (!callback) throw new Error('로그인을 취소했습니다');
+
+    // 사용자 정의 스킴도 URL로 읽힌다: com.traveltomodachi.app://auth?code=...
+    const params = new URL(callback).searchParams;
+    const code = params.get('code');
+    if (!code) {
+      throw new Error(params.get('error_description') ?? '로그인 응답에 코드가 없습니다');
+    }
+
+    const { data: session, error: exchangeError } = await client.auth.exchangeCodeForSession(code);
+    if (exchangeError) throw new Error(`로그인하지 못했습니다: ${exchangeError.message}`);
+    return toAccount(session.user.id, viaOf(session.user.app_metadata?.provider));
+  }
+
   /** 어떤 방식으로 들어왔는지. 제공자 정보가 없으면 google로 본다. */
   function viaOf(providerId: string | undefined): SignInMethod {
     return providerId === 'apple' ? 'apple' : 'google';
@@ -75,6 +106,11 @@ export function createSupabaseAuthProvider(): AuthProvider {
     async signIn(method: SignInMethod): Promise<Account> {
       if (method !== 'google' && method !== 'apple') {
         throw new Error('지원하지 않는 로그인 방식입니다');
+      }
+
+      // 앱: 시스템 브라우저로 열고 딥링크로 돌아온 코드를 세션으로 바꾼다
+      if (platform.openAuthSession) {
+        return signInNative(method, platform.openAuthSession);
       }
 
       const { error } = await client.auth.signInWithOAuth({

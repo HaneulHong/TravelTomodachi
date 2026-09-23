@@ -1,7 +1,14 @@
 import { useEffect } from 'react';
 import { HashRouter, Navigate, Route, Routes, useParams } from 'react-router-dom';
 import { getAuthProvider } from '@/auth';
-import { inviteCodeFromHash, stashInvite, takeStashedInvite } from '@/auth/pendingInvite';
+import {
+  inviteCodeFromAppUrl,
+  inviteCodeFromHash,
+  stashInvite,
+  takeStashedInvite,
+} from '@/auth/pendingInvite';
+import { platform } from '@/platform';
+import { APP_SCHEME } from '@/platform/native';
 import { useAuthStore } from '@/store/authStore';
 import { useTripStore } from '@/store/tripStore';
 import { HomeScreen } from '@/screens/HomeScreen';
@@ -92,6 +99,23 @@ export function App() {
     const code = takeStashedInvite();
     if (code) window.location.hash = `#/invite/${encodeURIComponent(code)}`;
   }, [account]);
+
+  /*
+   * 앱이 초대 딥링크로 열렸을 때. 로그인돼 있으면 바로 참가 화면으로,
+   * 아니면 로그인하는 동안 보관했다가 위의 효과가 꺼내 쓴다.
+   */
+  useEffect(() => {
+    if (!platform.onDeepLink) return;
+    return platform.onDeepLink((url) => {
+      const code = inviteCodeFromAppUrl(url, APP_SCHEME);
+      if (!code) return;
+      if (useAuthStore.getState().account) {
+        window.location.hash = `#/invite/${encodeURIComponent(code)}`;
+      } else {
+        stashInvite(code);
+      }
+    });
+  }, []);
 
   /*
    * 세션 복구가 끝나기 전에는 아무것도 결정하지 않는다. 바로 로그인 화면을

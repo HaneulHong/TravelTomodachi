@@ -9,9 +9,19 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "tsx scripts/logic.test.ts",
-    "typecheck:logic": "tsc -p tsconfig.logic.json --noEmit"
+    "typecheck:logic": "tsc -p tsconfig.logic.json --noEmit",
+    "app:sync": "npm run build && cap sync",
+    "app:ios": "npm run build && cap sync ios && cap open ios",
+    "app:android": "npm run build && cap sync android && cap open android"
   },
   "dependencies": {
+    "@capacitor/android": "^8.5.2",
+    "@capacitor/app": "^8.1.1",
+    "@capacitor/browser": "^8.0.4",
+    "@capacitor/core": "^8.5.2",
+    "@capacitor/haptics": "^8.0.2",
+    "@capacitor/ios": "^8.5.2",
+    "@capacitor/share": "^8.0.2",
     "@supabase/supabase-js": "^2.116.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
@@ -19,6 +29,7 @@
     "zustand": "^4.5.5"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.5.2",
     "@types/react": "^18.3.10",
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.1",
