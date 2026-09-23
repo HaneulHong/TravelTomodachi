@@ -1,0 +1,16 @@
+// Cloudflare 배포 설정 — 정적 파일만 올린다 (docs/DEPLOY.md)
+//
+// 이 파일이 없으면 `wrangler deploy`가 프로젝트를 자동으로 설정하려 드는데,
+// 그 기능은 Vite 6 이상만 지원해서 배포가 실패한다.
+// 서버 코드(Worker 스크립트)는 없다. dist/의 파일을 그대로 내보낸다.
+{
+  "name": "traveltomodachi",
+  "compatibility_date": "2026-09-01",
+  "assets": {
+    "directory": "./dist"
+  },
+  // PR·브랜치 빌드는 `wrangler preview`로 미리보기 주소를 만든다. 이 항목이
+  // 있어야 그 명령이 돈다. 비워 두면 위의 assets 설정을 그대로 쓴다.
+  // (미리보기 주소는 Supabase·지도 키에 등록돼 있지 않아 로그인·지도는 안 될 수 있다)
+  "previews": {}
+}
