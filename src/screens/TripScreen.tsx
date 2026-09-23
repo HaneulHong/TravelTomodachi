@@ -5,6 +5,7 @@ import { BottomTabs } from '@/components/BottomTabs';
 import { DateStrip } from '@/components/DateStrip';
 import { DataCredits } from '@/components/DataCredits';
 import { DayEditSheet } from '@/components/DayEditSheet';
+import { EditedBy } from '@/components/EditedBy';
 import { MenuSheet } from '@/components/MenuSheet';
 import { TransportChip } from '@/components/TransportChip';
 import {
@@ -236,6 +237,7 @@ export function TripScreen() {
                         {item.carrierCode ?? ITEM_KIND_LABEL[item.kind]}
                       </span>
                     )}
+                    <EditedBy item={item} members={trip.members} variant="avatar" />
                   </div>
 
                   {item.placeName && (

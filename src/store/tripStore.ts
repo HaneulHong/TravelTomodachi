@@ -125,6 +125,14 @@ export const useTripStore = create<TripState>()((set, get) => {
     return copy;
   }
 
+  /**
+   * 내가 고친 항목에 붙일 "누가·언제". DB 트리거도 같은 값을 채우지만,
+   * 서버가 돌려줄 때까지 기다리면 방금 고친 항목에 남의 아바타가 잠깐 남는다.
+   */
+  function editedNow(): Pick<Item, 'updatedBy' | 'updatedAt'> {
+    return { updatedBy: get().currentUserId || undefined, updatedAt: new Date().toISOString() };
+  }
+
   function applyRemote(change: RemoteChange): void {
     switch (change.kind) {
       case 'item-upsert':
@@ -248,7 +256,9 @@ export const useTripStore = create<TripState>()((set, get) => {
       const leg: Leg = { mode, minutes: Math.max(0, Math.round(minutes)), isManual: true };
       const previous = { items: get().items };
       set((state) => ({
-        items: state.items.map((item) => (item.id === itemId ? { ...item, leg } : item)),
+        items: state.items.map((item) =>
+          item.id === itemId ? { ...item, leg, ...editedNow() } : item,
+        ),
       }));
       rollbackOn(repository.updateItem(itemId, { leg }), previous);
     },
@@ -257,7 +267,7 @@ export const useTripStore = create<TripState>()((set, get) => {
       const previous = { items: get().items };
       set((state) => ({
         items: state.items.map((item) =>
-          item.id === itemId ? { ...item, leg: undefined } : item,
+          item.id === itemId ? { ...item, leg: undefined, ...editedNow() } : item,
         ),
       }));
       rollbackOn(repository.updateItem(itemId, { leg: undefined }), previous);
@@ -266,7 +276,9 @@ export const useTripStore = create<TripState>()((set, get) => {
     updateItem: (itemId, patch) => {
       const previous = { items: get().items };
       set((state) => ({
-        items: state.items.map((item) => (item.id === itemId ? { ...item, ...patch } : item)),
+        items: state.items.map((item) =>
+          item.id === itemId ? { ...item, ...patch, ...editedNow() } : item,
+        ),
       }));
       rollbackOn(repository.updateItem(itemId, patch), previous);
     },
@@ -280,7 +292,7 @@ export const useTripStore = create<TripState>()((set, get) => {
       const previous = { items: get().items };
       set((state) => ({
         items: state.items.map((item) =>
-          item.id === target.id ? { ...item, sortKey: newKey } : item,
+          item.id === target.id ? { ...item, sortKey: newKey, ...editedNow() } : item,
         ),
       }));
       rollbackOn(repository.updateItem(target.id, { sortKey: newKey }), previous);
@@ -305,6 +317,7 @@ export const useTripStore = create<TripState>()((set, get) => {
         durationMin: draft.durationMin,
         description: draft.description,
         carrierCode: draft.carrierCode,
+        ...editedNow(),
       };
 
       const previous = { items: get().items };

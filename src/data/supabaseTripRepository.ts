@@ -81,6 +81,9 @@ interface ItemRow {
   leg_mode: string | null;
   leg_minutes: number | null;
   leg_is_manual: boolean;
+  /** sharing.sql을 돌리기 전 DB에는 없다 */
+  updated_by?: string | null;
+  updated_at?: string | null;
 }
 
 interface ChecklistRow {
@@ -124,6 +127,8 @@ function toItem(row: ItemRow): Item {
     durationMin: row.duration_min ?? undefined,
     description: row.description ?? undefined,
     carrierCode: row.carrier_code ?? undefined,
+    updatedBy: row.updated_by ?? undefined,
+    updatedAt: row.updated_at ?? undefined,
     /*
      * 저장된 leg은 사용자가 직접 고친 값뿐이다. 길찾기 조회 결과는 캐시라
      * DB에 넣지 않으므로, 여기서 복원되는 건 항상 isManual = true다.

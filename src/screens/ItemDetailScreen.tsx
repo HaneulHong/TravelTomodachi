@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AppHeader } from '@/components/AppHeader';
+import { EditedBy } from '@/components/EditedBy';
 import { MODE_ICON } from '@/components/TransportChip';
 import { AlertIcon, PencilIcon, PinIcon } from '@/components/icons';
 import { useDayLegs } from '@/hooks/useDayLegs';
@@ -120,6 +121,7 @@ export function ItemDetailScreen() {
               )}
               {item.carrierCode && <span className="chip">{item.carrierCode}</span>}
             </div>
+            {trip && <EditedBy item={item} members={trip.members} variant="line" />}
           </section>
 
           {/* 이동 방법 · 이동 시간 */}

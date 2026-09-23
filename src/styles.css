@@ -495,6 +495,31 @@ a {
   border-width: 1.5px;
 }
 
+/* ── 누가 고쳤는지 ─────────────────────────────────────────────── */
+
+/* 타임라인 카드 머리의 오른쪽 끝. 제목이 길어도 밀려나지 않는다. */
+.edited__avatar {
+  margin-left: auto;
+  flex: none;
+}
+
+.edited {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 12px;
+  font-size: 12.5px;
+  color: var(--text-2);
+}
+
+.edited .avatar {
+  margin-left: 0;
+}
+
+.edited__when {
+  color: var(--text-3);
+}
+
 /* ── 날짜 스트립 ───────────────────────────────────────────────────── */
 
 .datestrip {
