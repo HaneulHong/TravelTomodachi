@@ -51,6 +51,20 @@ export const mockTripRepository: TripRepository = {
     throw new Error('백엔드를 연결해야 초대에 참가할 수 있습니다');
   },
 
+  async removeMember(tripId, userId): Promise<void> {
+    trips = trips.map((t) =>
+      t.id === tripId ? { ...t, members: t.members.filter((m) => m.id !== userId) } : t,
+    );
+    // 나 자신이 빠지면 그 여행은 더 이상 안 보인다
+    if (userId === 'u-me') trips = trips.filter((t) => t.id !== tripId);
+  },
+
+  async deleteTrip(tripId): Promise<void> {
+    trips = trips.filter((t) => t.id !== tripId);
+    items = items.filter((i) => i.tripId !== tripId);
+    checklist = checklist.filter((c) => c.tripId !== tripId);
+  },
+
   async addItem(item: Item): Promise<void> {
     items = [...items, item];
   },

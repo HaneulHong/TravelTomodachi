@@ -1361,6 +1361,42 @@ a {
   flex: none;
 }
 
+/* 나가기·삭제. 다른 메뉴와 섞이지 않게 선으로 한 번 떼어 놓는다. */
+.sheet__item--danger {
+  color: var(--danger);
+}
+
+.sheet__item--danger svg {
+  color: var(--danger);
+}
+
+.sheet__sep {
+  height: 1px;
+  margin: 6px 8px;
+  background: var(--border);
+}
+
+/* ── 확인 시트 ─────────────────────────────────────────────────── */
+
+.confirm {
+  padding: 4px 4px 0;
+}
+
+.confirm__title {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.confirm__body {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--text-2);
+}
+
+.confirm__body p {
+  margin: 0 0 6px;
+}
+
 .toast {
   position: fixed;
   z-index: 50;

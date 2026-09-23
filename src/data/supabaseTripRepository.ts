@@ -331,6 +331,29 @@ export function createSupabaseTripRepository(): TripRepository {
       return data as string;
     },
 
+    async removeMember(tripId: string, userId: string): Promise<void> {
+      /*
+       * 권한이 없으면 RLS는 오류 없이 0행을 지운다. 그걸 성공으로 알면
+       * "나갔는데 여전히 들어가 있는" 상태가 된다. 지운 행 수로 확인한다.
+       */
+      const { error, count } = await client
+        .from('trip_members')
+        .delete({ count: 'exact' })
+        .eq('trip_id', tripId)
+        .eq('user_id', userId);
+      if (error) throw new Error(`멤버를 빼지 못했습니다: ${error.message}`);
+      if (count === 0) throw new Error('권한이 없거나 이미 빠진 멤버입니다');
+    },
+
+    async deleteTrip(tripId: string): Promise<void> {
+      const { error, count } = await client
+        .from('trips')
+        .delete({ count: 'exact' })
+        .eq('id', tripId);
+      if (error) throw new Error(`여행을 지우지 못했습니다: ${error.message}`);
+      if (count === 0) throw new Error('여행을 만든 사람만 지울 수 있습니다');
+    },
+
     async addItem(item: Item): Promise<void> {
       const { error } = await client.from('items').insert({
         id: item.id,
@@ -473,8 +496,10 @@ export function createSupabaseTripRepository(): TripRepository {
             },
           });
         })
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'trip_members' }, () => {
-          onChange({ kind: 'members-changed' });
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'trip_members' }, (p) => {
+          // 기본키가 (trip_id, user_id)라 삭제 이벤트에도 이 둘은 들어온다
+          const row = (p.eventType === 'DELETE' ? p.old : p.new) as Partial<MemberRow>;
+          onChange({ kind: 'members-changed', tripId: row.trip_id, userId: row.user_id });
         })
         .subscribe();
 

@@ -213,3 +213,26 @@ export const UserIcon = ({ size = 19, className }: IconProps) => (
     <path d="M5 20c0-3.3 3.1-5.5 7-5.5s7 2.2 7 5.5" />
   </svg>
 );
+
+export const UsersIcon = ({ size = 18, className }: IconProps) => (
+  <svg {...base(size, className)}>
+    <circle cx="9" cy="8.5" r="3.1" />
+    <path d="M3 19.5c0-3 2.7-5 6-5s6 2 6 5" />
+    <path d="M15.5 5.6a3 3 0 010 5.8M17.5 14.7c2 .6 3.5 2.2 3.5 4.8" />
+  </svg>
+);
+
+export const LeaveIcon = ({ size = 18, className }: IconProps) => (
+  <svg {...base(size, className)}>
+    <path d="M14 4h4a2 2 0 012 2v12a2 2 0 01-2 2h-4" />
+    <path d="M10 16l-4-4 4-4M6 12h10" />
+  </svg>
+);
+
+export const TrashIcon = ({ size = 18, className }: IconProps) => (
+  <svg {...base(size, className)}>
+    <path d="M4 7h16M9.5 7V4.5h5V7" />
+    <path d="M6 7l1 12.5a1.5 1.5 0 001.5 1.5h7a1.5 1.5 0 001.5-1.5L18 7" />
+    <path d="M10 11v6M14 11v6" />
+  </svg>
+);
