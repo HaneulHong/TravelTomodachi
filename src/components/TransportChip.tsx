@@ -1,5 +1,6 @@
 import { formatMinutes } from '@/domain/time';
-import { TRANSPORT_LABEL, type TransportMode } from '@/domain/types';
+import type { TransportMode } from '@/domain/types';
+import { useLocale, useT } from '@/i18n';
 import { CarIcon, TransitIcon, WalkIcon } from './icons';
 
 export const MODE_ICON: Record<TransportMode, typeof WalkIcon> = {
@@ -17,12 +18,14 @@ interface Props {
 
 export function TransportChip({ mode, minutes, manual = false }: Props) {
   const Icon = MODE_ICON[mode];
+  const t = useT();
+  const locale = useLocale();
   return (
     <span className={`chip chip--${mode}`}>
       <Icon />
-      {TRANSPORT_LABEL[mode]}
-      {minutes !== undefined && ` ${formatMinutes(minutes)}`}
-      {manual && ' · 직접 입력'}
+      {t.transport[mode]}
+      {minutes !== undefined && ` ${formatMinutes(minutes, locale)}`}
+      {manual && ` · ${t.leg.manual}`}
     </span>
   );
 }

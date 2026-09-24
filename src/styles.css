@@ -2157,3 +2157,74 @@ select.form__input {
   letter-spacing: 0.02em;
   color: var(--text-3);
 }
+
+/* 언어 고르기처럼 선택지가 셋인 경우. 기본 .seg는 일정 종류 5칸이다. */
+.seg--3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+/*
+ * 일본어 화면. 띄어쓰기가 없어서 keep-all(위 .app)이면 문장부호에서만 줄이 바뀌고
+ * 「、」「。」가 혼자 다음 줄로 떨어진다. 일본어는 글자 사이에서 바꾸는 게 맞다.
+ * auto-phrase는 문절 단위로 바꾼다(크롬 계열). 모르는 브라우저는 앞의 normal을 쓴다.
+ * <html lang>은 i18n/store가 화면 언어로 맞춘다.
+ */
+.app:lang(ja) {
+  word-break: normal;
+  word-break: auto-phrase;
+  line-break: strict;
+}
+
+/* ── 순서 바꾸기 ─────────────────────────────────────────────── */
+
+/* 경고가 아니라 안내라서 경고색(노랑) 대신 강조색 */
+.banner--info {
+  background: var(--accent-soft);
+  border-color: transparent;
+  color: var(--text);
+}
+
+.banner--info .banner__icon {
+  color: var(--accent);
+}
+
+/* 이동 구간 칸이 빠지므로 카드 사이를 직접 띄운다 */
+.timeline--reorder .tl-row + .tl-row {
+  margin-top: 8px;
+}
+
+.tl-item--reorder {
+  padding: 8px 6px 8px 13px;
+}
+
+.tl-item--reorder .tl-item__head {
+  align-items: center;
+}
+
+.tl-row--dragging .tl-item {
+  box-shadow: var(--shadow-lg, 0 8px 24px rgb(0 0 0 / 0.18));
+  border-color: var(--accent);
+}
+
+/* 손잡이. 손가락으로 잡기 좋게 44px 가까이. 여기서만 끌기가 시작되고 스크롤은 막는다. */
+.tl-grip {
+  flex: none;
+  margin-left: auto;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  color: var(--text-3);
+  border-radius: var(--radius-sm);
+  touch-action: none;
+  cursor: grab;
+}
+
+.tl-grip:active {
+  cursor: grabbing;
+  color: var(--accent);
+}
+
+.tl-grip:focus-visible {
+  outline: 2px solid var(--accent);
+}

@@ -46,6 +46,9 @@
 - 버전은 `package.json` 한 곳 (`src/config.ts`가 읽는다). 앱 버전은 iOS `MARKETING_VERSION`,
   Android `versionName`도 같이 올린다.
 - HashRouter, `base: './'` 유지 (Capacitor 제약 — README 참고).
+- **화면 문구는 코드에 직접 쓰지 않는다.** `src/i18n/messages/ko.ts`에 넣고 `en.ts`·`ja.ts`에도
+  번역을 넣는다(빠지면 빌드 실패). 화면은 `useT()`, React 밖은 `getMessages()`.
+  날짜·시간 포맷은 `useLocale()`을 넘긴다. 개발자용 안내(`SHOW_DEV_HINTS`)는 한국어 그대로.
 
 ## 확인
 

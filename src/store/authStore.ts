@@ -8,6 +8,7 @@
 
 import { create } from 'zustand';
 import { getAuthProvider, type Account, type SignInMethod } from '@/auth';
+import { getMessages } from '@/i18n/store';
 
 interface AuthState {
   /** 세션 복구가 끝나기 전. 이때 로그인 화면을 띄우면 이미 로그인한 사람에게도 깜빡인다. */
@@ -44,7 +45,7 @@ export const useAuthStore = create<AuthState>()((set) => ({
       const account = await auth.signIn(method);
       set({ account });
     } catch (err: unknown) {
-      set({ error: err instanceof Error ? err.message : '로그인하지 못했습니다' });
+      set({ error: err instanceof Error ? err.message : getMessages().errors.signInFailed });
     }
   },
 
@@ -59,7 +60,7 @@ export const useAuthStore = create<AuthState>()((set) => ({
       const account = await auth.updateNickname(nickname);
       set({ account });
     } catch (err: unknown) {
-      set({ error: err instanceof Error ? err.message : '닉네임을 바꾸지 못했습니다' });
+      set({ error: err instanceof Error ? err.message : getMessages().errors.nicknameFailed });
     }
   },
 }));

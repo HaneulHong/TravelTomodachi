@@ -138,33 +138,7 @@ export interface ChecklistItem {
   assigneeId?: string;
 }
 
-export const TRANSPORT_LABEL: Record<TransportMode, string> = {
-  walk: '도보',
-  transit: '대중교통',
-  car: '차량',
-};
-
-export const ITEM_KIND_LABEL: Record<ItemKind, string> = {
-  place: '방문',
-  flight: '항공',
-  train: '기차',
-  bus: '버스',
-  ferry: '배편',
-};
-
-/** 편명 칸에 무엇을 적는지. 종류마다 부르는 이름이 다르다. */
-export const CARRIER_LABEL: Record<ItemKind, string> = {
-  place: '',
-  flight: '편명',
-  train: '열차편',
-  bus: '버스 노선',
-  ferry: '항로 · 선박',
-};
-
-export const CARRIER_PLACEHOLDER: Record<ItemKind, string> = {
-  place: '',
-  flight: '예: KE1201',
-  train: '예: KTX 101',
-  bus: '예: 동서울 → 속초 시외버스',
-  ferry: '예: 목포 → 제주 퀸메리호',
-};
+/*
+ * 이동 수단·일정 종류·편명 칸의 이름은 언어마다 달라 i18n/messages로 옮겼다
+ * (t.transport · t.kind · t.carrierLabel · t.carrierPlaceholder).
+ */

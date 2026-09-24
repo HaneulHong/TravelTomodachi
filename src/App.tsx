@@ -9,6 +9,7 @@ import {
 } from '@/auth/pendingInvite';
 import { platform } from '@/platform';
 import { APP_SCHEME } from '@/platform/native';
+import { useT } from '@/i18n';
 import { useAuthStore } from '@/store/authStore';
 import { useTripStore } from '@/store/tripStore';
 import { HomeScreen } from '@/screens/HomeScreen';
@@ -66,6 +67,7 @@ export function App() {
   const loading = useAuthStore((s) => s.loading);
   const account = useAuthStore((s) => s.account);
   const restore = useAuthStore((s) => s.restore);
+  const t = useT();
 
   const loadTrips = useTripStore((s) => s.load);
 
@@ -127,7 +129,7 @@ export function App() {
     return (
       <div className="app">
         <main className="main main--no-tabs">
-          <p className="empty">불러오는 중…</p>
+          <p className="empty">{t.common.loading}</p>
         </main>
       </div>
     );

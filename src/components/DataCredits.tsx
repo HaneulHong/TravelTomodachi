@@ -11,6 +11,7 @@
  * 대한 것이고, 검색·길찾기·대중교통은 여기서 밝힌다.
  */
 
+import { useT } from '@/i18n';
 import { platform } from '@/platform';
 
 interface Credit {
@@ -20,25 +21,26 @@ interface Credit {
   url: string;
 }
 
-const CREDITS: Credit[] = [
-  {
-    use: '장소 검색 · 길찾기',
-    name: '© OpenStreetMap 기여자',
-    url: 'https://www.openstreetmap.org/copyright',
-  },
-  {
-    use: '대중교통',
-    name: 'Transitous (교통기관 GTFS)',
-    url: 'https://transitous.org/sources/',
-  },
-];
-
 export function DataCredits() {
+  const t = useT();
+  const credits: Credit[] = [
+    {
+      use: t.credits.searchUse,
+      name: t.credits.osm,
+      url: 'https://www.openstreetmap.org/copyright',
+    },
+    {
+      use: t.credits.transitUse,
+      name: t.credits.transitous,
+      url: 'https://transitous.org/sources/',
+    },
+  ];
+
   return (
     <section className="credits">
-      <h2 className="credits__title">데이터 출처</h2>
+      <h2 className="credits__title">{t.credits.title}</h2>
       <ul className="credits__list">
-        {CREDITS.map((credit) => (
+        {credits.map((credit) => (
           <li key={credit.url} className="credits__row">
             <span className="credits__use">{credit.use}</span>
             {/*

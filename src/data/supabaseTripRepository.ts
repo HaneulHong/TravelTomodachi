@@ -27,6 +27,7 @@ import type {
   Trip,
   TripDay,
 } from '@/domain/types';
+import { getMessages, translateServerError } from '@/i18n/store';
 import { getSupabase } from '@/supabase/client';
 import type {
   DayPatch,
@@ -196,7 +197,7 @@ export function createSupabaseTripRepository(): TripRepository {
       .from('trip_members')
       .select('trip_id,user_id,role')
       .in('trip_id', tripIds);
-    if (error) throw new Error(`멤버를 읽지 못했습니다: ${error.message}`);
+    if (error) throw new Error(`${getMessages().errors.readMembers}: ${error.message}`);
 
     const members = (rows ?? []) as MemberRow[];
     const userIds = [...new Set(members.map((m) => m.user_id))];
@@ -215,7 +216,7 @@ export function createSupabaseTripRepository(): TripRepository {
 
     for (const m of members) {
       const profile = profilesById.get(m.user_id);
-      const name = profile?.nickname ?? '여행자';
+      const name = profile?.nickname ?? getMessages().profile.defaultNickname;
       const list = byTrip.get(m.trip_id) ?? [];
       list.push({
         id: m.user_id,
@@ -239,7 +240,7 @@ export function createSupabaseTripRepository(): TripRepository {
         .from('trips')
         .select('id,name,start_date,end_date,owner_id,invite_code,cover_emoji')
         .order('start_date', { ascending: true });
-      if (error) throw new Error(`여행을 읽지 못했습니다: ${error.message}`);
+      if (error) throw new Error(`${getMessages().errors.readTrips}: ${error.message}`);
 
       const trips = (tripRows ?? []) as TripRow[];
       const tripIds = trips.map((t) => t.id);
@@ -253,8 +254,8 @@ export function createSupabaseTripRepository(): TripRepository {
         client.from('checklist').select('*').in('trip_id', tripIds),
       ]);
 
-      if (daysRes.error) throw new Error(`날짜를 읽지 못했습니다: ${daysRes.error.message}`);
-      if (itemsRes.error) throw new Error(`항목을 읽지 못했습니다: ${itemsRes.error.message}`);
+      if (daysRes.error) throw new Error(`${getMessages().errors.readDays}: ${daysRes.error.message}`);
+      if (itemsRes.error) throw new Error(`${getMessages().errors.readItems}: ${itemsRes.error.message}`);
 
       const daysByTrip = new Map<string, TripDay[]>();
       for (const d of (daysRes.data ?? []) as DayRow[]) {
@@ -289,7 +290,7 @@ export function createSupabaseTripRepository(): TripRepository {
     async createTrip(draft: TripDraft): Promise<Trip> {
       const { data: userData } = await client.auth.getUser();
       const userId = userData.user?.id;
-      if (!userId) throw new Error('로그인이 필요합니다');
+      if (!userId) throw new Error(getMessages().errors.needSignIn);
 
       const { data, error } = await client
         .from('trips')
@@ -302,7 +303,7 @@ export function createSupabaseTripRepository(): TripRepository {
         })
         .select('id,name,start_date,end_date,owner_id,invite_code,cover_emoji')
         .single();
-      if (error || !data) throw new Error(`여행을 만들지 못했습니다: ${error?.message}`);
+      if (error || !data) throw new Error(`${getMessages().errors.createTrip}: ${error?.message}`);
 
       const row = data as TripRow;
 
@@ -315,7 +316,7 @@ export function createSupabaseTripRepository(): TripRepository {
             city_label: d.cityLabel,
           })),
         );
-        if (dayError) throw new Error(`날짜를 만들지 못했습니다: ${dayError.message}`);
+        if (dayError) throw new Error(`${getMessages().errors.createDays}: ${dayError.message}`);
       }
 
       const membersByTrip = await loadMembers([row.id]);
@@ -335,7 +336,8 @@ export function createSupabaseTripRepository(): TripRepository {
 
     async joinTrip(code: string): Promise<string> {
       const { data, error } = await client.rpc('join_trip_by_code', { code });
-      if (error) throw new Error(error.message);
+      // DB 함수의 오류는 한국어다(없는 코드 등). 그 사람의 언어로 옮긴다.
+      if (error) throw new Error(translateServerError(error.message));
       return data as string;
     },
 
@@ -349,8 +351,8 @@ export function createSupabaseTripRepository(): TripRepository {
         .delete({ count: 'exact' })
         .eq('trip_id', tripId)
         .eq('user_id', userId);
-      if (error) throw new Error(`멤버를 빼지 못했습니다: ${error.message}`);
-      if (count === 0) throw new Error('권한이 없거나 이미 빠진 멤버입니다');
+      if (error) throw new Error(`${getMessages().errors.removeMember}: ${error.message}`);
+      if (count === 0) throw new Error(getMessages().errors.removeMemberNone);
     },
 
     async deleteTrip(tripId: string): Promise<void> {
@@ -358,14 +360,14 @@ export function createSupabaseTripRepository(): TripRepository {
         .from('trips')
         .delete({ count: 'exact' })
         .eq('id', tripId);
-      if (error) throw new Error(`여행을 지우지 못했습니다: ${error.message}`);
-      if (count === 0) throw new Error('여행을 만든 사람만 지울 수 있습니다');
+      if (error) throw new Error(`${getMessages().errors.deleteTrip}: ${error.message}`);
+      if (count === 0) throw new Error(getMessages().errors.deleteTripNotOwner);
     },
 
     async regenerateInviteCode(tripId: string): Promise<string> {
       // 멤버는 invite_code 칸을 고칠 권한이 없다(sharing.sql). 소유자 확인은 함수가 한다.
       const { data, error } = await client.rpc('regenerate_invite_code', { trip: tripId });
-      if (error) throw new Error(error.message);
+      if (error) throw new Error(translateServerError(error.message));
       return data as string;
     },
 
@@ -388,19 +390,19 @@ export function createSupabaseTripRepository(): TripRepository {
         description: item.description ?? null,
         carrier_code: item.carrierCode ?? null,
       });
-      if (error) throw new Error(`일정을 만들지 못했습니다: ${error.message}`);
+      if (error) throw new Error(`${getMessages().errors.createItem}: ${error.message}`);
     },
 
     async updateItem(itemId: string, patch: Partial<Item>): Promise<void> {
       const row = toItemRow(patch);
       if (Object.keys(row).length === 0) return;
       const { error } = await client.from('items').update(row).eq('id', itemId);
-      if (error) throw new Error(`일정을 고치지 못했습니다: ${error.message}`);
+      if (error) throw new Error(`${getMessages().errors.updateItem}: ${error.message}`);
     },
 
     async removeItem(itemId: string): Promise<void> {
       const { error } = await client.from('items').delete().eq('id', itemId);
-      if (error) throw new Error(`일정을 지우지 못했습니다: ${error.message}`);
+      if (error) throw new Error(`${getMessages().errors.deleteItem}: ${error.message}`);
     },
 
     async updateDays(tripId: string, dates: string[], patch: DayPatch): Promise<void> {
@@ -414,7 +416,7 @@ export function createSupabaseTripRepository(): TripRepository {
         .update(row)
         .eq('trip_id', tripId)
         .in('date', dates);
-      if (error) throw new Error(`날짜를 고치지 못했습니다: ${error.message}`);
+      if (error) throw new Error(`${getMessages().errors.updateDays}: ${error.message}`);
     },
 
     async addChecklistItem(entry: ChecklistItem): Promise<void> {
@@ -425,17 +427,17 @@ export function createSupabaseTripRepository(): TripRepository {
         checked: entry.checked,
         assignee_id: entry.assigneeId ?? null,
       });
-      if (error) throw new Error(`준비물을 추가하지 못했습니다: ${error.message}`);
+      if (error) throw new Error(`${getMessages().errors.addChecklist}: ${error.message}`);
     },
 
     async updateChecklistItem(itemId: string, checked: boolean): Promise<void> {
       const { error } = await client.from('checklist').update({ checked }).eq('id', itemId);
-      if (error) throw new Error(`준비물을 고치지 못했습니다: ${error.message}`);
+      if (error) throw new Error(`${getMessages().errors.updateChecklist}: ${error.message}`);
     },
 
     async removeChecklistItem(itemId: string): Promise<void> {
       const { error } = await client.from('checklist').delete().eq('id', itemId);
-      if (error) throw new Error(`준비물을 지우지 못했습니다: ${error.message}`);
+      if (error) throw new Error(`${getMessages().errors.deleteChecklist}: ${error.message}`);
     },
 
     subscribe(onChange: (change: RemoteChange) => void): () => void {

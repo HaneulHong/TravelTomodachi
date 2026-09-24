@@ -42,7 +42,4 @@ export function resolveLegRegion(
   return { region: a, crossBorder: a !== b };
 }
 
-export const REGION_LABEL: Record<Region, string> = {
-  KR: '국내',
-  GLOBAL: '해외',
-};
+// 지역 이름(국내·해외)은 언어마다 달라 i18n/messages의 t.region으로 옮겼다

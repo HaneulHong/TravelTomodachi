@@ -3,11 +3,13 @@ import { useParams } from 'react-router-dom';
 import { AppHeader } from '@/components/AppHeader';
 import { CheckIcon, PlusIcon } from '@/components/icons';
 import { platform } from '@/platform';
+import { useT } from '@/i18n';
 import { useTripStore } from '@/store/tripStore';
 
 export function ChecklistScreen() {
   const { tripId = '' } = useParams();
   const [draft, setDraft] = useState('');
+  const t = useT();
 
   const trip = useTripStore((s) => s.getTrip(tripId));
   const checklist = useTripStore((s) => s.checklist).filter((c) => c.tripId === tripId);
@@ -17,9 +19,9 @@ export function ChecklistScreen() {
   if (!trip) {
     return (
       <div className="app">
-        <AppHeader title="체크리스트" back />
+        <AppHeader title={t.checklist.title} back />
         <main className="main main--no-tabs">
-          <p className="empty">여행을 찾을 수 없습니다.</p>
+          <p className="empty">{t.common.tripNotFound}</p>
         </main>
       </div>
     );
@@ -37,7 +39,7 @@ export function ChecklistScreen() {
 
   return (
     <div className="app">
-      <AppHeader title="체크리스트" back />
+      <AppHeader title={t.checklist.title} back />
 
       <main className="main main--no-tabs">
         <div className="section" style={{ paddingBottom: 0 }}>
@@ -55,7 +57,7 @@ export function ChecklistScreen() {
         </div>
 
         <div className="checklist">
-          {checklist.length === 0 && <p className="empty">아직 항목이 없습니다.</p>}
+          {checklist.length === 0 && <p className="empty">{t.checklist.empty}</p>}
 
           {checklist.map((c) => {
             const assignee = trip.members.find((m) => m.id === c.assigneeId);
@@ -92,13 +94,13 @@ export function ChecklistScreen() {
             <input
               className="checkadd__input"
               value={draft}
-              placeholder="항목 추가"
+              placeholder={t.checklist.addPlaceholder}
               onChange={(e) => setDraft(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') submit();
               }}
             />
-            <button className="btn btn--primary btn--sm" onClick={submit} aria-label="추가">
+            <button className="btn btn--primary btn--sm" onClick={submit} aria-label={t.common.add}>
               <PlusIcon />
             </button>
           </div>

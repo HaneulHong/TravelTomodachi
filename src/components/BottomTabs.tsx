@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom';
+import { useT } from '@/i18n';
 import { CalendarIcon, HomeIcon, MapIcon } from './icons';
 
 interface Props {
@@ -10,16 +11,17 @@ interface Props {
 
 /** 스케치 하단의 홈 / 일정 / 지도 탭바 */
 export function BottomTabs({ tripId, date }: Props) {
+  const t = useT();
   const tripPath = tripId
     ? `/trip/${tripId}${date ? `?date=${date}` : ''}`
     : '/';
   const mapPath = tripId ? `/trip/${tripId}/map${date ? `?date=${date}` : ''}` : '/';
 
   return (
-    <nav className="tabs" aria-label="주요 화면">
+    <nav className="tabs" aria-label={t.common.mainNav}>
       <NavLink to="/" end className={({ isActive }) => `tab${isActive ? ' tab--active' : ''}`}>
         <HomeIcon className="tab__icon" />
-        홈
+        {t.tabs.home}
       </NavLink>
 
       <NavLink
@@ -30,7 +32,7 @@ export function BottomTabs({ tripId, date }: Props) {
         aria-disabled={!tripId}
       >
         <CalendarIcon className="tab__icon" />
-        일정
+        {t.tabs.schedule}
       </NavLink>
 
       <NavLink
@@ -39,7 +41,7 @@ export function BottomTabs({ tripId, date }: Props) {
         aria-disabled={!tripId}
       >
         <MapIcon className="tab__icon" />
-        지도
+        {t.tabs.map}
       </NavLink>
     </nav>
   );

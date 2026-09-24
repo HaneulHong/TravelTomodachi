@@ -14,8 +14,9 @@
 import { useMemo, useState } from 'react';
 import { MenuSheet } from '@/components/MenuSheet';
 import { followingSameDays, formatDateLabel, tzShortLabel } from '@/domain/time';
-import { zoneLabel, zoneOptions } from '@/domain/timezones';
+import { isDefaultZoneLabel, zoneLabel, zoneOptions } from '@/domain/timezones';
 import type { TripDay } from '@/domain/types';
+import { useLocale, useT } from '@/i18n';
 import { useTripStore } from '@/store/tripStore';
 
 interface Props {
@@ -27,6 +28,8 @@ interface Props {
 
 export function DayEditSheet({ tripId, days, date, onClose }: Props) {
   const updateDays = useTripStore((s) => s.updateDays);
+  const t = useT();
+  const locale = useLocale();
 
   const dayIndex = days.findIndex((d) => d.date === date);
   const day = days[dayIndex];
@@ -36,7 +39,7 @@ export function DayEditSheet({ tripId, days, date, onClose }: Props) {
   const [withFollowing, setWithFollowing] = useState(false);
 
   const following = useMemo(() => followingSameDays(days, date), [days, date]);
-  const zones = useMemo(() => zoneOptions(day?.timezone ?? ''), [day?.timezone]);
+  const zones = useMemo(() => zoneOptions(locale, day?.timezone ?? ''), [locale, day?.timezone]);
 
   if (!day) return null;
 
@@ -46,11 +49,11 @@ export function DayEditSheet({ tripId, days, date, onClose }: Props) {
      * 사용자가 '제주'처럼 직접 적은 이름은 건드리지 않는다.
      */
     const trimmed = city.trim();
-    if (trimmed === '' || trimmed === zoneLabel(timezone)) setCity(zoneLabel(next));
+    if (trimmed === '' || isDefaultZoneLabel(timezone, trimmed)) setCity(zoneLabel(next, locale));
     setTimezone(next);
   };
 
-  const cityLabel = city.trim() || zoneLabel(timezone);
+  const cityLabel = city.trim() || zoneLabel(timezone, locale);
   const changed = timezone !== day.timezone || cityLabel !== day.cityLabel;
   const lastFollowing = following[following.length - 1];
 
@@ -65,25 +68,25 @@ export function DayEditSheet({ tripId, days, date, onClose }: Props) {
   };
 
   return (
-    <MenuSheet open onClose={onClose} label="날짜 설정">
+    <MenuSheet open onClose={onClose} label={t.dayEdit.label}>
       <div className="form dayedit">
         <div className="dayedit__title">
-          {dayIndex + 1}일차 · {formatDateLabel(date)}
+          {t.common.dayWithDate(dayIndex + 1, formatDateLabel(date, locale))}
         </div>
 
         <label className="form__row">
-          <span className="form__label">도시</span>
+          <span className="form__label">{t.dayEdit.city}</span>
           <input
             className="form__input"
             value={city}
             onChange={(e) => setCity(e.target.value)}
-            placeholder={zoneLabel(timezone)}
+            placeholder={zoneLabel(timezone, locale)}
             maxLength={30}
           />
         </label>
 
         <label className="form__row">
-          <span className="form__label">타임존</span>
+          <span className="form__label">{t.dayEdit.timezone}</span>
           <select
             className="form__input"
             value={timezone}
@@ -96,9 +99,7 @@ export function DayEditSheet({ tripId, days, date, onClose }: Props) {
             ))}
           </select>
           {timezone !== day.timezone && (
-            <p className="form__hint">
-              일정 시간은 그대로 둡니다. 09:00 일정은 {cityLabel} 현지 09:00이 됩니다.
-            </p>
+            <p className="form__hint">{t.dayEdit.keepTimes(cityLabel)}</p>
           )}
         </label>
 
@@ -115,9 +116,12 @@ export function DayEditSheet({ tripId, days, date, onClose }: Props) {
               onChange={(e) => setWithFollowing(e.target.checked)}
             />
             <span>
-              뒤로 이어지는 {following.length}일도 같이 바꾸기
+              {t.dayEdit.withFollowing(following.length)}
               <span className="form__check-sub">
-                {formatDateLabel(lastFollowing)}까지 · 지금 {day.cityLabel || zoneLabel(day.timezone)}
+                {t.dayEdit.until(
+                  formatDateLabel(lastFollowing, locale),
+                  day.cityLabel || zoneLabel(day.timezone, locale),
+                )}
               </span>
             </span>
           </label>
@@ -125,10 +129,10 @@ export function DayEditSheet({ tripId, days, date, onClose }: Props) {
 
         <div className="form__actions">
           <button className="btn btn--primary" onClick={save}>
-            저장
+            {t.common.save}
           </button>
           <button className="btn" onClick={onClose}>
-            취소
+            {t.common.cancel}
           </button>
         </div>
       </div>

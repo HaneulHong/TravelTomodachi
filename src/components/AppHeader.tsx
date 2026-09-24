@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { useT } from '@/i18n';
 import { ChevronLeft, Menu, UserIcon } from './icons';
 
 interface Props {
@@ -21,11 +22,12 @@ interface Props {
 
 export function AppHeader({ title, back = false, onMenu, action, onProfile }: Props) {
   const navigate = useNavigate();
+  const t = useT();
 
   return (
     <header className="header">
       {back ? (
-        <button className="header__btn" onClick={() => navigate(-1)} aria-label="뒤로">
+        <button className="header__btn" onClick={() => navigate(-1)} aria-label={t.common.back}>
           <ChevronLeft />
         </button>
       ) : (
@@ -35,11 +37,11 @@ export function AppHeader({ title, back = false, onMenu, action, onProfile }: Pr
       <h1 className="header__title">{title}</h1>
 
       {onProfile ? (
-        <button className="header__btn header__profile" onClick={onProfile} aria-label="프로필">
+        <button className="header__btn header__profile" onClick={onProfile} aria-label={t.common.profile}>
           <UserIcon size={20} />
         </button>
       ) : onMenu ? (
-        <button className="header__btn" onClick={onMenu} aria-label="메뉴">
+        <button className="header__btn" onClick={onMenu} aria-label={t.common.menu}>
           <Menu />
         </button>
       ) : action ? (

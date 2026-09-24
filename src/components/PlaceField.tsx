@@ -13,6 +13,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { PinIcon } from '@/components/icons';
 import type { Coord } from '@/domain/types';
+import { getMessages, useT } from '@/i18n';
 import { getPlaceProvider, type Place } from '@/providers';
 
 /** 입력이 멈추고 이만큼 지나야 조회한다. */
@@ -38,6 +39,7 @@ export function PlaceField({
   onPicked,
   autoFocus,
 }: Props) {
+  const t = useT();
   const [results, setResults] = useState<Place[]>([]);
   const [searching, setSearching] = useState(false);
   const [open, setOpen] = useState(false);
@@ -85,7 +87,7 @@ export function PlaceField({
           if (seq !== seqRef.current) return;
           // 서비스가 막혔거나 죽은 경우. "결과 없음"으로 뭉뚱그리면 검색어를
           // 계속 바꿔보게 되므로 이유를 그대로 보여준다.
-          setSearchError(err instanceof Error ? err.message : '장소를 찾지 못했습니다');
+          setSearchError(err instanceof Error ? err.message : getMessages().place.searchFailed);
           setResults([]);
           setSearching(false);
         });
@@ -179,7 +181,7 @@ export function PlaceField({
            * 목록이 닫히면 선택이 통째로 무시된다.
            */
           <ul className="ac__list" onMouseDown={(e) => e.preventDefault()}>
-            {searching && <li className="ac__msg">찾는 중…</li>}
+            {searching && <li className="ac__msg">{t.place.searching}</li>}
 
             {!searching &&
               results.map((place, i) => (
@@ -206,14 +208,11 @@ export function PlaceField({
           한글 표기가 거의 없어서다. 그냥 "없음"이라고만 하면 검색이 고장난
           줄 알고 같은 말을 계속 바꿔 치게 된다.
         */
-        <p className="form__hint">
-          후보가 없습니다. 해외 장소는 현지어나 영어로 쳐보세요 (예: 도쿄 스카이트리 →
-          Tokyo Skytree).
-        </p>
+        <p className="form__hint">{t.place.noResults}</p>
       )}
 
       {name.trim().length > 0 && !coord && (
-        <p className="form__hint">좌표가 없어 지도에는 표시되지 않습니다.</p>
+        <p className="form__hint">{t.place.noCoord}</p>
       )}
     </div>
   );

@@ -10,14 +10,9 @@ import { useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { AppHeader } from '@/components/AppHeader';
 import { PlaceField } from '@/components/PlaceField';
-import {
-  CARRIER_LABEL,
-  CARRIER_PLACEHOLDER,
-  ITEM_KIND_LABEL,
-  isSegmentKind,
-  type Coord,
-  type ItemKind,
-} from '@/domain/types';
+import { isSegmentKind, type Coord, type ItemKind } from '@/domain/types';
+import { formatDateLabel } from '@/domain/time';
+import { useLocale, useT } from '@/i18n';
 import { useTripStore } from '@/store/tripStore';
 
 const KINDS: ItemKind[] = ['place', 'flight', 'train', 'bus', 'ferry'];
@@ -32,11 +27,16 @@ export function ItemEditScreen() {
   const addItem = useTripStore((s) => s.addItem);
   const updateItem = useTripStore((s) => s.updateItem);
   const removeItem = useTripStore((s) => s.removeItem);
+  const moveItemToDate = useTripStore((s) => s.moveItemToDate);
+  const t = useT();
+  const locale = useLocale();
 
   const isEdit = Boolean(itemId);
   // 추가일 때 어느 날짜에 넣을지는 쿼리로 받는다. 수정이면 항목이 이미 안다.
-  const date = existing?.date ?? params.get('date') ?? trip?.startDate ?? '';
+  const originalDate = existing?.date ?? params.get('date') ?? trip?.startDate ?? '';
 
+  // 다른 날로 옮길 수 있다. 옮기면 그 날의 맨 뒤에 붙고 시간은 그대로다.
+  const [date, setDate] = useState(originalDate);
   const [kind, setKind] = useState<ItemKind>(existing?.kind ?? 'place');
   const [title, setTitle] = useState(existing?.title ?? '');
   const [placeName, setPlaceName] = useState(existing?.placeName ?? '');
@@ -53,9 +53,9 @@ export function ItemEditScreen() {
   if (!trip) {
     return (
       <div className="app">
-        <AppHeader title="일정" back />
+        <AppHeader title={t.trip.title} back />
         <main className="main main--no-tabs">
-          <p className="empty">여행을 찾을 수 없습니다.</p>
+          <p className="empty">{t.common.tripNotFound}</p>
         </main>
       </div>
     );
@@ -64,9 +64,9 @@ export function ItemEditScreen() {
   if (isEdit && !existing) {
     return (
       <div className="app">
-        <AppHeader title="일정 수정" back />
+        <AppHeader title={t.itemEdit.titleEdit} back />
         <main className="main main--no-tabs">
-          <p className="empty">항목을 찾을 수 없습니다.</p>
+          <p className="empty">{t.common.itemNotFound}</p>
         </main>
       </div>
     );
@@ -94,6 +94,7 @@ export function ItemEditScreen() {
     };
 
     if (isEdit && itemId) {
+      if (date !== originalDate) moveItemToDate(itemId, date);
       updateItem(itemId, patch);
       navigate(-1);
       return;
@@ -109,21 +110,21 @@ export function ItemEditScreen() {
     if (!itemId) return;
     removeItem(itemId);
     // 상세 화면은 이미 사라진 항목을 가리키므로 목록까지 되돌린다.
-    navigate(`/trip/${trip.id}?date=${date}`, { replace: true });
+    navigate(`/trip/${trip.id}?date=${originalDate}`, { replace: true });
   };
 
   return (
     <div className="app">
       <AppHeader
-        title={isEdit ? '일정 수정' : '일정 추가'}
+        title={isEdit ? t.itemEdit.titleEdit : t.itemEdit.titleNew}
         back
-        action={{ label: '저장', onClick: save, disabled: !canSave }}
+        action={{ label: t.common.save, onClick: save, disabled: !canSave }}
       />
 
       <main className="main main--no-tabs">
         <div className="form">
           <div className="form__row">
-            <span className="form__label">종류</span>
+            <span className="form__label">{t.itemEdit.kind}</span>
             <div className="seg">
               {KINDS.map((k) => (
                 <button
@@ -131,27 +132,41 @@ export function ItemEditScreen() {
                   className={`seg__btn${k === kind ? ' seg__btn--on' : ''}`}
                   onClick={() => setKind(k)}
                 >
-                  {ITEM_KIND_LABEL[k]}
+                  {t.kind[k]}
                 </button>
               ))}
             </div>
           </div>
 
           <label className="form__row">
-            <span className="form__label">제목</span>
+            <span className="form__label">{t.itemEdit.title}</span>
             <input
               className="form__input"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="예: 점심 · 분짜"
+              placeholder={t.itemEdit.titlePlaceholder}
               autoFocus={!isEdit}
             />
           </label>
 
+          <label className="form__row">
+            <span className="form__label">{t.itemEdit.date}</span>
+            <select className="form__input" value={date} onChange={(e) => setDate(e.target.value)}>
+              {trip.days.map((d, i) => (
+                <option key={d.date} value={d.date}>
+                  {t.common.dayWithDate(i + 1, formatDateLabel(d.date, locale))}
+                </option>
+              ))}
+            </select>
+            {isEdit && date !== originalDate && (
+              <p className="form__hint">{t.itemEdit.dateMoveHint}</p>
+            )}
+          </label>
+
           <PlaceField
-            label={isSegmentKind(kind) ? '출발 터미널' : '장소'}
+            label={isSegmentKind(kind) ? t.itemEdit.depart : t.itemEdit.place}
             placeholder={
-              isSegmentKind(kind) ? '예: 서울역, 동서울종합터미널' : '장소 검색 (예: 호안끼엠)'
+              isSegmentKind(kind) ? t.itemEdit.departPlaceholder : t.itemEdit.placePlaceholder
             }
             name={placeName}
             coord={coord}
@@ -172,8 +187,8 @@ export function ItemEditScreen() {
           */}
           {isSegmentKind(kind) && (
             <PlaceField
-              label="도착 터미널"
-              placeholder="예: 부산역, 제주항 여객터미널"
+              label={t.itemEdit.arrive}
+              placeholder={t.itemEdit.arrivePlaceholder}
               name={toPlaceName}
               coord={toCoord}
               onChange={(next, nextCoord) => {
@@ -185,7 +200,7 @@ export function ItemEditScreen() {
 
           <div className="form__pair">
             <label className="form__row">
-              <span className="form__label">시각</span>
+              <span className="form__label">{t.itemEdit.time}</span>
               <input
                 className="form__input"
                 type="time"
@@ -195,7 +210,7 @@ export function ItemEditScreen() {
             </label>
 
             <label className="form__row">
-              <span className="form__label">머무는 시간</span>
+              <span className="form__label">{t.itemEdit.stay}</span>
               <span className="form__suffixed">
                 <input
                   className="form__input"
@@ -207,42 +222,42 @@ export function ItemEditScreen() {
                   onChange={(e) => setDuration(e.target.value)}
                   placeholder="60"
                 />
-                <span className="form__suffix">분</span>
+                <span className="form__suffix">{t.itemEdit.minutesSuffix}</span>
               </span>
             </label>
           </div>
 
           {isSegmentKind(kind) && (
             <label className="form__row">
-              <span className="form__label">{CARRIER_LABEL[kind]}</span>
+              <span className="form__label">{t.carrierLabel[kind]}</span>
               <input
                 className="form__input"
                 value={carrierCode}
                 onChange={(e) => setCarrierCode(e.target.value)}
-                placeholder={CARRIER_PLACEHOLDER[kind]}
+                placeholder={t.carrierPlaceholder[kind]}
               />
             </label>
           )}
 
           <label className="form__row">
-            <span className="form__label">메모</span>
+            <span className="form__label">{t.itemEdit.memo}</span>
             <textarea
               className="form__input form__textarea"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
-              placeholder="예약 번호, 준비물, 주의할 점…"
+              placeholder={t.itemEdit.memoPlaceholder}
             />
           </label>
 
           <div className="form__actions">
             <button className="btn btn--primary" onClick={save} disabled={!canSave}>
-              {isEdit ? '저장' : '추가'}
+              {isEdit ? t.common.save : t.common.add}
             </button>
 
             {isEdit && (
               <button className="btn btn--danger" onClick={destroy}>
-                삭제
+                {t.common.delete}
               </button>
             )}
           </div>

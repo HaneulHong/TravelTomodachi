@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { formatDateShort, formatWeekday } from '@/domain/time';
 import type { TripDay } from '@/domain/types';
+import { useLocale, useT } from '@/i18n';
 
 interface Props {
   days: TripDay[];
@@ -11,6 +12,8 @@ interface Props {
 /** 스케치의 "슬라이드 시 해당 일정의 날짜 변동"을 칩으로도 직접 고를 수 있게 */
 export function DateStrip({ days, activeDate, onSelect }: Props) {
   const ref = useRef<HTMLDivElement>(null);
+  const t = useT();
+  const locale = useLocale();
 
   // 선택된 날짜가 바뀌면 화면 안으로 스크롤한다 (스와이프로 넘겼을 때 필요)
   useEffect(() => {
@@ -19,7 +22,7 @@ export function DateStrip({ days, activeDate, onSelect }: Props) {
   }, [activeDate]);
 
   return (
-    <div className="datestrip" ref={ref} role="tablist" aria-label="여행 날짜">
+    <div className="datestrip" ref={ref} role="tablist" aria-label={t.common.tripDates}>
       {days.map((day, i) => {
         const active = day.date === activeDate;
         return (
@@ -31,9 +34,9 @@ export function DateStrip({ days, activeDate, onSelect }: Props) {
             className={`daychip${active ? ' daychip--active' : ''}`}
             onClick={() => onSelect(day.date)}
           >
-            <span className="daychip__n">{i + 1}일차</span>
+            <span className="daychip__n">{t.common.dayN(i + 1)}</span>
             <span className="daychip__d">{formatDateShort(day.date)}</span>
-            <span className="daychip__w">{formatWeekday(day.date)}</span>
+            <span className="daychip__w">{formatWeekday(day.date, locale)}</span>
           </button>
         );
       })}

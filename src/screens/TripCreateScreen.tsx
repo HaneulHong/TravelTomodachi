@@ -18,6 +18,7 @@ import { AppHeader } from '@/components/AppHeader';
 import { formatDateLabel, tzShortLabel } from '@/domain/time';
 import { deviceTimezone, zoneLabel, zoneOptions } from '@/domain/timezones';
 import type { TripDay } from '@/domain/types';
+import { useLocale, useT } from '@/i18n';
 import { useTripStore } from '@/store/tripStore';
 
 const EMOJIS = ['🧳', '🏝️', '🍊', '🗼', '🏔️', '🚄', '⛴️', '🎒'];
@@ -49,6 +50,8 @@ function datesBetween(start: string, end: string): string[] {
 export function TripCreateScreen() {
   const navigate = useNavigate();
   const createTrip = useTripStore((s) => s.createTrip);
+  const t = useT();
+  const locale = useLocale();
 
   const [name, setName] = useState('');
   const [emoji, setEmoji] = useState(EMOJIS[0]!);
@@ -58,7 +61,7 @@ export function TripCreateScreen() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const zones = useMemo(() => zoneOptions(deviceTimezone()), []);
+  const zones = useMemo(() => zoneOptions(locale, deviceTimezone()), [locale]);
 
   const dates = useMemo(() => datesBetween(startDate, endDate), [startDate, endDate]);
   const canSave = name.trim().length > 0 && dates.length > 0 && !saving;
@@ -70,7 +73,8 @@ export function TripCreateScreen() {
     try {
       // 도시 이름은 타임존의 대표 도시로 채워 둔다. 비워 두면 일정 화면 머리에
       // 아무것도 안 떠서, 어디를 눌러 고치는지조차 안 보인다.
-      const cityLabel = zoneLabel(timezone);
+      // 저장되는 값이라 만드는 사람의 언어로 들어간다 — 날짜 설정에서 고칠 수 있다.
+      const cityLabel = zoneLabel(timezone, locale);
       const days: TripDay[] = dates.map((date) => ({ date, timezone, cityLabel }));
       const tripId = await createTrip({
         name: name.trim(),
@@ -81,7 +85,7 @@ export function TripCreateScreen() {
       });
       navigate(`/trip/${tripId}?date=${startDate}`, { replace: true });
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : '여행을 만들지 못했습니다');
+      setError(err instanceof Error ? err.message : t.tripCreate.failed);
       setSaving(false);
     }
   };
@@ -89,22 +93,26 @@ export function TripCreateScreen() {
   return (
     <div className="app">
       <AppHeader
-        title="새 여행"
+        title={t.tripCreate.title}
         back
-        action={{ label: saving ? '만드는 중…' : '만들기', onClick: () => void save(), disabled: !canSave }}
+        action={{
+          label: saving ? t.tripCreate.creating : t.tripCreate.create,
+          onClick: () => void save(),
+          disabled: !canSave,
+        }}
       />
 
       <main className="main main--no-tabs">
         <div className="form">
           <div className="form__row">
-            <span className="form__label">표지</span>
+            <span className="form__label">{t.tripCreate.cover}</span>
             <div className="emoji-pick">
               {EMOJIS.map((e) => (
                 <button
                   key={e}
                   className={`emoji-pick__btn${e === emoji ? ' emoji-pick__btn--on' : ''}`}
                   onClick={() => setEmoji(e)}
-                  aria-label={`표지 ${e}`}
+                  aria-label={t.tripCreate.coverAria(e)}
                 >
                   {e}
                 </button>
@@ -113,12 +121,12 @@ export function TripCreateScreen() {
           </div>
 
           <label className="form__row">
-            <span className="form__label">여행 이름</span>
+            <span className="form__label">{t.tripCreate.name}</span>
             <input
               className="form__input"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="예: 동남아 + 도쿄 6일"
+              placeholder={t.tripCreate.namePlaceholder}
               maxLength={60}
               autoFocus
             />
@@ -126,7 +134,7 @@ export function TripCreateScreen() {
 
           <div className="form__pair">
             <label className="form__row">
-              <span className="form__label">시작</span>
+              <span className="form__label">{t.tripCreate.start}</span>
               <input
                 className="form__input"
                 type="date"
@@ -141,7 +149,7 @@ export function TripCreateScreen() {
             </label>
 
             <label className="form__row">
-              <span className="form__label">종료</span>
+              <span className="form__label">{t.tripCreate.end}</span>
               <input
                 className="form__input"
                 type="date"
@@ -153,7 +161,7 @@ export function TripCreateScreen() {
           </div>
 
           <label className="form__row">
-            <span className="form__label">기본 타임존</span>
+            <span className="form__label">{t.tripCreate.timezone}</span>
             <select
               className="form__input"
               value={timezone}
@@ -165,18 +173,15 @@ export function TripCreateScreen() {
                 </option>
               ))}
             </select>
-            <p className="form__hint">
-              모든 날짜에 이 타임존이 붙습니다. 도시를 옮기는 날은 일정 화면에서 도시
-              이름을 눌러 그 날부터 고치면 됩니다.
-            </p>
+            <p className="form__hint">{t.tripCreate.timezoneHint}</p>
           </label>
 
           {dates.length > 0 && (
             <div className="form__row">
-              <span className="form__label">만들어질 날짜 {dates.length}일</span>
+              <span className="form__label">{t.tripCreate.dateCount(dates.length)}</span>
               <p className="form__hint">
-                {formatDateLabel(dates[0]!)}
-                {dates.length > 1 && ` — ${formatDateLabel(dates[dates.length - 1]!)}`}
+                {formatDateLabel(dates[0]!, locale)}
+                {dates.length > 1 && ` — ${formatDateLabel(dates[dates.length - 1]!, locale)}`}
               </p>
             </div>
           )}
@@ -185,7 +190,7 @@ export function TripCreateScreen() {
 
           <div className="form__actions">
             <button className="btn btn--primary" onClick={() => void save()} disabled={!canSave}>
-              {saving ? '만드는 중…' : '여행 만들기'}
+              {saving ? t.tripCreate.creating : t.tripCreate.submit}
             </button>
           </div>
         </div>

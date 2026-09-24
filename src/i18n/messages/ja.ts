@@ -1,0 +1,356 @@
+/**
+ * 日本語. 모양은 ko.ts를 따른다 — 빠진 문구가 있으면 빌드가 실패한다.
+ * 원어민 검토 전이다. 어색한 표현은 이 파일만 고치면 된다.
+ */
+
+import type { Messages } from './ko';
+
+export const ja: Messages = {
+  common: {
+    back: '戻る',
+    menu: 'メニュー',
+    profile: 'プロフィール',
+    mainNav: 'メイン',
+    tripDates: '旅行の日付',
+    save: '保存',
+    add: '追加',
+    delete: '削除',
+    cancel: 'キャンセル',
+    processing: '処理中…',
+    failed: 'できませんでした',
+    loading: '読み込み中…',
+    beta: 'ベータ',
+    tripNotFound: '旅行が見つかりません。',
+    itemNotFound: '予定が見つかりません。',
+    noInfo: '情報なし',
+    querying: '検索中',
+    dayN: (n) => `${n}日目`,
+    dayWithDate: (n, date) => `${n}日目 · ${date}`,
+  },
+
+  tabs: { home: 'ホーム', schedule: '予定', map: '地図' },
+
+  kind: {
+    place: 'スポット',
+    flight: '飛行機',
+    train: '電車',
+    bus: 'バス',
+    ferry: '船',
+  },
+
+  transport: {
+    walk: '徒歩',
+    transit: '公共交通',
+    car: '車',
+  },
+
+  carrierLabel: {
+    place: '',
+    flight: '便名',
+    train: '列車',
+    bus: 'バス路線',
+    ferry: '航路 · 船名',
+  },
+
+  carrierPlaceholder: {
+    place: '',
+    flight: '例: JL091',
+    train: '例: のぞみ21号',
+    bus: '例: 空港リムジンバス',
+    ferry: '例: 博多 → 釜山 クイーンビートル',
+  },
+
+  region: { KR: '韓国', GLOBAL: '海外' },
+
+  leg: {
+    transitMissing: '公共交通の情報なし',
+    crossBorder: '国際区間 · 手入力',
+    crossBorderShort: '国際区間',
+    unknownTap: '移動情報なし · タップして入力',
+    unknown: '移動情報なし',
+    manual: '手入力',
+  },
+
+  signIn: {
+    method: {
+      google: 'Googleで続ける',
+      apple: 'Appleで続ける',
+      dev: '開発用アカウントで試す',
+    },
+    tagline: '友だちと一緒に作る旅行プラン',
+    invited: '旅行に招待されました。ログインするとそのプランにすぐ入れます。',
+    devNote:
+      'まだバックエンドにつながっていないため、セッションは**このブラウザだけ**に残ります。招待と共同編集はSupabaseにつないでから使えます。',
+    privacy: '保存するのはニックネームだけです。メールアドレスや本名は受け取りません。',
+  },
+
+  unavailable: {
+    title: 'ただいまサービスを利用できません',
+    body: 'メンテナンス中か、一時的な問題が発生しています。しばらくしてからもう一度お試しください。',
+    retry: '再試行',
+  },
+
+  home: {
+    title: 'ホーム',
+    list: '旅行リスト',
+    empty: 'まだ旅行がありません。下から最初の旅行を作りましょう。',
+    dayCount: (n) => `${n}日間`,
+    bothRegions: '韓国 + 海外',
+    dday: (n) => `あと${n}日`,
+    departsToday: '今日出発',
+    ongoing: '旅行中 · 過去の旅行',
+    newTrip: '新しい旅行を作る',
+    joinByCode: '招待コードで参加',
+  },
+
+  trip: {
+    title: '予定',
+    notFound: '旅行が見つかりません。削除されたか、メンバーではなくなった可能性があります。',
+    tzBanner: (delta, city) =>
+      `前日との時差は**${delta}**です。以下の時刻はすべて**${city}の現地時刻**です。`,
+    emptyDay: 'この日はまだ予定がありません。',
+    addItem: '予定を追加',
+    menuChecklist: 'チェックリスト',
+    menuReorder: '並べ替え',
+    reorderDone: '完了',
+    reorderHint: '右のハンドルをドラッグして並べ替えます。入力した時刻は変わりません。',
+    reorderHandle: (title) => `${title}を移動`,
+    menuShare: '友だちに共有',
+    menuMembers: 'メンバー · 招待コード',
+    menuDelete: '旅行を削除',
+    menuLeave: '旅行から抜ける',
+    deleteTitle: '旅行を削除しますか？',
+    deleteConfirm: '削除',
+    deleteBody: (name) => `**${name}**の予定と持ち物がすべて削除されます。元に戻せません。`,
+    deleteOthers: (n) => `一緒にいた${n}人もこの旅行を見られなくなります。`,
+    leaveTitle: '旅行から抜けますか？',
+    leaveConfirm: '抜ける',
+    leaveBody: (name) =>
+      `あなたのリストから**${name}**が消えます。予定はほかのメンバーにはそのまま残ります。`,
+    leaveRejoin: 'また参加するには新しい招待リンクが必要です。',
+  },
+
+  dayEdit: {
+    label: '日付の設定',
+    city: '都市',
+    timezone: 'タイムゾーン',
+    keepTimes: (city) =>
+      `予定の時刻はそのままです。09:00の予定は${city}の現地時刻09:00になります。`,
+    withFollowing: (n) => `続く${n}日間も一緒に変更`,
+    until: (date, city) => `${date}まで · 現在 ${city}`,
+  },
+
+  tripCreate: {
+    title: '新しい旅行',
+    create: '作成',
+    creating: '作成中…',
+    cover: '表紙',
+    coverAria: (emoji) => `表紙 ${emoji}`,
+    name: '旅行の名前',
+    namePlaceholder: '例: ソウル・釜山 5日間',
+    start: '開始',
+    end: '終了',
+    timezone: '基本のタイムゾーン',
+    timezoneHint:
+      'すべての日付にこのタイムゾーンが付きます。別の都市へ移動する日は、予定画面で都市名をタップしてその日から変更してください。',
+    dateCount: (n) => `作成される日付 ${n}日間`,
+    submit: '旅行を作成',
+    failed: '旅行を作成できませんでした',
+  },
+
+  itemEdit: {
+    titleNew: '予定を追加',
+    titleEdit: '予定を編集',
+    date: '日付',
+    dateMoveHint: 'その日の最後に移動します。時刻はそのままです。',
+    kind: '種類',
+    title: 'タイトル',
+    titlePlaceholder: '例: ランチ · 冷麺',
+    place: '場所',
+    placePlaceholder: '場所を検索 (例: 明洞)',
+    depart: '出発ターミナル',
+    departPlaceholder: '例: ソウル駅、仁川空港',
+    arrive: '到着ターミナル',
+    arrivePlaceholder: '例: 釜山駅、済州港',
+    time: '時刻',
+    stay: '滞在時間',
+    minutesSuffix: '分',
+    memo: 'メモ',
+    memoPlaceholder: '予約番号、持ち物、注意点…',
+    defaultTitle: '新しい予定',
+  },
+
+  itemDetail: {
+    stay: (d) => `滞在 ${d}`,
+    howToMove: '移動手段',
+    firstOfDay: 'この日の最初の予定です。前の区間はありません。',
+    transitMissing:
+      'この地域は公共交通のデータがありません。徒歩と車だけ計算しました。Grabやトゥクトゥクなど現地の手段を使う場合は、下に直接入力してください。',
+    crossBorder:
+      '国境をまたぐ区間です。ルート検索では計算できないので、飛行機や列車の情報を直接入力してください。',
+    moveTime: '移動時間',
+    minus5: '5分減らす',
+    plus5: '5分増やす',
+    saveManual: '入力した時間で保存',
+    manualNote: '手入力した値です。ルート検索の結果で上書きしません。',
+    revertAuto: '自動計算に戻す',
+    memo: 'メモ',
+    noMemo: 'まだメモがありません。',
+    drawnLine: '地図に描かれた線',
+    viaTransit: '見つかった公共交通の路線',
+    viaCar: '道路・航路に沿った車のルート',
+    straight: 'ルートが見つからず、2つのターミナルを直線(点線)で結びました。',
+    coordNote: '座標だけで探したルートです。',
+    carrierDiffers: (code) => `入力した「${code}」とは異なる場合があります。`,
+    edit: '編集',
+  },
+
+  edited: {
+    leftMember: '抜けたメンバー',
+    title: (name, when) => `${name === null ? 'あなた' : `${name}さん`}が編集${when ? ` · ${when}` : ''}`,
+    line: (name) => `最終編集: ${name === null ? 'あなた' : `${name}さん`}`,
+  },
+
+  map: {
+    title: '地図',
+    noCoords: 'この日は位置情報のある予定がありません。',
+    noTime: '時刻未定',
+    startPoint: 'この日の出発地点です。',
+    loading: '地図を読み込み中…',
+    failed: '地図を読み込めませんでした',
+    fallback: '地図を読み込めなかったため、簡易地図で表示しています。予定の順番とルートはそのままです。',
+    schematic: '簡易地図',
+    pinAria: (n, time, name) => `地点${n}: ${time ? `${time} ` : ''}${name}`,
+  },
+
+  place: {
+    searchFailed: '場所が見つかりませんでした',
+    searchHttpFailed: (status) =>
+      `場所の検索に失敗しました (${status})。しばらくしてからもう一度お試しください。`,
+    searching: '検索中…',
+    noResults: '候補がありません。現地の言葉か英語で入力してみてください (例: 東京スカイツリー → Tokyo Skytree)。',
+    noCoord: '座標がないため、地図には表示されません。',
+  },
+
+  credits: {
+    title: 'データの出典',
+    searchUse: '場所検索 · ルート検索',
+    osm: '© OpenStreetMap 貢献者',
+    transitUse: '公共交通',
+    transitous: 'Transitous (交通機関のGTFS)',
+  },
+
+  checklist: {
+    title: 'チェックリスト',
+    empty: 'まだ項目がありません。',
+    addPlaceholder: '項目を追加',
+  },
+
+  members: {
+    title: 'メンバー',
+    screenTitle: 'メンバー · 招待',
+    code: '招待コード',
+    codeAria: (spelled) => `招待コード ${spelled}`,
+    sendLink: '招待リンクを送る',
+    regenerate: '招待コードを変更',
+    count: (n) => `メンバー ${n}人`,
+    me: ' (自分)',
+    owner: '作成者',
+    kick: '外す',
+    alone: 'まだひとりです。招待リンクを送れば、友だちがすぐに参加して一緒に編集できます。',
+    kickTitle: (name) => `${name}さんを外しますか？`,
+    kickBody: 'この旅行を見られなくなります。編集済みの予定はそのまま残ります。',
+    kickBody2: '招待リンクを持っていれば再参加できます。防ぐには招待コードも変更してください。',
+    regenTitle: '招待コードを変更しますか？',
+    regenConfirm: '新しいコードを作成',
+    regenBody: (code) => `これまでに送ったリンクとコード**${code}**では参加できなくなります。`,
+    regenBody2: 'すでに参加しているメンバーはそのままです。',
+  },
+
+  invite: {
+    title: '招待に参加',
+    joining: '参加中…',
+    code: '招待コード',
+    placeholder: '例: 5G5D5UNX',
+    hint: '大文字と小文字は区別しません。友だちからのリンクを開くと、この画面が自動で参加します。',
+    join: '参加する',
+    goHome: 'ホームへ',
+    failed: '参加できませんでした',
+  },
+
+  share: {
+    text: (name, code) => `${name}のプランを一緒に見よう (招待コード ${code})`,
+    textNoUrl: (name, code) =>
+      `${name}のプランを一緒に見よう\n招待コード: ${code}\nアプリで「招待コードで参加」をタップして入力してください。`,
+    copiedLink: '招待リンクをコピーしました',
+    copiedCode: '招待コードをコピーしました',
+    codeToast: (code) => `招待コード: ${code}`,
+  },
+
+  profile: {
+    title: 'プロフィール',
+    notSignedIn: 'ログインしていません。',
+    via: {
+      google: 'Googleアカウントでログイン中',
+      apple: 'Appleアカウントでログイン中',
+      dev: '開発用アカウントでログイン中',
+    },
+    nickname: 'ニックネーム',
+    nicknamePlaceholder: '友だちに表示される名前',
+    nicknameHint: (tag) =>
+      `ほかの人と同じでも大丈夫です${tag ? `。後ろの番号(#${tag})で区別します` : ''}。いつでも変更できます。`,
+    saved: '保存しました',
+    saveNickname: 'ニックネームを保存',
+    signOut: 'ログアウト',
+    privacy: '保存するのはニックネームだけです。メールアドレスや本名は受け取りません。',
+    defaultNickname: '旅行者',
+    language: '言語',
+    languageAuto: '端末の言語に合わせる',
+    languageAutoHint: (name) => `現在の端末の言語: ${name}`,
+    languageManualHint: '選んだ言語はこの端末でだけ使われます。',
+  },
+
+  nickname: {
+    empty: 'ニックネームを入力してください',
+    tooLong: (max) => `ニックネームは${max}文字までです`,
+    hash: 'ニックネームに「#」は使えません',
+  },
+
+  errors: {
+    signInFailed: 'ログインできませんでした',
+    signInCancelled: 'ログインがキャンセルされました',
+    signInNoCode: 'ログインの応答にコードがありません',
+    unsupportedMethod: '対応していないログイン方法です',
+    notSignedIn: 'ログインしていません',
+    needSignIn: 'ログインが必要です',
+    nicknameFailed: 'ニックネームを変更できませんでした',
+    readProfile: 'プロフィールを読み込めませんでした',
+    createProfile: 'プロフィールを作成できませんでした',
+    saveFailed: '保存できませんでした',
+    readTrips: '旅行を読み込めませんでした',
+    readMembers: 'メンバーを読み込めませんでした',
+    readDays: '日付を読み込めませんでした',
+    readItems: '予定を読み込めませんでした',
+    createTrip: '旅行を作成できませんでした',
+    createDays: '日付を作成できませんでした',
+    removeMember: 'メンバーを外せませんでした',
+    removeMemberNone: '権限がないか、すでに抜けたメンバーです',
+    deleteTrip: '旅行を削除できませんでした',
+    deleteTripNotOwner: '旅行を作成した人だけが削除できます',
+    createItem: '予定を追加できませんでした',
+    updateItem: '予定を更新できませんでした',
+    deleteItem: '予定を削除できませんでした',
+    updateDays: '日付を更新できませんでした',
+    addChecklist: '持ち物を追加できませんでした',
+    updateChecklist: '持ち物を更新できませんでした',
+    deleteChecklist: '持ち物を削除できませんでした',
+  },
+
+  serverErrors: {
+    needSignIn: 'ログインが必要です',
+    codeNotFound: '招待コードが見つかりません',
+    onlyOwnerRegenerate: '旅行を作成した人だけが招待コードを変更できます',
+    regenerateFailed: '招待コードを作成できませんでした。もう一度お試しください',
+    nicknameCrowded: 'このニックネームを使っている人が多すぎます。別のニックネームにしてください',
+  },
+};

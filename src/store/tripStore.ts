@@ -19,7 +19,9 @@
 import { create } from 'zustand';
 import { getTripRepository, type DayPatch, type RemoteChange } from '@/data';
 import { bySortKey, keyBetween, keyForMove } from '@/domain/fractionalIndex';
+import { moved, predecessorsChanged } from '@/domain/order';
 import type { ChecklistItem, Item, Leg, TransportMode, Trip, TripDay } from '@/domain/types';
+import { getMessages } from '@/i18n/store';
 
 const repository = getTripRepository();
 
@@ -66,7 +68,13 @@ interface TripState {
   /** 수동 지정을 해제하고 다시 자동 조회 대상으로 돌린다 */
   clearManualLeg(itemId: string): void;
   updateItem(itemId: string, patch: Partial<Omit<Item, 'id' | 'tripId'>>): void;
+  /**
+   * 같은 날 안에서 순서를 바꾼다. to는 옮긴 뒤의 최종 인덱스.
+   * 앞 일정이 바뀐 항목의 직접 입력 이동 시간은 지운다(domain/order.ts).
+   */
   moveItem(tripId: string, date: string, from: number, to: number): void;
+  /** 다른 날로 옮긴다. 그 날의 맨 뒤에 붙는다. 벽시계 시간은 그대로. */
+  moveItemToDate(itemId: string, date: string): void;
   addItem(tripId: string, date: string, draft: Partial<Item>): string;
   removeItem(itemId: string): void;
 
@@ -119,9 +127,40 @@ export const useTripStore = create<TripState>()((set, get) => {
       set((state) => ({
         ...state,
         ...previous,
-        error: err instanceof Error ? err.message : '저장하지 못했습니다',
+        error: err instanceof Error ? err.message : getMessages().errors.saveFailed,
       }));
     });
+  }
+
+  /** 이 중 직접 입력 이동 시간이 있는 항목만 — 없는 항목까지 쓰면 불필요한 저장이 는다 */
+  function staleLegs(ids: string[]): Set<string> {
+    const set = new Set(ids);
+    return new Set(get().items.filter((i) => set.has(i.id) && i.leg).map((i) => i.id));
+  }
+
+  /**
+   * 순서·날짜 변경을 한 번에 반영한다. 옮긴 항목의 새 위치와, 앞 일정이 바뀌어
+   * 무의미해진 이동 시간 지우기를 같이 적용하고, 하나라도 실패하면 전부 되돌린다.
+   */
+  function applyReorder(
+    moves: Record<string, Pick<Item, 'sortKey'> & Partial<Pick<Item, 'date'>>>,
+    clearLeg: Set<string>,
+  ): void {
+    const previous = { items: get().items };
+    const patches = new Map<string, Partial<Item>>();
+    for (const [id, patch] of Object.entries(moves)) patches.set(id, { ...patch });
+    for (const id of clearLeg) patches.set(id, { ...patches.get(id), leg: undefined });
+
+    set((state) => ({
+      items: state.items.map((item) => {
+        const patch = patches.get(item.id);
+        return patch ? { ...item, ...patch, ...editedNow() } : item;
+      }),
+    }));
+    rollbackOn(
+      Promise.all([...patches].map(([id, patch]) => repository.updateItem(id, patch))),
+      previous,
+    );
   }
 
   /** 여행과 딸린 항목·준비물을 함께 치운다 (DB의 cascade와 맞춘다) */
@@ -237,7 +276,7 @@ export const useTripStore = create<TripState>()((set, get) => {
       } catch (err: unknown) {
         set({
           loading: false,
-          error: err instanceof Error ? err.message : '여행을 읽지 못했습니다',
+          error: err instanceof Error ? err.message : getMessages().errors.readTrips,
         });
       }
     },
@@ -311,13 +350,26 @@ export const useTripStore = create<TripState>()((set, get) => {
       if (!target || from === to) return;
       const newKey = keyForMove(dayItems, from, to);
 
-      const previous = { items: get().items };
-      set((state) => ({
-        items: state.items.map((item) =>
-          item.id === target.id ? { ...item, sortKey: newKey, ...editedNow() } : item,
-        ),
-      }));
-      rollbackOn(repository.updateItem(target.id, { sortKey: newKey }), previous);
+      const ids = dayItems.map((i) => i.id);
+      const stale = staleLegs(predecessorsChanged(ids, moved(ids, from, to)));
+      applyReorder({ [target.id]: { sortKey: newKey } }, stale);
+    },
+
+    moveItemToDate: (itemId, date) => {
+      const item = get().getItem(itemId);
+      if (!item || item.date === date) return;
+
+      const target = get().getDayItems(item.tripId, date);
+      const last = target[target.length - 1]?.sortKey ?? null;
+      // 떠나는 날: 이 항목 바로 뒤에 있던 일정의 앞 일정이 바뀐다
+      const leaving = get()
+        .getDayItems(item.tripId, item.date)
+        .map((i) => i.id);
+      const stale = staleLegs([
+        ...predecessorsChanged(leaving, leaving.filter((id) => id !== itemId)),
+        itemId,
+      ]);
+      applyReorder({ [itemId]: { date, sortKey: keyBetween(last, null) } }, stale);
     },
 
     addItem: (tripId, date, draft) => {
@@ -330,7 +382,7 @@ export const useTripStore = create<TripState>()((set, get) => {
         // 맨 뒤에 추가 — fractional index의 정수부만 증가하므로 키가 짧게 유지된다
         sortKey: keyBetween(last, null),
         kind: draft.kind ?? 'place',
-        title: draft.title ?? '새 일정',
+        title: draft.title ?? getMessages().itemEdit.defaultTitle,
         placeName: draft.placeName,
         coord: draft.coord,
         toPlaceName: draft.toPlaceName,

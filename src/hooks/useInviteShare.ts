@@ -8,6 +8,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Trip } from '@/domain/types';
+import { getMessages } from '@/i18n';
 import { platform } from '@/platform';
 
 /**
@@ -29,16 +30,16 @@ export function useInviteShare(): {
 
   const share = useCallback(async (trip: Pick<Trip, 'name' | 'inviteCode'>) => {
     const url = inviteUrl(trip.inviteCode);
+    // 누를 때의 언어로 쓴다 — 보내는 사람이 읽고 보내는 메시지다
+    const t = getMessages().share;
     const result = await platform.share({
       title: trip.name,
       // 코드는 링크가 있어도 적는다. 앱을 쓰는 친구는 링크 대신 코드를 입력한다.
-      text: url
-        ? `${trip.name} 일정을 함께 봐요 (초대 코드 ${trip.inviteCode})`
-        : `${trip.name} 일정을 함께 봐요\n초대 코드: ${trip.inviteCode}\n앱에서 "초대 코드로 참가"를 누르고 입력하세요.`,
+      text: url ? t.text(trip.name, trip.inviteCode) : t.textNoUrl(trip.name, trip.inviteCode),
       url,
     });
-    if (result === 'copied') setToast(url ? '초대 링크를 복사했습니다' : '초대 코드를 복사했습니다');
-    else if (result === 'unavailable') setToast(`초대 코드: ${trip.inviteCode}`);
+    if (result === 'copied') setToast(url ? t.copiedLink : t.copiedCode);
+    else if (result === 'unavailable') setToast(t.codeToast(trip.inviteCode));
     else return;
     clearTimeout(timer.current);
     timer.current = setTimeout(() => setToast(null), 2400);

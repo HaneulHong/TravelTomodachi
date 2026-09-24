@@ -11,6 +11,7 @@
  */
 
 import type { Coord } from '@/domain/types';
+import { getMessages } from '@/i18n/store';
 
 export interface MapStop {
   id: string;
@@ -95,7 +96,7 @@ export function createPinElement(
   const el = document.createElement('div');
   el.className = anchor === 'bottom' ? 'mappin mappin--anchor-bottom' : 'mappin';
   el.setAttribute('role', 'img');
-  el.setAttribute('aria-label', `${label}번 지점: ${caption ? `${caption} ` : ''}${title}`);
+  el.setAttribute('aria-label', getMessages().map.pinAria(label, caption, title));
 
   const dot = document.createElement('span');
   dot.className = 'mappin__dot';

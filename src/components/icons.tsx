@@ -236,3 +236,22 @@ export const TrashIcon = ({ size = 18, className }: IconProps) => (
     <path d="M10 11v6M14 11v6" />
   </svg>
 );
+
+/** 순서 바꾸기 — 위아래 화살표 */
+export const ReorderIcon = ({ size = 18, className }: IconProps) => (
+  <svg {...base(size, className)}>
+    <path d="M8 4v16M8 4L4.5 7.5M8 4l3.5 3.5M16 20V4M16 20l-3.5-3.5M16 20l3.5-3.5" />
+  </svg>
+);
+
+/** 끌기 손잡이 — 점 여섯 개 */
+export const GripIcon = ({ size = 18, className }: IconProps) => (
+  <svg {...base(size, className)} fill="currentColor" stroke="none">
+    <circle cx="9" cy="6" r="1.6" />
+    <circle cx="15" cy="6" r="1.6" />
+    <circle cx="9" cy="12" r="1.6" />
+    <circle cx="15" cy="12" r="1.6" />
+    <circle cx="9" cy="18" r="1.6" />
+    <circle cx="15" cy="18" r="1.6" />
+  </svg>
+);
