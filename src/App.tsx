@@ -21,6 +21,8 @@ import { ChecklistScreen } from '@/screens/ChecklistScreen';
 import { InviteScreen } from '@/screens/InviteScreen';
 import { ProfileScreen } from '@/screens/ProfileScreen';
 import { SignInScreen } from '@/screens/SignInScreen';
+import { UnavailableScreen } from '@/screens/UnavailableScreen';
+import { hasBackend } from '@/supabase/client';
 import { TripCreateScreen } from '@/screens/TripCreateScreen';
 
 /**
@@ -130,6 +132,9 @@ export function App() {
       </div>
     );
   }
+
+  // 배포 빌드인데 백엔드 설정이 빠졌다 — 개발용 목으로 몰래 돌지 않는다
+  if (!hasBackend && import.meta.env.PROD) return <UnavailableScreen />;
 
   if (!account) {
     // 초대 링크로 들어왔다면 로그인 동안 코드를 붙잡아 둔다

@@ -7,7 +7,8 @@
 
 import { useState } from 'react';
 import { AppHeader } from '@/components/AppHeader';
-import { colorOf, initialOf, type SignInMethod } from '@/auth';
+import { initialOf, NICKNAME_MAX, nicknameProblem, type SignInMethod } from '@/auth';
+import { VERSION_LABEL } from '@/config';
 import { useAuthStore } from '@/store/authStore';
 
 const VIA_LABEL: Record<SignInMethod, string> = {
@@ -37,7 +38,9 @@ export function ProfileScreen() {
   }
 
   const trimmed = draft.trim();
-  const changed = trimmed.length > 0 && trimmed !== account.nickname;
+  // 저장을 누르기 전에 알려준다. 누른 뒤에 서버 오류로 알게 되면 늦다.
+  const problem = trimmed === account.nickname ? null : nicknameProblem(draft);
+  const changed = trimmed !== account.nickname && problem === null;
 
   const save = async (): Promise<void> => {
     if (!changed) return;
@@ -55,11 +58,12 @@ export function ProfileScreen() {
         <div className="form">
           {/* 아바타는 닉네임에서 만든다 — 사진을 받지 않으므로 */}
           <div className="profile__head">
-            <span
-              className="profile__avatar"
-              style={{ background: colorOf(trimmed || account.nickname) }}
-            >
+            <span className="profile__avatar" style={{ background: account.color }}>
               {initialOf(trimmed || account.nickname)}
+            </span>
+            <span className="profile__name">
+              {account.nickname}
+              {account.tag && <span className="profile__tag">#{account.tag}</span>}
             </span>
             <span className="profile__via">{VIA_LABEL[account.via]}으로 로그인됨</span>
           </div>
@@ -71,11 +75,17 @@ export function ProfileScreen() {
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
               placeholder="친구들에게 보일 이름"
-              maxLength={20}
+              maxLength={NICKNAME_MAX}
             />
-            <p className="form__hint">
-              일정에서 누가 고쳤는지 구분하는 데만 씁니다. 언제든 바꿀 수 있습니다.
-            </p>
+            {problem ? (
+              <p className="form__hint form__hint--error">{problem}</p>
+            ) : (
+              <p className="form__hint">
+                다른 사람과 같아도 됩니다
+                {account.tag ? `. 뒤의 번호(#${account.tag})로 구분합니다` : ''}. 언제든 바꿀
+                수 있습니다.
+              </p>
+            )}
           </label>
 
           {error && <p className="form__hint form__hint--error">{error}</p>}
@@ -92,6 +102,8 @@ export function ProfileScreen() {
           <p className="signin__privacy">
             저장하는 정보는 닉네임뿐입니다. 이메일과 실명은 받지 않습니다.
           </p>
+
+          <p className="signin__version">TravelTomodachi {VERSION_LABEL}</p>
         </div>
       </main>
     </div>

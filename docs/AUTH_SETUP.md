@@ -247,6 +247,14 @@ create trigger on_auth_user_created
 > ⚠️ 그 파일은 테이블을 **새로 만드는** 스크립트입니다. 이미 데이터가 있는
 > 상태에서 돌리면 전부 지워집니다. 마이그레이션이 아닙니다.
 
+이어서 순서대로 실행합니다 (모두 덧붙이기용이라 데이터를 지우지 않고, 여러 번 돌려도 안전):
+
+| 파일 | 하는 일 |
+|---|---|
+| [`supabase/realtime.sql`](../supabase/realtime.sql) | 실시간 동기화 켜기 |
+| [`supabase/sharing.sql`](../supabase/sharing.sql) | 누가 고쳤는지, 권한 구멍 막기, 초대 코드 바꾸기 (새 DB면 schema.sql에 이미 있음 — 돌려도 무해) |
+| [`supabase/profile-tag.sql`](../supabase/profile-tag.sql) | 닉네임 번호(#1234) |
+
 ---
 
 ## 5. 코드 연결

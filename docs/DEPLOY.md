@@ -9,30 +9,30 @@ GitHub에 푸시하면 자동 배포. (Vercel 무료는 비상업 전용)
 
 ---
 
-## 1. Cloudflare 프로젝트 만들기
+## 1. Cloudflare Pages 프로젝트 (현재: `tabitomo.pages.dev`)
 
-Cloudflare는 새 프로젝트를 **Workers** 방식(정적 파일 제공 포함)으로 안내한다.
-정적 파일만 내보내면 무료다. 저장소의 `wrangler.jsonc`가 "dist/를 그대로
-올린다"를 정해 둔다 — 이 파일이 없으면 배포 단계가 Vite 버전 문제로 실패한다.
+**지금 쓰는 곳: https://tabitomo.pages.dev** (Pages 프로젝트 `tabitomo`)
 
-1. https://dash.cloudflare.com 가입 (무료)
-2. **Workers & Pages → Create → Import a repository** → GitHub 연결 →
-   `HaneulHong/TravelTomodachi`
-3. 빌드 설정
+처음엔 Workers 방식으로 만들었다가 주소(`traveltomodachi.hongha303.workers.dev`)가
+길고 계정 이름이 드러나서 Pages로 옮겼다. Workers 프로젝트 `traveltomodachi`는
+**지워도 된다** — 남겨 두면 푸시할 때마다 두 곳에서 빌드된다.
+(저장소의 `wrangler.jsonc`는 Workers용이고 Pages는 무시한다.)
+
+새로 만든다면:
+
+1. https://dash.cloudflare.com → **Workers & Pages → Create** → 아래쪽 **Pages** 탭 →
+   **Connect to Git** → `HaneulHong/TravelTomodachi`
+2. 빌드 설정
 
    | 항목 | 값 |
    |---|---|
-   | Build command | `npm run build` |
-   | Deploy command | `npx wrangler deploy` (기본값 그대로) |
    | Production branch | `main` |
+   | Build command | `npm run build` |
+   | Build output directory | `dist` |
 
    Node 버전은 저장소의 `.node-version`(22)을 따른다.
 
-4. **환경 변수 — "빌드 변수"에 넣는다**
-
-   Worker → **Settings → Build → Variables and secrets** (빌드용).
-   런타임 변수(Settings → Variables and Secrets)에 넣으면 **안 된다.**
-   `VITE_` 값은 빌드할 때 번들에 박히는 값이라 빌드 단계에서 보여야 한다.
+3. **환경 변수** — 프로젝트 → **Settings → Variables and Secrets** → **Production**
 
    | 이름 | 값 |
    |---|---|
@@ -41,43 +41,43 @@ Cloudflare는 새 프로젝트를 **Workers** 방식(정적 파일 제공 포함
    | `VITE_GOOGLE_MAPS_API_KEY` | Google Maps 키 |
    | `VITE_GOOGLE_MAPS_MAP_ID` | Map ID |
    | `VITE_KAKAO_MAPS_JS_KEY` | 카카오 JavaScript 키 |
-   | `VITE_PUBLIC_BASE_URL` | 배포 주소 (예: `https://traveltomodachi.○○○.workers.dev`) |
+   | `VITE_PUBLIC_BASE_URL` | `https://tabitomo.pages.dev` |
 
    ⚠️ **secret / service_role 키는 절대 넣지 않는다.** 여기 값은 전부 번들에
    들어가 누구나 볼 수 있다. 공개 키만 넣는다(접근 제어는 RLS가 한다).
 
-   `VITE_PUBLIC_BASE_URL`은 첫 배포 뒤에야 주소를 안다. 주소를 확인해 넣고
-   **다시 배포**(Deployments → 최신 빌드 Retry, 또는 main에 푸시)한다.
-   이 값이 초대 링크의 주소가 된다.
+   ⚠️ 변수를 넣거나 바꾼 뒤에는 **다시 배포해야** 반영된다
+   (Deployments → 최신 배포 ⋯ → Retry deployment, 또는 main에 푸시).
+   `VITE_` 값은 빌드할 때 번들에 박히기 때문이다.
 
-5. 배포되면 주소는 `https://traveltomodachi.<계정 서브도메인>.workers.dev`
+   변수가 빠진 채 배포되면 앱은 "잠시 서비스를 이용할 수 없습니다" 화면을
+   띄운다(개발용 목으로 몰래 돌지 않는다).
 
-이후로는 main에 푸시할 때마다 자동으로 다시 배포된다.
+이후로는 main에 머지할 때마다 자동으로 다시 배포된다.
 
 ---
 
 ## 2. 배포 주소를 각 서비스에 알려주기
 
-아래에서 `https://traveltomodachi.pages.dev`는 예시다. **실제 배포 주소**로 바꿔 넣는다
-(Workers 방식이면 `https://traveltomodachi.○○○.workers.dev`).
+배포 주소: `https://tabitomo.pages.dev`
 
 ### Supabase — 로그인 후 돌아올 곳
 **Authentication → URL Configuration**
-- **Site URL**: `https://traveltomodachi.pages.dev`
-- **Redirect URLs**에 추가: `https://traveltomodachi.pages.dev`
+- **Site URL**: `https://tabitomo.pages.dev`
+- **Redirect URLs**에 추가: `https://tabitomo.pages.dev`
   (개발용 `http://localhost:5173`, 앱용 `com.traveltomodachi.app://auth`는 그대로 둔다)
 
 안 하면 로그인 후 localhost로 튕긴다.
 
 ### Google Maps 키 — 허용 웹사이트
 Cloud Console → 사용자 인증 정보 → 해당 키 → 웹사이트 제한에 추가:
-`https://traveltomodachi.pages.dev/*`
+`https://tabitomo.pages.dev/*`
 
 안 하면 해외 지도가 인증 실패로 개략도가 된다.
 
 ### 카카오맵 — 사이트 도메인
 Kakao Developers → 앱 → 플랫폼 → Web → 사이트 도메인에 추가:
-`https://traveltomodachi.pages.dev`
+`https://tabitomo.pages.dev`
 
 안 하면 국내 지도가 401로 개략도가 된다.
 

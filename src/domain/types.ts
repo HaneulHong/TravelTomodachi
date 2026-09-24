@@ -45,6 +45,17 @@ export interface Member {
   /** 아바타에 표시할 한 글자 */
   initial: string;
   color: string;
+  /** 같은 닉네임끼리 구분하는 4자리 번호. 없을 수 있다(태그 도입 전 DB). */
+  tag?: string;
+}
+
+/**
+ * 멤버 이름표. 같은 여행에 같은 닉네임이 있을 때만 번호를 붙인다.
+ * 늘 붙이면 "여행자#0421님이 고침"처럼 읽기 번거롭고, 안 붙이면 둘을 못 가른다.
+ */
+export function memberLabel(member: Member, members: readonly Member[]): string {
+  const clash = members.some((m) => m.id !== member.id && m.name === member.name);
+  return clash && member.tag ? `${member.name}#${member.tag}` : member.name;
 }
 
 export interface TripDay {

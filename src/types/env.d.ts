@@ -6,6 +6,10 @@
  */
 
 interface ImportMetaEnv {
+  /** 개발 서버(npm run dev)인지. 설정 안내 같은 개발자용 문구는 이때만 보인다. */
+  readonly DEV: boolean;
+  readonly PROD: boolean;
+
   readonly VITE_PUBLIC_BASE_URL?: string;
 
   // ── 지도 ──────────────────────────────────────────────────────────
@@ -33,3 +37,6 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
+
+/** package.json의 version. vite.config.ts가 빌드할 때 넣는다. */
+declare const __APP_VERSION__: string;

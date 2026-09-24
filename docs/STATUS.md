@@ -1,0 +1,77 @@
+# 진행 현황
+
+> 모바일에서 확인하는 용도. GitHub 앱 → 저장소 → `docs/STATUS.md`.
+> 작업이 끝날 때마다 Claude가 갱신한다. 마지막 갱신: **2026-09-24**
+
+**서비스 주소**: https://tabitomo.pages.dev · **버전**: v0.9.0 베타
+
+---
+
+## 🙋 사용자가 할 일
+
+체크하지 않은 것이 남은 일이다. 위에서부터.
+
+- [ ] **Cloudflare Pages 환경 변수 넣고 다시 배포** — 지금 배포본이 개발용 목으로 뜬다.
+      Pages → `tabitomo` → Settings → Variables and Secrets → Production에 `.env.local` 값을
+      넣고, Deployments → Retry. 자세히는 [DEPLOY.md](./DEPLOY.md) 1단계
+- [ ] **배포 주소 등록 네 곳** ([DEPLOY.md](./DEPLOY.md) 2단계)
+  - [ ] Supabase: Site URL · Redirect URLs에 `https://tabitomo.pages.dev`
+  - [ ] Google Maps 키: 웹사이트 제한에 `https://tabitomo.pages.dev/*`
+  - [ ] 카카오: 사이트 도메인에 `https://tabitomo.pages.dev`
+  - [ ] Google OAuth 동의 화면: **프로덕션으로 게시** (안 하면 친구가 로그인 못 함)
+- [ ] **`supabase/profile-tag.sql` 실행** — 닉네임 번호(#1234). 머지 전후 상관없음(실행 전에도 앱은 번호 없이 동작)
+- [ ] PR `feat/beta-polish` 머지 → 자동 배포
+- [ ] Cloudflare Workers 프로젝트 `traveltomodachi` 삭제 (Pages로 옮겨서 안 씀)
+- [ ] 두 번째 계정으로: 「여행에서 나가기」, 「내보내기」 확인
+
+## ✅ 된 것
+
+### v0.9.0 베타 — 2026-09-24 (PR `feat/beta-polish`)
+- 개발용 문구 숨김 — 키 설정 안내·서비스 패널은 개발 서버에서만. 배포에 백엔드 설정이
+  빠지면 목 대신 "잠시 이용할 수 없습니다" 화면
+- 버전 표시 v0.9.0 베타 (로그인·프로필 화면, iOS·Android 버전도 0.9.0)
+- 닉네임 번호(여행자#0421) — 중복을 막지 않고 번호로 구분. 같은 여행에 같은 이름이
+  있을 때만 번호를 붙여 보인다. `#` 금지, 20자 제한
+- 아바타 색을 사람(id) 기준으로 — 같은 닉네임끼리도 색이 다르다
+- 홈 오른쪽 위 프로필 버튼을 사람 아이콘으로
+- 글자 잘림·넘침 수정 (320·360px 전 화면 검사)
+  - 헤더 글자 버튼(만들기 등)이 칸을 넘어 화면이 옆으로 밀리던 것
+  - 새 여행의 날짜 두 칸이 좁은 폰에서 넘치던 것
+  - 띄어쓰기 없는 긴 메모·URL이 카드를 밀어내던 것
+  - 한국어 단어가 중간에서 끊기던 것(신/칸센) → 띄어쓰기에서만 줄바꿈
+  - 긴 편명 칩 옆 제목이 한 글자씩 세로로 쪼개지던 것
+
+### 2026-09-23 ~ 24 (main에 머지됨)
+- 웹 배포 (Cloudflare Pages) — `tabitomo.pages.dev`
+- iOS·Android 앱 프로젝트(Capacitor). iOS 시뮬레이터에서 실행·Google 로그인 확인
+- 멤버·초대 코드 화면, 내보내기, 초대 코드 바꾸기, 여행 나가기·삭제
+- 누가 마지막으로 고쳤는지 표시
+- 보안: 멤버가 여행 소유자를 바꿔 빼앗을 수 있던 구멍 막음
+- 날짜별 도시·타임존 편집
+- 실시간 동기화 (친구가 고친 일정이 새로고침 없이)
+- 초대 링크·코드로 참가
+- Google 로그인, 닉네임 프로필, Supabase 저장
+
+### 그 전
+- 지도(해외 Google, 국내 카카오, 실패 시 간략 지도), 실제 경로선, 대중교통,
+  기차·버스·배편 구간, 장소 자동완성, 일정 추가·수정, 노트 스타일 디자인
+
+## ⏳ 확인 못 한 것
+- 배포 주소에서 로그인·지도·초대 링크 (환경 변수·주소 등록 후)
+- Android 앱 실행 (Android Studio 없음)
+- 앱에서 카카오맵이 뜨는지 (도메인 등록 방식 불확실 — 안 되면 간략 지도)
+
+## 💡 다음 후보
+- 홈 화면 아이콘 이미지 (`public/icon-192.png`, `icon-512.png` 없음 — 홈 화면에 추가 시 깨짐)
+- 첫 로그인 때 닉네임 정하기 화면 (지금은 모두 '여행자'로 시작)
+- 도메인 구입 (링크를 많이 돌리기 전에)
+- Apple 로그인 ($99/년 — 앱 출시 때)
+
+---
+
+## 작업 방식
+
+1. Claude가 main에서 새 브랜치를 따서 작업 → 커밋 → 푸시
+2. Claude가 PR 링크를 준다: `https://github.com/HaneulHong/TravelTomodachi/compare/main...<브랜치>?expand=1`
+3. 사용자가 GitHub에서 PR 만들고 머지 → Cloudflare가 자동 배포
+4. DB 변경이 있으면 `supabase/*.sql`을 **머지 전에** SQL Editor에서 실행

@@ -17,7 +17,7 @@ import { useParams } from 'react-router-dom';
 import { AppHeader } from '@/components/AppHeader';
 import { ConfirmSheet } from '@/components/ConfirmSheet';
 import { ShareIcon } from '@/components/icons';
-import type { Member } from '@/domain/types';
+import { memberLabel, type Member } from '@/domain/types';
 import { useInviteShare } from '@/hooks/useInviteShare';
 import { useTripStore } from '@/store/tripStore';
 
@@ -88,6 +88,8 @@ export function MembersScreen() {
                   </span>
                   <span className="member__name">
                     {m.name}
+                    {/* 멤버 화면에서는 늘 번호를 보인다 — 누가 누군지 확인하는 곳이다 */}
+                    {m.tag && <span className="member__tag">#{m.tag}</span>}
                     {self && <span className="member__me"> (나)</span>}
                   </span>
                   {owner && <span className="chip chip--accent">만든 사람</span>}
@@ -113,7 +115,7 @@ export function MembersScreen() {
 
       {pending?.kind === 'kick' && (
         <ConfirmSheet
-          title={`${pending.member.name}님을 내보낼까요?`}
+          title={`${memberLabel(pending.member, trip.members)}님을 내보낼까요?`}
           confirmLabel="내보내기"
           danger
           onClose={() => setPending(null)}

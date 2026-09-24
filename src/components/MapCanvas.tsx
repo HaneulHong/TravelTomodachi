@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { SHOW_DEV_HINTS } from '@/config';
 import { createSchematicMapRenderer } from '@/providers';
 import type { MapHandle, MapRenderer, MapStop, PathSegment } from '@/providers';
 
@@ -172,18 +173,29 @@ export function MapCanvas({ renderer, stops, path, onStopClick }: Props) {
       <div className="mapstage__canvas" ref={containerRef} />
 
       {status === 'loading' && active.configured && (
-        <div className="mapstage__overlay">{active.label} 불러오는 중…</div>
+        <div className="mapstage__overlay">지도를 불러오는 중…</div>
       )}
 
       {status === 'error' && (
         <div className="mapstage__overlay mapstage__overlay--error">
-          <strong>{active.label}을 불러오지 못했습니다</strong>
-          <span>{error}</span>
+          <strong>지도를 불러오지 못했습니다</strong>
+          {/* 원인 문구에는 키·리퍼러 같은 설정 얘기가 들어 있어 개발 중에만 */}
+          {SHOW_DEV_HINTS && <span>{error}</span>}
+        </div>
+      )}
+
+      {/*
+        배포된 서비스에서는 설정법 대신 "간략 지도로 보여준다"만 말한다.
+        사용자가 할 수 있는 일이 없는데 환경변수 이름을 보여줘 봐야 불안만 준다.
+      */}
+      {!SHOW_DEV_HINTS && (fallbackReason || !renderer.configured) && (
+        <div className="mapstage__note">
+          지도를 불러오지 못해 간략 지도로 보여드립니다. 일정 순서와 동선은 그대로입니다.
         </div>
       )}
 
       {/* SDK가 실패해서 내려온 경우: 키는 있으니 환경변수 안내는 맞지 않는다 */}
-      {fallbackReason && (
+      {SHOW_DEV_HINTS && fallbackReason && (
         <div className="mapstage__note">
           개략도입니다. <strong>{renderer.label}</strong> 타일을 불러오지 못했습니다 —{' '}
           {fallbackReason} 동선과 순서는 아래에서 그대로 확인할 수 있습니다. 설정 확인은{' '}
@@ -192,7 +204,7 @@ export function MapCanvas({ renderer, stops, path, onStopClick }: Props) {
       )}
 
       {/* 키가 없을 때: 개략도가 그려진 위에 무엇을 설정해야 하는지 알려준다 */}
-      {!fallbackReason && !renderer.configured && (
+      {SHOW_DEV_HINTS && !fallbackReason && !renderer.configured && (
         <div className="mapstage__note">
           개략도입니다. 실제 지도는 <strong>{renderer.label}</strong>으로 렌더링됩니다 —{' '}
           {renderer.setupHint && <code>{renderer.setupHint}</code>} 환경변수를 설정하세요.
@@ -201,7 +213,7 @@ export function MapCanvas({ renderer, stops, path, onStopClick }: Props) {
       )}
 
       {/* 지도는 떴지만 일부가 조용히 빠진 경우 (예: Map ID 누락 → 마커 없음) */}
-      {!fallbackReason && active.configured && status === 'ready' && renderer.warning && (
+      {SHOW_DEV_HINTS && !fallbackReason && active.configured && status === 'ready' && renderer.warning && (
         <div className="mapstage__note mapstage__note--warn">⚠ {renderer.warning}</div>
       )}
 
