@@ -11,19 +11,20 @@
 
 체크하지 않은 것이 남은 일이다. 위에서부터.
 
-- [ ] **`VITE_PUBLIC_BASE_URL`을 `https://traveltomodachi.pages.dev`로 고치고 다시 배포** —
+- [ ] ⚠️ **`VITE_PUBLIC_BASE_URL`을 `https://traveltomodachi.pages.dev`로 고치고 다시 배포** —
+      (2026-09-24 배포본에서 아직 tabitomo로 확인됨)
       지금 `https://traveltomodachi.pages.dev`로 들어가 있는데 그건 **다른 사람의 사이트**다.
       이대로면 초대 링크가 남의 사이트로 간다.
       Pages → `traveltomodachi` → Settings → Variables and Secrets → Production → 값 수정 →
       Deployments → Retry
 - [ ] Pages 프로젝트 `tabitomo`(실제 주소 `tabitomo-….pages.dev`, 환경 변수 없음) 삭제
 - [ ] **배포 주소 등록 네 곳** ([DEPLOY.md](./DEPLOY.md) 2단계)
-  - [ ] Supabase: Site URL · Redirect URLs에 `https://traveltomodachi.pages.dev`
+  - [x] Supabase: Site URL · Redirect URLs에 `https://traveltomodachi.pages.dev` — 배포 주소 로그인 확인됨
         (안 하면 로그인 후 `localhost:3000`으로 튕긴다 — 2026-09-24 실제로 겪음)
   - [ ] Google Maps 키: 웹사이트 제한에 `https://traveltomodachi.pages.dev/*`
   - [ ] 카카오: 사이트 도메인에 `https://traveltomodachi.pages.dev`
   - [ ] Google OAuth 동의 화면: **프로덕션으로 게시** (안 하면 친구가 로그인 못 함)
-- [ ] **`supabase/profile-tag.sql` 실행** — 닉네임 번호(#1234). 머지 전후 상관없음(실행 전에도 앱은 번호 없이 동작)
+- [x] **`supabase/profile-tag.sql` 실행** — 닉네임 번호(#1234). 머지 전후 상관없음(실행 전에도 앱은 번호 없이 동작)
 - [x] PR `feat/beta-polish` 머지 → 자동 배포 (PR #5)
 - [ ] Cloudflare **Workers** 프로젝트 `traveltomodachi`가 남아 있으면 삭제 (PR마다 실패 검사가 뜬다)
 - [ ] 두 번째 계정으로: 「여행에서 나가기」, 「내보내기」 확인
