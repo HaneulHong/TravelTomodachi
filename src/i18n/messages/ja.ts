@@ -64,6 +64,7 @@ export const ja: Messages = {
 
   leg: {
     transitMissing: '公共交通の情報なし',
+    transitNoRoute: '路線なし',
     crossBorder: '国際区間 · 手入力',
     crossBorderShort: '国際区間',
     unknownTap: '移動情報なし · タップして入力',
@@ -228,7 +229,7 @@ export const ja: Messages = {
     howToMove: '移動手段',
     firstOfDay: 'この日の最初の予定です。前の区間はありません。',
     transitMissing:
-      'この地域は公共交通のデータがありません。徒歩と車だけ計算しました。Grabやトゥクトゥクなど現地の手段を使う場合は、下に直接入力してください。',
+      '公共交通の経路が見つかりませんでした。この地域にデータがないか、その時間帯に運行する路線がない可能性があります。徒歩と車だけ計算しました。Grabやトゥクトゥクなど現地の手段を使う場合は、下に直接入力してください。',
     crossBorder:
       '国境をまたぐ区間です。ルート検索では計算できないので、飛行機や列車の情報を直接入力してください。',
     moveTime: '移動時間',

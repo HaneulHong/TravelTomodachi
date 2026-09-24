@@ -69,7 +69,9 @@ export async function fetchRoute(
   try {
     const provider = getRouteProviderFor(from);
     const result = await provider.route({ from, to, mode, departAt });
-    cache.set(key, result);
+    // 조회 실패(네트워크·스로틀링)는 담아 두지 않는다. 담아 두면 한 번 막힌
+    // 구간이 앱을 새로 열 때까지 계속 '정보 없음'으로 남는다.
+    if (result.available || result.reason !== 'lookup_failed') cache.set(key, result);
     return result;
   } finally {
     release();

@@ -64,6 +64,7 @@ export const en: Messages = {
 
   leg: {
     transitMissing: 'No transit data',
+    transitNoRoute: 'No line',
     crossBorder: 'International · enter manually',
     crossBorderShort: 'International',
     unknownTap: 'No route info · tap to enter',
@@ -232,7 +233,7 @@ export const en: Messages = {
     howToMove: 'Getting there',
     firstOfDay: 'First plan of the day — nothing before it.',
     transitMissing:
-      "There's no public transit data for this area, so only walking and driving were calculated. If you'll use local options like Grab or tuk-tuks, enter the time below.",
+      "No transit route was found. This area may have no transit data, or nothing runs at that time. Only walking and driving were calculated. If you'll use local options like Grab or tuk-tuks, enter the time below.",
     crossBorder:
       "This leg crosses a border and can't be routed. Please enter the flight or train details yourself.",
     moveTime: 'Travel time',

@@ -82,6 +82,10 @@ export function ItemDetailScreen() {
   const renderer = getMapRenderer(resolveMapRegion(legCoords));
 
   const activeMode = item.leg?.mode ?? legInfo?.recommended;
+  // 대중교통으로 가는 경우에만 탈 노선을 보여준다 — 도보를 골랐는데 노선이 뜨면 헷갈린다
+  const transitResult = legInfo?.results.transit;
+  const transitLines =
+    activeMode === 'transit' && transitResult?.available ? transitResult.lines : undefined;
   const shownMinutes =
     draftMinutes ??
     item.leg?.minutes ??
@@ -190,13 +194,26 @@ export function ItemDetailScreen() {
                           {result?.available
                             ? formatDistance(result.distanceM)
                             : unavailable
-                              ? t.common.noInfo
+                              ? result.reason === 'no_transit_route'
+                                ? t.leg.transitNoRoute
+                                : t.common.noInfo
                               : t.common.querying}
                         </div>
                       </button>
                     );
                   })}
                 </div>
+
+                {/* 어떤 노선을 타는 걸로 계산했는지 — 안 보이면 맞게 찾았는지 알 수 없다 */}
+                {transitLines && transitLines.length > 0 && (
+                  <div className="routesrc__lines" aria-label={t.transport.transit}>
+                    {transitLines.map((line, i) => (
+                      <span key={`${line}-${i}`} className="chip chip--transit">
+                        {line}
+                      </span>
+                    ))}
+                  </div>
+                )}
 
                 {/* 폴백 정책: 추정값을 만들어 보여주지 않고, 모른다고 말하고 입력을 받는다 */}
                 {legInfo?.transitMissing && (

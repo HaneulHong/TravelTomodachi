@@ -53,6 +53,12 @@ export interface RouteFound {
 export type RouteUnavailableReason =
   /** 이 지역에 대중교통 데이터 자체가 없다 (GTFS 피드 미제공) */
   | 'no_transit_data'
+  /**
+   * 대중교통 데이터는 있을 법한데 탈 만한 노선이 없다 — 대개 걸어가는 게 나은
+   * 가까운 거리. 'no_transit_data'와 달리 "이 지역은 데이터가 없다"는 경고를
+   * 띄우지 않는다.
+   */
+  | 'no_transit_route'
   /** 해당 지역에서 이 프로바이더가 이 수단을 제공하지 않는다 (예: 한국 내 Google 차량) */
   | 'mode_not_supported_here'
   /** 좌표가 없어서 조회 자체가 불가 */
