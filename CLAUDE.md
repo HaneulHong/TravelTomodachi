@@ -23,9 +23,10 @@
 
 1. `main`에서 새 브랜치 (`git switch -c feat/<이름> origin/main`). **main에 직접 푸시하지 않는다.**
 2. 커밋 메시지 끝에 `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`
-3. 푸시 후 PR 링크를 준다 (gh가 없다):
-   `https://github.com/HaneulHong/TravelTomodachi/compare/main...<브랜치>?expand=1`
-4. 사용자가 머지 → Cloudflare Pages가 자동 배포
+3. 푸시 후 `gh pr create`로 PR을 만들고 **PR 주소를 준다** (gh는 HaneulHong 계정으로 로그인돼 있다).
+   본문은 한국어, 끝에 `🤖 Generated with [Claude Code](https://claude.com/claude-code)`.
+   gh가 안 되면 링크로: `https://github.com/HaneulHong/TravelTomodachi/compare/main...<브랜치>?expand=1`
+4. 사용자가 머지 → Cloudflare Pages가 자동 배포. **Claude가 머지하지 않는다.**
 
 ## DB (Supabase)
 

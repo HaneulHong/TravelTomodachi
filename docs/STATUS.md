@@ -11,8 +11,7 @@
 
 체크하지 않은 것이 남은 일이다. 위에서부터.
 
-- [ ] ⚠️ **`VITE_PUBLIC_BASE_URL`을 `https://traveltomodachi.pages.dev`로 고치고 다시 배포** —
-      (2026-09-24 배포본에서 아직 tabitomo로 확인됨)
+- [x] **`VITE_PUBLIC_BASE_URL`을 `https://traveltomodachi.pages.dev`로 고침** — PR #6 머지 후 배포본에서 확인 필요
       지금 `https://traveltomodachi.pages.dev`로 들어가 있는데 그건 **다른 사람의 사이트**다.
       이대로면 초대 링크가 남의 사이트로 간다.
       Pages → `traveltomodachi` → Settings → Variables and Secrets → Production → 값 수정 →
@@ -78,6 +77,6 @@
 ## 작업 방식
 
 1. Claude가 main에서 새 브랜치를 따서 작업 → 커밋 → 푸시
-2. Claude가 PR 링크를 준다: `https://github.com/HaneulHong/TravelTomodachi/compare/main...<브랜치>?expand=1`
-3. 사용자가 GitHub에서 PR 만들고 머지 → Cloudflare가 자동 배포
+2. Claude가 PR을 만들고 주소를 준다 (`gh`)
+3. 사용자가 GitHub에서 확인하고 머지 → Cloudflare가 자동 배포
 4. DB 변경이 있으면 `supabase/*.sql`을 **머지 전에** SQL Editor에서 실행
