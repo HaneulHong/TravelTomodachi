@@ -11,11 +11,8 @@
 
 체크하지 않은 것이 남은 일이다. 위에서부터.
 
-- [x] **`VITE_PUBLIC_BASE_URL`을 `https://traveltomodachi.pages.dev`로 고침** — PR #6 머지 후 배포본에서 확인 필요
-      지금 `https://traveltomodachi.pages.dev`로 들어가 있는데 그건 **다른 사람의 사이트**다.
-      이대로면 초대 링크가 남의 사이트로 간다.
-      Pages → `traveltomodachi` → Settings → Variables and Secrets → Production → 값 수정 →
-      Deployments → Retry
+- [x] **`VITE_PUBLIC_BASE_URL`을 `https://traveltomodachi.pages.dev`로 고침** (2026-09-24 사용자가 수정)
+  - [x] 배포본에서 확인 — 초대 링크가 제대로 생성되고, 친구들과 실제로 참가해 봄 (2026-09-24)
 - [ ] Pages 프로젝트 `tabitomo`(실제 주소 `tabitomo-….pages.dev`, 환경 변수 없음) 삭제
 - [ ] **배포 주소 등록 네 곳** ([DEPLOY.md](./DEPLOY.md) 2단계)
   - [x] Supabase: Site URL · Redirect URLs에 `https://traveltomodachi.pages.dev` — 배포 주소 로그인 확인됨
@@ -61,8 +58,7 @@
   기차·버스·배편 구간, 장소 자동완성, 일정 추가·수정, 노트 스타일 디자인
 
 ## ⏳ 확인 못 한 것
-- 배포 주소에서 로그인·지도·초대 링크 (주소 등록 후). 로그인 화면이 정상으로 뜨는
-  것(키 들어감, 개발용 문구 없음, v0.9.0 베타)까지는 확인함
+- 배포 주소에서 지도 (주소 등록 후). 로그인·초대 링크(친구들과 참가)는 확인함
 - Android 앱 실행 (Android Studio 없음)
 - 앱에서 카카오맵이 뜨는지 (도메인 등록 방식 불확실 — 안 되면 간략 지도)
 

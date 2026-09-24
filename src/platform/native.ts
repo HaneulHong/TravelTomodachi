@@ -17,6 +17,7 @@ import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { Share } from '@capacitor/share';
 import type { Coord } from '@/domain/types';
 import type { Platform, SharePayload, ShareResult } from './types';
+import { normalizeBaseUrl } from './baseUrl';
 
 /**
  * 딥링크 스킴. capacitor.config.ts의 appId와 같게 둔다.
@@ -30,7 +31,7 @@ const AUTH_CALLBACK = `${APP_SCHEME}://auth`;
  * 초대 링크용 공개 주소. 앱은 origin이 capacitor://localhost라서 그대로 쓰면
  * 친구가 열 수 없는 링크가 된다. 배포 주소가 없으면 비워 두고 코드만 보낸다.
  */
-const PUBLIC_BASE_URL = (import.meta.env.VITE_PUBLIC_BASE_URL as string | undefined) ?? '';
+const PUBLIC_BASE_URL = normalizeBaseUrl(import.meta.env.VITE_PUBLIC_BASE_URL as string | undefined);
 
 /**
  * 브라우저를 닫은 뒤 콜백을 조금 더 기다리는 시간.
