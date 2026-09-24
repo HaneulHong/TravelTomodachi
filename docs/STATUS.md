@@ -3,7 +3,7 @@
 > 모바일에서 확인하는 용도. GitHub 앱 → 저장소 → `docs/STATUS.md`.
 > 작업이 끝날 때마다 Claude가 갱신한다. 마지막 갱신: **2026-09-24**
 
-**서비스 주소**: https://tabitomo.pages.dev · **버전**: v0.9.0 베타
+**서비스 주소**: https://traveltomodachi.pages.dev · **버전**: v0.9.0 베타
 
 ---
 
@@ -11,22 +11,26 @@
 
 체크하지 않은 것이 남은 일이다. 위에서부터.
 
-- [ ] **Cloudflare Pages 환경 변수 넣고 다시 배포** — 지금 배포본이 개발용 목으로 뜬다.
-      Pages → `tabitomo` → Settings → Variables and Secrets → Production에 `.env.local` 값을
-      넣고, Deployments → Retry. 자세히는 [DEPLOY.md](./DEPLOY.md) 1단계
+- [ ] **`VITE_PUBLIC_BASE_URL`을 `https://traveltomodachi.pages.dev`로 고치고 다시 배포** —
+      지금 `https://traveltomodachi.pages.dev`로 들어가 있는데 그건 **다른 사람의 사이트**다.
+      이대로면 초대 링크가 남의 사이트로 간다.
+      Pages → `traveltomodachi` → Settings → Variables and Secrets → Production → 값 수정 →
+      Deployments → Retry
+- [ ] Pages 프로젝트 `tabitomo`(실제 주소 `tabitomo-….pages.dev`, 환경 변수 없음) 삭제
 - [ ] **배포 주소 등록 네 곳** ([DEPLOY.md](./DEPLOY.md) 2단계)
-  - [ ] Supabase: Site URL · Redirect URLs에 `https://tabitomo.pages.dev`
-  - [ ] Google Maps 키: 웹사이트 제한에 `https://tabitomo.pages.dev/*`
-  - [ ] 카카오: 사이트 도메인에 `https://tabitomo.pages.dev`
+  - [ ] Supabase: Site URL · Redirect URLs에 `https://traveltomodachi.pages.dev`
+        (안 하면 로그인 후 `localhost:3000`으로 튕긴다 — 2026-09-24 실제로 겪음)
+  - [ ] Google Maps 키: 웹사이트 제한에 `https://traveltomodachi.pages.dev/*`
+  - [ ] 카카오: 사이트 도메인에 `https://traveltomodachi.pages.dev`
   - [ ] Google OAuth 동의 화면: **프로덕션으로 게시** (안 하면 친구가 로그인 못 함)
 - [ ] **`supabase/profile-tag.sql` 실행** — 닉네임 번호(#1234). 머지 전후 상관없음(실행 전에도 앱은 번호 없이 동작)
-- [ ] PR `feat/beta-polish` 머지 → 자동 배포
-- [ ] Cloudflare Workers 프로젝트 `traveltomodachi` 삭제 (Pages로 옮겨서 안 씀)
+- [x] PR `feat/beta-polish` 머지 → 자동 배포 (PR #5)
+- [ ] Cloudflare **Workers** 프로젝트 `traveltomodachi`가 남아 있으면 삭제 (PR마다 실패 검사가 뜬다)
 - [ ] 두 번째 계정으로: 「여행에서 나가기」, 「내보내기」 확인
 
 ## ✅ 된 것
 
-### v0.9.0 베타 — 2026-09-24 (PR `feat/beta-polish`)
+### v0.9.0 베타 — 2026-09-24 (PR #5, main에 머지됨)
 - 개발용 문구 숨김 — 키 설정 안내·서비스 패널은 개발 서버에서만. 배포에 백엔드 설정이
   빠지면 목 대신 "잠시 이용할 수 없습니다" 화면
 - 버전 표시 v0.9.0 베타 (로그인·프로필 화면, iOS·Android 버전도 0.9.0)
@@ -42,7 +46,7 @@
   - 긴 편명 칩 옆 제목이 한 글자씩 세로로 쪼개지던 것
 
 ### 2026-09-23 ~ 24 (main에 머지됨)
-- 웹 배포 (Cloudflare Pages) — `tabitomo.pages.dev`
+- 웹 배포 (Cloudflare Pages) — `traveltomodachi.pages.dev`
 - iOS·Android 앱 프로젝트(Capacitor). iOS 시뮬레이터에서 실행·Google 로그인 확인
 - 멤버·초대 코드 화면, 내보내기, 초대 코드 바꾸기, 여행 나가기·삭제
 - 누가 마지막으로 고쳤는지 표시
@@ -57,7 +61,8 @@
   기차·버스·배편 구간, 장소 자동완성, 일정 추가·수정, 노트 스타일 디자인
 
 ## ⏳ 확인 못 한 것
-- 배포 주소에서 로그인·지도·초대 링크 (환경 변수·주소 등록 후)
+- 배포 주소에서 로그인·지도·초대 링크 (주소 등록 후). 로그인 화면이 정상으로 뜨는
+  것(키 들어감, 개발용 문구 없음, v0.9.0 베타)까지는 확인함
 - Android 앱 실행 (Android Studio 없음)
 - 앱에서 카카오맵이 뜨는지 (도메인 등록 방식 불확실 — 안 되면 간략 지도)
 

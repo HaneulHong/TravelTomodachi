@@ -1,7 +1,7 @@
 # TravelTomodachi — Claude 작업 규칙
 
 친구와 같이 짜는 여행 일정 웹앱. Vite + React + TS SPA, Supabase, Capacitor(iOS·Android).
-서비스: https://tabitomo.pages.dev (Cloudflare Pages, main 머지 시 자동 배포) · v0.9.0 베타
+서비스: https://traveltomodachi.pages.dev (Cloudflare Pages, main 머지 시 자동 배포) · v0.9.0 베타
 
 **작업을 시작하기 전에 [docs/STATUS.md](docs/STATUS.md)를 읽는다.** 무엇이 끝났고,
 사용자가 무엇을 해야 하고, 무엇이 확인되지 않았는지가 거기 있다. 작업을 마치면 갱신한다.

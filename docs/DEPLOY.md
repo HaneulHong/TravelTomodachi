@@ -9,14 +9,15 @@ GitHub에 푸시하면 자동 배포. (Vercel 무료는 비상업 전용)
 
 ---
 
-## 1. Cloudflare Pages 프로젝트 (현재: `tabitomo.pages.dev`)
+## 1. Cloudflare Pages 프로젝트 (현재: `traveltomodachi.pages.dev`)
 
-**지금 쓰는 곳: https://tabitomo.pages.dev** (Pages 프로젝트 `tabitomo`)
+**지금 쓰는 곳: https://traveltomodachi.pages.dev** (Pages 프로젝트 `traveltomodachi`)
 
-처음엔 Workers 방식으로 만들었다가 주소(`traveltomodachi.hongha303.workers.dev`)가
-길고 계정 이름이 드러나서 Pages로 옮겼다. Workers 프로젝트 `traveltomodachi`는
-**지워도 된다** — 남겨 두면 푸시할 때마다 두 곳에서 빌드된다.
-(저장소의 `wrangler.jsonc`는 Workers용이고 Pages는 무시한다.)
+- 처음엔 Workers 방식으로 만들었다가 주소(`….hongha303.workers.dev`)가 길고 계정
+  이름이 드러나서 Pages로 옮겼다. (저장소의 `wrangler.jsonc`는 Workers용이고 Pages는 무시한다.)
+- ⚠️ `traveltomodachi.pages.dev`는 **다른 사람의 사이트**(AI 번역 앱)다. Pages 주소는 전
+  세계에서 하나뿐이라 이미 쓰는 이름으로 만들면 `tabitomo-xxxx.pages.dev`처럼 뒤에
+  글자가 붙는다. 주소를 정할 때는 **브라우저로 먼저 열어 봐서 비어 있는지** 확인한다.
 
 새로 만든다면:
 
@@ -41,7 +42,7 @@ GitHub에 푸시하면 자동 배포. (Vercel 무료는 비상업 전용)
    | `VITE_GOOGLE_MAPS_API_KEY` | Google Maps 키 |
    | `VITE_GOOGLE_MAPS_MAP_ID` | Map ID |
    | `VITE_KAKAO_MAPS_JS_KEY` | 카카오 JavaScript 키 |
-   | `VITE_PUBLIC_BASE_URL` | `https://tabitomo.pages.dev` |
+   | `VITE_PUBLIC_BASE_URL` | `https://traveltomodachi.pages.dev` |
 
    ⚠️ **secret / service_role 키는 절대 넣지 않는다.** 여기 값은 전부 번들에
    들어가 누구나 볼 수 있다. 공개 키만 넣는다(접근 제어는 RLS가 한다).
@@ -59,25 +60,28 @@ GitHub에 푸시하면 자동 배포. (Vercel 무료는 비상업 전용)
 
 ## 2. 배포 주소를 각 서비스에 알려주기
 
-배포 주소: `https://tabitomo.pages.dev`
+배포 주소: `https://traveltomodachi.pages.dev`
 
 ### Supabase — 로그인 후 돌아올 곳
 **Authentication → URL Configuration**
-- **Site URL**: `https://tabitomo.pages.dev`
-- **Redirect URLs**에 추가: `https://tabitomo.pages.dev`
-  (개발용 `http://localhost:5173`, 앱용 `com.traveltomodachi.app://auth`는 그대로 둔다)
+- **Site URL**: `https://traveltomodachi.pages.dev`
+- **Redirect URLs**에 추가:
+  - `https://traveltomodachi.pages.dev`
+  - `https://*.traveltomodachi.pages.dev` (PR 미리보기 주소용, 선택)
+  - 개발용 `http://localhost:5173`, 앱용 `com.traveltomodachi.app://auth`는 그대로 둔다
 
-안 하면 로그인 후 localhost로 튕긴다.
+안 하면 로그인 후 `http://localhost:3000/?code=…`으로 튕긴다. Supabase는 허용 목록에
+없는 주소를 요청받으면 Site URL(기본값 `localhost:3000`)로 보낸다.
 
 ### Google Maps 키 — 허용 웹사이트
 Cloud Console → 사용자 인증 정보 → 해당 키 → 웹사이트 제한에 추가:
-`https://tabitomo.pages.dev/*`
+`https://traveltomodachi.pages.dev/*`
 
 안 하면 해외 지도가 인증 실패로 개략도가 된다.
 
 ### 카카오맵 — 사이트 도메인
 Kakao Developers → 앱 → 플랫폼 → Web → 사이트 도메인에 추가:
-`https://tabitomo.pages.dev`
+`https://traveltomodachi.pages.dev`
 
 안 하면 국내 지도가 401로 개략도가 된다.
 
