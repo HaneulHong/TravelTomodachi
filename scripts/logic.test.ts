@@ -27,6 +27,7 @@ import { memberLabel, type Member, type TripDay } from '../src/domain/types';
 import { colorOf, fullName, nicknameProblem } from '../src/auth/types';
 import { inviteCodeFromAppUrl, inviteCodeFromHash } from '../src/auth/pendingInvite';
 import { normalizeBaseUrl } from '../src/platform/baseUrl';
+import { dropIndex, moved, predecessorsChanged } from '../src/domain/order';
 import { detectLocale, isLocalePreference } from '../src/i18n/locales';
 import { isDefaultZoneLabel, zoneLabel, zoneOptions } from '../src/domain/timezones';
 import { formatDateLabel, formatWeekday } from '../src/domain/time';
@@ -355,6 +356,27 @@ console.log('\n── 닉네임 번호 ──');
   eq('보통 닉네임', nicknameProblem('하늘'), null);
 
   ok('색은 id로 — 같은 입력이면 같은 색', colorOf('user-1') === colorOf('user-1'));
+}
+
+console.log('\n── 순서 바꾸기 ──');
+{
+  const ids = ['a', 'b', 'c', 'd'];
+  eq('뒤로 옮기기', moved(ids, 0, 2).join(''), 'bcad');
+  eq('앞으로 옮기기', moved(ids, 3, 1).join(''), 'adbc');
+  eq('제자리', moved(ids, 1, 1).join(''), 'abcd');
+
+  // a를 c 뒤로: b(앞 없음이 됨), a(앞이 c), d(앞이 a) 바뀜. c는 앞이 b 그대로.
+  eq('앞 일정이 바뀐 항목', predecessorsChanged(ids, moved(ids, 0, 2)).join(''), 'bad');
+  eq('안 바뀌면 없음', predecessorsChanged(ids, ids).join(''), '');
+  eq('다른 날에서 온 항목은 바뀐 것', predecessorsChanged(['a'], ['a', 'x']).join(''), 'x');
+  eq('빠진 항목 다음만', predecessorsChanged(ids, ['a', 'c', 'd']).join(''), 'c');
+
+  const centers = [50, 150, 250, 350];
+  eq('조금 끌면 제자리', dropIndex(centers, 0, 90), 0);
+  eq('두 칸 아래로', dropIndex(centers, 0, 260), 2);
+  eq('맨 아래 넘어서', dropIndex(centers, 0, 999), 3);
+  eq('위로 끌기', dropIndex(centers, 3, 120), 1);
+  eq('맨 위 넘어서', dropIndex(centers, 2, -50), 0);
 }
 
 console.log('\n── 언어 ──');

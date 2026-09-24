@@ -11,7 +11,8 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { AppHeader } from '@/components/AppHeader';
 import { PlaceField } from '@/components/PlaceField';
 import { isSegmentKind, type Coord, type ItemKind } from '@/domain/types';
-import { useT } from '@/i18n';
+import { formatDateLabel } from '@/domain/time';
+import { useLocale, useT } from '@/i18n';
 import { useTripStore } from '@/store/tripStore';
 
 const KINDS: ItemKind[] = ['place', 'flight', 'train', 'bus', 'ferry'];
@@ -26,12 +27,16 @@ export function ItemEditScreen() {
   const addItem = useTripStore((s) => s.addItem);
   const updateItem = useTripStore((s) => s.updateItem);
   const removeItem = useTripStore((s) => s.removeItem);
+  const moveItemToDate = useTripStore((s) => s.moveItemToDate);
   const t = useT();
+  const locale = useLocale();
 
   const isEdit = Boolean(itemId);
   // 추가일 때 어느 날짜에 넣을지는 쿼리로 받는다. 수정이면 항목이 이미 안다.
-  const date = existing?.date ?? params.get('date') ?? trip?.startDate ?? '';
+  const originalDate = existing?.date ?? params.get('date') ?? trip?.startDate ?? '';
 
+  // 다른 날로 옮길 수 있다. 옮기면 그 날의 맨 뒤에 붙고 시간은 그대로다.
+  const [date, setDate] = useState(originalDate);
   const [kind, setKind] = useState<ItemKind>(existing?.kind ?? 'place');
   const [title, setTitle] = useState(existing?.title ?? '');
   const [placeName, setPlaceName] = useState(existing?.placeName ?? '');
@@ -89,6 +94,7 @@ export function ItemEditScreen() {
     };
 
     if (isEdit && itemId) {
+      if (date !== originalDate) moveItemToDate(itemId, date);
       updateItem(itemId, patch);
       navigate(-1);
       return;
@@ -104,7 +110,7 @@ export function ItemEditScreen() {
     if (!itemId) return;
     removeItem(itemId);
     // 상세 화면은 이미 사라진 항목을 가리키므로 목록까지 되돌린다.
-    navigate(`/trip/${trip.id}?date=${date}`, { replace: true });
+    navigate(`/trip/${trip.id}?date=${originalDate}`, { replace: true });
   };
 
   return (
@@ -141,6 +147,20 @@ export function ItemEditScreen() {
               placeholder={t.itemEdit.titlePlaceholder}
               autoFocus={!isEdit}
             />
+          </label>
+
+          <label className="form__row">
+            <span className="form__label">{t.itemEdit.date}</span>
+            <select className="form__input" value={date} onChange={(e) => setDate(e.target.value)}>
+              {trip.days.map((d, i) => (
+                <option key={d.date} value={d.date}>
+                  {t.common.dayWithDate(i + 1, formatDateLabel(d.date, locale))}
+                </option>
+              ))}
+            </select>
+            {isEdit && date !== originalDate && (
+              <p className="form__hint">{t.itemEdit.dateMoveHint}</p>
+            )}
           </label>
 
           <PlaceField

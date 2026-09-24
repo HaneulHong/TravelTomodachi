@@ -14,12 +14,14 @@ import {
   BusIcon,
   ClockIcon,
   FerryIcon,
+  GripIcon,
   LeaveIcon,
   ListIcon,
   PencilIcon,
   PinIcon,
   PlaneIcon,
   PlusIcon,
+  ReorderIcon,
   ShareIcon,
   TrainIcon,
   TrashIcon,
@@ -27,6 +29,7 @@ import {
 } from '@/components/icons';
 import { useDayLegs, type LegInfo } from '@/hooks/useDayLegs';
 import { useInviteShare } from '@/hooks/useInviteShare';
+import { useReorderDrag } from '@/hooks/useReorderDrag';
 import { useSwipe } from '@/hooks/useSwipe';
 import {
   formatDateLabel,
@@ -115,6 +118,9 @@ export function TripScreen() {
   const [search, setSearch] = useSearchParams();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
+  /** 순서 바꾸기 모드. 켜면 손잡이가 나오고 카드를 눌러도 상세로 가지 않는다. */
+  const [reorder, setReorder] = useState(false);
+  const moveItem = useTripStore((s) => s.moveItem);
   const [dayEditOpen, setDayEditOpen] = useState(false);
   const [confirm, setConfirm] = useState<'leave' | 'delete' | null>(null);
   const me = useTripStore((s) => s.currentUserId);
@@ -156,6 +162,11 @@ export function TripScreen() {
     onSwipeRight: () => goToDay(-1),
   });
 
+  const reorderDrag = useReorderDrag((from, to) => {
+    moveItem(tripId, activeDate, from, to);
+    platform.vibrate(8);
+  });
+
   async function onShare() {
     if (!trip) return;
     setMenuOpen(false);
@@ -182,7 +193,16 @@ export function TripScreen() {
 
   return (
     <div className="app">
-      <AppHeader title={trip.name} back onMenu={() => setMenuOpen(true)} />
+      {/* 순서 바꾸기 중에는 메뉴 대신 '완료' — 둘은 같은 자리를 쓴다 */}
+      {reorder ? (
+        <AppHeader
+          title={trip.name}
+          back
+          action={{ label: t.trip.reorderDone, onClick: () => setReorder(false) }}
+        />
+      ) : (
+        <AppHeader title={trip.name} back onMenu={() => setMenuOpen(true)} />
+      )}
 
       <DateStrip
         days={trip.days}
@@ -191,7 +211,8 @@ export function TripScreen() {
       />
 
       {/* 가로 스와이프로 날짜 전환. 세로 스크롤은 그대로 동작한다. */}
-      <main className="main" {...swipe} style={{ touchAction: 'pan-y' }}>
+      {/* 순서 바꾸기 중에는 끌기와 헷갈리지 않게 날짜 스와이프를 끈다 */}
+      <main className="main" {...(reorder ? {} : swipe)} style={{ touchAction: 'pan-y' }}>
         {/*
           도시·타임존은 머리를 눌러 고친다. 도시를 옮기는 날만 고치는 값이라
           화면에 따로 버튼을 두기보다 그 값이 보이는 자리를 누르게 한다.
@@ -221,10 +242,44 @@ export function TripScreen() {
           </div>
         )}
 
-        <div className="timeline">
+        {reorder && (
+          <div className="section" style={{ paddingTop: 10, paddingBottom: 0 }}>
+            <div className="banner banner--info">
+              <ReorderIcon className="banner__icon" />
+              <div>{t.trip.reorderHint}</div>
+            </div>
+          </div>
+        )}
+
+        <div className={`timeline${reorder ? ' timeline--reorder' : ''}`}>
           {items.length === 0 && <p className="empty">{t.trip.emptyDay}</p>}
 
-          {items.map((item, i) => (
+          {reorder &&
+            items.map((item, i) => (
+              <div
+                key={item.id}
+                ref={reorderDrag.rowRef(i)}
+                style={reorderDrag.rowStyle(i)}
+                className={`tl-row${reorderDrag.drag?.from === i ? ' tl-row--dragging' : ''}`}
+              >
+                <div className="tl-time">{item.localTime ?? '—'}</div>
+                <div className="tl-item tl-item--reorder">
+                  <div className="tl-item__head">
+                    <span className="tl-item__title">{item.title}</span>
+                    <button
+                      className="tl-grip"
+                      aria-label={t.trip.reorderHandle(item.title)}
+                      {...reorderDrag.handleProps(i, items.length)}
+                    >
+                      <GripIcon />
+                    </button>
+                  </div>
+                  {item.placeName && <div className="tl-item__place">{item.placeName}</div>}
+                </div>
+              </div>
+            ))}
+
+          {!reorder && items.map((item, i) => (
             <div key={item.id}>
               {i > 0 && <LegRow info={legs.get(item.id)} />}
 
@@ -268,12 +323,14 @@ export function TripScreen() {
             추가 버튼을 목록 끝에 둔다. 띄우는 버튼(FAB)은 마지막 항목을 가려서,
             일정이 꽉 찬 날일수록 방해가 된다.
           */}
-          <button
-            className="tl-add"
-            onClick={() => navigate(`/trip/${trip.id}/item/new?date=${activeDate}`)}
-          >
-            <PlusIcon size={16} /> {t.trip.addItem}
-          </button>
+          {!reorder && (
+            <button
+              className="tl-add"
+              onClick={() => navigate(`/trip/${trip.id}/item/new?date=${activeDate}`)}
+            >
+              <PlusIcon size={16} /> {t.trip.addItem}
+            </button>
+          )}
         </div>
       </main>
 
@@ -288,6 +345,18 @@ export function TripScreen() {
           <ListIcon />
           {t.trip.menuChecklist}
         </button>
+        {items.length > 1 && (
+          <button
+            className="sheet__item"
+            onClick={() => {
+              setMenuOpen(false);
+              setReorder(true);
+            }}
+          >
+            <ReorderIcon />
+            {t.trip.menuReorder}
+          </button>
+        )}
         <button className="sheet__item" onClick={onShare}>
           <ShareIcon />
           {t.trip.menuShare}
