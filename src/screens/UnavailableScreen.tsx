@@ -6,26 +6,26 @@
  * 그보다는 솔직하게 "지금은 안 된다"고 말하는 게 낫다.
  */
 
-import { VERSION_LABEL } from '@/config';
+import { versionLabel } from '@/config';
+import { useT } from '@/i18n';
 
 export function UnavailableScreen() {
+  const t = useT();
   return (
     <div className="app">
       <main className="main main--no-tabs signin">
         <div className="signin__brand">
           <span className="signin__mark">🧳</span>
           <h1 className="signin__title">TravelTomodachi</h1>
-          <p className="signin__sub">잠시 서비스를 이용할 수 없습니다</p>
+          <p className="signin__sub">{t.unavailable.title}</p>
         </div>
-        <p className="signin__note">
-          서비스 점검 중이거나 일시적인 문제가 생겼습니다. 잠시 후 다시 시도해 주세요.
-        </p>
+        <p className="signin__note">{t.unavailable.body}</p>
         <div className="signin__methods">
           <button className="btn btn--primary" onClick={() => window.location.reload()}>
-            다시 시도
+            {t.unavailable.retry}
           </button>
         </div>
-        <p className="signin__version">{VERSION_LABEL}</p>
+        <p className="signin__version">{versionLabel(t.common.beta)}</p>
       </main>
     </div>
   );

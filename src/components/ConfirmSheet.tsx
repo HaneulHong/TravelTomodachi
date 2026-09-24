@@ -10,6 +10,7 @@
 
 import { useState, type ReactNode } from 'react';
 import { MenuSheet } from '@/components/MenuSheet';
+import { useT } from '@/i18n';
 
 interface Props {
   title: string;
@@ -29,6 +30,7 @@ export function ConfirmSheet({
   onConfirm,
   onClose,
 }: Props) {
+  const t = useT();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -38,7 +40,7 @@ export function ConfirmSheet({
     try {
       await onConfirm();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : '하지 못했습니다');
+      setError(err instanceof Error ? err.message : t.common.failed);
       setBusy(false);
     }
   };
@@ -58,10 +60,10 @@ export function ConfirmSheet({
             onClick={() => void confirm()}
             disabled={busy}
           >
-            {busy ? '처리하는 중…' : confirmLabel}
+            {busy ? t.common.processing : confirmLabel}
           </button>
           <button className="btn" onClick={onClose} disabled={busy}>
-            취소
+            {t.common.cancel}
           </button>
         </div>
       </div>

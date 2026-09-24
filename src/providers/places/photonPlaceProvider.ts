@@ -17,6 +17,7 @@
  * 자체 호스팅(photon은 오픈소스)으로 옮기는 게 맞다.
  */
 
+import { getMessages } from '@/i18n/store';
 import type { Coord } from '@/domain/types';
 import type { Place, PlaceProvider } from '../types';
 
@@ -86,7 +87,7 @@ export function createPhotonPlaceProvider(): PlaceProvider {
 
       const res = await fetch(`${ENDPOINT}?${params.toString()}`);
       if (!res.ok) {
-        throw new Error(`장소 검색에 실패했습니다 (${res.status}). 잠시 후 다시 시도해 주세요.`);
+        throw new Error(getMessages().place.searchHttpFailed(res.status));
       }
 
       const data = (await res.json()) as { features?: PhotonFeature[] };

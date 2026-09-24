@@ -80,12 +80,26 @@ export function fullName(nickname: string, tag: string | undefined): string {
 
 export const NICKNAME_MAX = 20;
 
-/** 닉네임으로 쓸 수 없으면 그 이유, 괜찮으면 null. DB 제약과 같은 규칙이다. */
-export function nicknameProblem(nickname: string): string | null {
+export type NicknameProblem = 'empty' | 'tooLong' | 'hash';
+
+/**
+ * 닉네임으로 쓸 수 없으면 그 이유, 괜찮으면 null. DB 제약과 같은 규칙이다.
+ * 문구가 아니라 이유만 돌려준다 — 화면이 그 사람의 언어로 적는다(nicknameMessage).
+ */
+export function nicknameProblem(nickname: string): NicknameProblem | null {
   const trimmed = nickname.trim();
-  if (trimmed.length === 0) return '닉네임을 입력해 주세요';
-  if ([...trimmed].length > NICKNAME_MAX) return `닉네임은 ${NICKNAME_MAX}자까지입니다`;
+  if (trimmed.length === 0) return 'empty';
+  if ([...trimmed].length > NICKNAME_MAX) return 'tooLong';
   // 번호 표시(#0421)와 헷갈린다
-  if (trimmed.includes('#')) return "닉네임에는 '#'을 쓸 수 없습니다";
+  if (trimmed.includes('#')) return 'hash';
   return null;
+}
+
+/** 이유를 문구로. 문구는 i18n 쪽에서 받아 넘긴다(여기는 언어를 모른다). */
+export function nicknameMessage(
+  problem: NicknameProblem,
+  t: { empty: string; tooLong(max: number): string; hash: string },
+): string {
+  if (problem === 'tooLong') return t.tooLong(NICKNAME_MAX);
+  return t[problem];
 }

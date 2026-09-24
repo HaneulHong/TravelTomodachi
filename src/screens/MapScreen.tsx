@@ -11,7 +11,8 @@ import { useDayLegs } from '@/hooks/useDayLegs';
 import { useSegmentRoutes } from '@/hooks/useSegmentRoutes';
 import { formatDistance } from '@/domain/geo';
 import { formatMinutes } from '@/domain/time';
-import { TRANSPORT_LABEL, type Coord, type TransportMode } from '@/domain/types';
+import type { Coord, TransportMode } from '@/domain/types';
+import { useLocale, useT } from '@/i18n';
 import { getMapRenderer, resolveMapRegion, type MapStop, type PathSegment } from '@/providers';
 import { useTripStore } from '@/store/tripStore';
 
@@ -21,6 +22,8 @@ export function MapScreen() {
   const { tripId = '' } = useParams();
   const [search, setSearch] = useSearchParams();
   const [openStop, setOpenStop] = useState<string | null>(null);
+  const t = useT();
+  const locale = useLocale();
 
   const trip = useTripStore((s) => s.getTrip(tripId));
   const allItems = useTripStore((s) => s.items);
@@ -139,9 +142,9 @@ export function MapScreen() {
   if (!trip) {
     return (
       <div className="app">
-        <AppHeader title="지도" back />
+        <AppHeader title={t.map.title} back />
         <main className="main">
-          <p className="empty">여행을 찾을 수 없습니다.</p>
+          <p className="empty">{t.common.tripNotFound}</p>
         </main>
         <BottomTabs />
       </div>
@@ -150,7 +153,7 @@ export function MapScreen() {
 
   return (
     <div className="app">
-      <AppHeader title="지도" back />
+      <AppHeader title={t.map.title} back />
 
       <DateStrip
         days={trip.days}
@@ -164,7 +167,7 @@ export function MapScreen() {
       <main className="main">
         {stops.length === 0 ? (
           <div className="mapstage">
-            <p className="empty">이 날은 좌표가 있는 일정이 없습니다.</p>
+            <p className="empty">{t.map.noCoords}</p>
           </div>
         ) : (
           <MapCanvas
@@ -205,11 +208,11 @@ export function MapScreen() {
                       )}
                       {info?.status === 'cross_border' && (
                         <span className="chip chip--warn">
-                          <AlertIcon size={11} /> 국제 구간
+                          <AlertIcon size={11} /> {t.leg.crossBorderShort}
                         </span>
                       )}
                       {info?.status === 'unavailable' && (
-                        <span className="chip">이동 정보 없음</span>
+                        <span className="chip">{t.leg.unknown}</span>
                       )}
                     </div>
                   </div>
@@ -231,7 +234,7 @@ export function MapScreen() {
                     >
                       <div className="stop__name">{item.title}</div>
                       <div className="stop__sub">
-                        {item.localTime ?? '시간 미정'}
+                        {item.localTime ?? t.map.noTime}
                         {item.placeName ? ` · ${item.placeName}` : ''}
                       </div>
                     </button>
@@ -250,17 +253,17 @@ export function MapScreen() {
                               }`}
                             >
                               <div className="mode__name">
-                                <Icon /> {TRANSPORT_LABEL[mode]}
+                                <Icon /> {t.transport[mode]}
                               </div>
                               <div className="mode__val">
-                                {r?.available ? formatMinutes(r.minutes) : '—'}
+                                {r?.available ? formatMinutes(r.minutes, locale) : '—'}
                               </div>
                               <div className="mode__sub">
                                 {r?.available
                                   ? formatDistance(r.distanceM)
                                   : off
-                                    ? '정보 없음'
-                                    : '조회 중'}
+                                    ? t.common.noInfo
+                                    : t.common.querying}
                               </div>
                             </div>
                           );
@@ -270,7 +273,7 @@ export function MapScreen() {
 
                     {isOpen && i === 0 && (
                       <div className="stop__sub" style={{ marginTop: 8 }}>
-                        이 날의 출발 지점입니다.
+                        {t.map.startPoint}
                       </div>
                     )}
                   </div>

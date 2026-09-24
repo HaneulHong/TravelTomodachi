@@ -12,11 +12,13 @@
  *  우리 코드가 읽지 않는다.)
  */
 
+import { getMessages, translateServerError } from '@/i18n/store';
 import { platform } from '@/platform';
 import { getSupabase } from '@/supabase/client';
 import {
   colorOf,
   initialOf,
+  nicknameMessage,
   nicknameProblem,
   type Account,
   type AuthProvider,
@@ -29,8 +31,6 @@ interface ProfileRow {
   tag?: string | null;
 }
 
-/** 프로필이 아직 없을 때 쓰는 이름. 사용자가 프로필 화면에서 바꾼다. */
-const DEFAULT_NICKNAME = '여행자';
 
 export function createSupabaseAuthProvider(): AuthProvider {
   const client = getSupabase();
@@ -59,7 +59,7 @@ export function createSupabaseAuthProvider(): AuthProvider {
       .eq('id', userId)
       .maybeSingle();
 
-    if (error) throw new Error(`프로필을 읽지 못했습니다: ${error.message}`);
+    if (error) throw new Error(`${getMessages().errors.readProfile}: ${error.message}`);
     if (data) return fromRow(userId, data as ProfileRow, via);
 
     /*
@@ -67,13 +67,15 @@ export function createSupabaseAuthProvider(): AuthProvider {
      * 트리거를 만들기 전에 가입한 계정이 남아 있을 수 있어서다. 그때 로그인이
      * 통째로 막히는 것보다, 기본 닉네임으로 채워 넣고 진행하는 게 낫다.
      * 번호(tag)는 DB 트리거가 붙여서 돌려준다.
+     * 기본 닉네임은 가입하는 사람의 언어로 (여행자 · Traveler · 旅行者).
+     * 사용자가 프로필 화면에서 바꾼다.
      */
     const { data: created, error: insertError } = await client
       .from('profiles')
-      .insert({ id: userId, nickname: DEFAULT_NICKNAME })
+      .insert({ id: userId, nickname: getMessages().profile.defaultNickname })
       .select('*')
       .single();
-    if (insertError) throw new Error(`프로필을 만들지 못했습니다: ${insertError.message}`);
+    if (insertError) throw new Error(`${getMessages().errors.createProfile}: ${insertError.message}`);
     return fromRow(userId, created as ProfileRow, via);
   }
 
@@ -91,20 +93,20 @@ export function createSupabaseAuthProvider(): AuthProvider {
       provider: method,
       options: { redirectTo: platform.authRedirectUrl, skipBrowserRedirect: true },
     });
-    if (error || !data.url) throw new Error(`로그인하지 못했습니다: ${error?.message ?? '주소 없음'}`);
+    if (error || !data.url) throw new Error(`${getMessages().errors.signInFailed}: ${error?.message ?? 'no URL'}`);
 
     const callback = await openAuthSession(data.url);
-    if (!callback) throw new Error('로그인을 취소했습니다');
+    if (!callback) throw new Error(getMessages().errors.signInCancelled);
 
     // 사용자 정의 스킴도 URL로 읽힌다: com.traveltomodachi.app://auth?code=...
     const params = new URL(callback).searchParams;
     const code = params.get('code');
     if (!code) {
-      throw new Error(params.get('error_description') ?? '로그인 응답에 코드가 없습니다');
+      throw new Error(params.get('error_description') ?? getMessages().errors.signInNoCode);
     }
 
     const { data: session, error: exchangeError } = await client.auth.exchangeCodeForSession(code);
-    if (exchangeError) throw new Error(`로그인하지 못했습니다: ${exchangeError.message}`);
+    if (exchangeError) throw new Error(`${getMessages().errors.signInFailed}: ${exchangeError.message}`);
     return toAccount(session.user.id, viaOf(session.user.app_metadata?.provider));
   }
 
@@ -128,7 +130,7 @@ export function createSupabaseAuthProvider(): AuthProvider {
 
     async signIn(method: SignInMethod): Promise<Account> {
       if (method !== 'google' && method !== 'apple') {
-        throw new Error('지원하지 않는 로그인 방식입니다');
+        throw new Error(getMessages().errors.unsupportedMethod);
       }
 
       // 앱: 시스템 브라우저로 열고 딥링크로 돌아온 코드를 세션으로 바꾼다
@@ -142,7 +144,7 @@ export function createSupabaseAuthProvider(): AuthProvider {
         options: { redirectTo: platform.authRedirectUrl },
       });
 
-      if (error) throw new Error(`로그인하지 못했습니다: ${error.message}`);
+      if (error) throw new Error(`${getMessages().errors.signInFailed}: ${error.message}`);
 
       /*
        * 여기서 브라우저가 Google로 떠난다. 돌아오면 페이지가 새로 뜨고
@@ -158,12 +160,12 @@ export function createSupabaseAuthProvider(): AuthProvider {
 
     async updateNickname(nickname: string): Promise<Account> {
       const problem = nicknameProblem(nickname);
-      if (problem) throw new Error(problem);
+      if (problem) throw new Error(nicknameMessage(problem, getMessages().nickname));
       const trimmed = nickname.trim();
 
       const { data: sessionData } = await client.auth.getSession();
       const user = sessionData.session?.user;
-      if (!user) throw new Error('로그인 상태가 아닙니다');
+      if (!user) throw new Error(getMessages().errors.notSignedIn);
 
       // 새 닉네임에서 번호가 겹치면 트리거가 번호를 새로 고른다. 결과를 돌려받는다.
       const { data, error } = await client
@@ -173,7 +175,12 @@ export function createSupabaseAuthProvider(): AuthProvider {
         .select('*')
         .single();
 
-      if (error) throw new Error(`닉네임을 바꾸지 못했습니다: ${error.message}`);
+      // 닉네임이 너무 흔하면 DB 트리거가 한국어로 거절한다 — 그 사람의 언어로 옮긴다
+      if (error) {
+        throw new Error(
+          `${getMessages().errors.nicknameFailed}: ${translateServerError(error.message)}`,
+        );
+      }
       return fromRow(user.id, data as ProfileRow, viaOf(user.app_metadata?.provider));
     },
   };

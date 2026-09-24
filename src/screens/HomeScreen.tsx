@@ -3,7 +3,8 @@ import { AppHeader } from '@/components/AppHeader';
 import { BottomTabs } from '@/components/BottomTabs';
 import { GlobeIcon, PlusIcon } from '@/components/icons';
 import { daysUntil, formatDateLabel, tripLengthDays } from '@/domain/time';
-import { REGION_LABEL, resolveRegion } from '@/providers';
+import { useLocale, useT, type Messages } from '@/i18n';
+import { resolveRegion } from '@/providers';
 import { useTripStore } from '@/store/tripStore';
 import type { Trip } from '@/domain/types';
 
@@ -17,17 +18,19 @@ function tripRegions(trip: Trip, coords: { tripId: string; lat: number; lng: num
   return [...set];
 }
 
-function countdownLabel(startDate: string): string {
+function countdownLabel(startDate: string, t: Messages): string {
   const d = daysUntil(startDate);
-  if (d > 0) return `D-${d}`;
-  if (d === 0) return '오늘 출발';
-  return '진행 중 · 지난 여행';
+  if (d > 0) return t.home.dday(d);
+  if (d === 0) return t.home.departsToday;
+  return t.home.ongoing;
 }
 
 export function HomeScreen() {
   const navigate = useNavigate();
   const trips = useTripStore((s) => s.trips);
   const items = useTripStore((s) => s.items);
+  const t = useT();
+  const locale = useLocale();
 
   const coords = items
     .filter((i) => i.coord)
@@ -36,16 +39,16 @@ export function HomeScreen() {
   return (
     <div className="app">
       <AppHeader
-        title="홈"
+        title={t.home.title}
         onProfile={() => navigate('/profile')}
       />
 
       <main className="main">
         <section className="section">
-          <h2 className="section__title">일정 리스트</h2>
+          <h2 className="section__title">{t.home.list}</h2>
 
           {trips.length === 0 && (
-            <p className="empty">아직 여행이 없습니다. 아래에서 첫 여행을 만들어 보세요.</p>
+            <p className="empty">{t.home.empty}</p>
           )}
 
           {trips.map((trip) => {
@@ -64,8 +67,8 @@ export function HomeScreen() {
                   <div style={{ minWidth: 0, flex: 1 }}>
                     <h3 className="trip-card__name">{trip.name}</h3>
                     <div className="trip-card__dates">
-                      {formatDateLabel(trip.startDate)} — {formatDateLabel(trip.endDate)} ·{' '}
-                      {dayCount}일
+                      {formatDateLabel(trip.startDate, locale)} —{' '}
+                      {formatDateLabel(trip.endDate, locale)} · {t.home.dayCount(dayCount)}
                     </div>
                   </div>
                 </div>
@@ -88,16 +91,16 @@ export function HomeScreen() {
                     {regions.length > 1 ? (
                       <span className="chip">
                         <GlobeIcon size={12} />
-                        국내 + 해외
+                        {t.home.bothRegions}
                       </span>
                     ) : (
                       regions.map((r) => (
                         <span key={r} className="chip">
-                          {REGION_LABEL[r]}
+                          {t.region[r]}
                         </span>
                       ))
                     )}
-                    <span className="chip chip--accent">{countdownLabel(trip.startDate)}</span>
+                    <span className="chip chip--accent">{countdownLabel(trip.startDate, t)}</span>
                   </div>
                 </div>
               </button>
@@ -109,7 +112,7 @@ export function HomeScreen() {
             빈자리다. 실선 카드로 만들면 마지막 여행처럼 읽힌다.
           */}
           <button className="tl-add trip-add" onClick={() => navigate('/trip/new')}>
-            <PlusIcon size={16} /> 새 여행 만들기
+            <PlusIcon size={16} /> {t.home.newTrip}
           </button>
 
           {/*
@@ -117,7 +120,7 @@ export function HomeScreen() {
             링크로 오면 이 화면을 거치지 않는다.
           */}
           <button className="btn btn--ghost trip-join" onClick={() => navigate('/invite')}>
-            초대 코드로 참가
+            {t.home.joinByCode}
           </button>
         </section>
       </main>

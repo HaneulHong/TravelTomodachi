@@ -36,7 +36,9 @@ import {
   tzShortLabel,
 } from '@/domain/time';
 import { zoneLabel } from '@/domain/timezones';
-import { ITEM_KIND_LABEL, isSegmentKind, type Item } from '@/domain/types';
+import { isSegmentKind, type Item } from '@/domain/types';
+import { useLocale, useT } from '@/i18n';
+import { Rich } from '@/i18n/Rich';
 import { platform } from '@/platform';
 import { useTripStore } from '@/store/tripStore';
 
@@ -59,6 +61,7 @@ function KindIcon({ kind }: { kind: Item['kind'] }) {
 
 /** 구간 한 줄. 상태별로 다르게 보여준다 — 특히 '모름'을 숨기지 않는다. */
 function LegRow({ info }: { info?: LegInfo }) {
+  const t = useT();
   return (
     <div className="tl-leg">
       <div className="tl-leg__rail">
@@ -86,7 +89,7 @@ function LegRow({ info }: { info?: LegInfo }) {
             {info.transitMissing && (
               <span className="chip chip--warn">
                 <AlertIcon size={11} />
-                대중교통 정보 없음
+                {t.leg.transitMissing}
               </span>
             )}
           </>
@@ -95,12 +98,12 @@ function LegRow({ info }: { info?: LegInfo }) {
         {info?.status === 'cross_border' && (
           <span className="chip chip--warn">
             <AlertIcon size={11} />
-            국제 구간 · 직접 입력
+            {t.leg.crossBorder}
           </span>
         )}
 
         {info?.status === 'unavailable' && (
-          <span className="chip">이동 정보 없음 · 탭해서 입력</span>
+          <span className="chip">{t.leg.unknownTap}</span>
         )}
       </div>
     </div>
@@ -118,6 +121,8 @@ export function TripScreen() {
   const leaveTrip = useTripStore((s) => s.leaveTrip);
   const deleteTrip = useTripStore((s) => s.deleteTrip);
   const { share: shareInvite, toast } = useInviteShare();
+  const t = useT();
+  const locale = useLocale();
 
   const trip = useTripStore((s) => s.getTrip(tripId));
   const allItems = useTripStore((s) => s.items);
@@ -160,12 +165,10 @@ export function TripScreen() {
   if (!trip || !day) {
     return (
       <div className="app">
-        <AppHeader title="일정" back />
+        <AppHeader title={t.trip.title} back />
         <main className="main">
           {/* 보고 있던 여행이 지워지거나 내보내졌을 때도 여기로 온다 */}
-          <p className="empty">
-            여행을 찾을 수 없습니다. 삭제됐거나 더 이상 멤버가 아닐 수 있습니다.
-          </p>
+          <p className="empty">{t.trip.notFound}</p>
         </main>
         <BottomTabs />
       </div>
@@ -173,7 +176,7 @@ export function TripScreen() {
   }
 
   const shift = timezoneShift(prevDay, day);
-  const cityName = day.cityLabel || zoneLabel(day.timezone);
+  const cityName = day.cityLabel || zoneLabel(day.timezone, locale);
   const isOwner = trip.ownerId === me;
   const others = trip.members.filter((m) => m.id !== me).length;
 
@@ -200,7 +203,7 @@ export function TripScreen() {
             <PencilIcon size={14} className="dayhead__pencil" />
           </div>
           <div className="dayhead__date">
-            {dayIndex + 1}일차 · {formatDateLabel(day.date)}
+            {t.common.dayWithDate(dayIndex + 1, formatDateLabel(day.date, locale))}
           </div>
         </button>
 
@@ -210,15 +213,16 @@ export function TripScreen() {
             <div className="banner">
               <AlertIcon className="banner__icon" />
               <div>
-                어제와 시차가 <strong>{formatOffsetDelta(shift.deltaMinutes)}</strong> 있습니다.
-                아래 시간은 모두 <strong>{cityName} 현지 시각</strong>입니다.
+                <Rich
+                  text={t.trip.tzBanner(formatOffsetDelta(shift.deltaMinutes, locale), cityName)}
+                />
               </div>
             </div>
           </div>
         )}
 
         <div className="timeline">
-          {items.length === 0 && <p className="empty">이 날은 아직 비어 있습니다.</p>}
+          {items.length === 0 && <p className="empty">{t.trip.emptyDay}</p>}
 
           {items.map((item, i) => (
             <div key={item.id}>
@@ -228,7 +232,7 @@ export function TripScreen() {
                 <div className="tl-time">
                   {item.localTime ?? '—'}
                   {item.durationMin !== undefined && (
-                    <span className="tl-time__dur">{formatMinutes(item.durationMin)}</span>
+                    <span className="tl-time__dur">{formatMinutes(item.durationMin, locale)}</span>
                   )}
                 </div>
 
@@ -241,7 +245,7 @@ export function TripScreen() {
                     {isSegmentKind(item.kind) && (
                       <span className={`chip chip--${KIND_TONE[item.kind]}`}>
                         <KindIcon kind={item.kind} />
-                        {item.carrierCode ?? ITEM_KIND_LABEL[item.kind]}
+                        {item.carrierCode ?? t.kind[item.kind]}
                       </span>
                     )}
                     <EditedBy item={item} members={trip.members} variant="avatar" />
@@ -268,7 +272,7 @@ export function TripScreen() {
             className="tl-add"
             onClick={() => navigate(`/trip/${trip.id}/item/new?date=${activeDate}`)}
           >
-            <PlusIcon size={16} /> 일정 추가
+            <PlusIcon size={16} /> {t.trip.addItem}
           </button>
         </div>
       </main>
@@ -282,11 +286,11 @@ export function TripScreen() {
           }}
         >
           <ListIcon />
-          체크리스트
+          {t.trip.menuChecklist}
         </button>
         <button className="sheet__item" onClick={onShare}>
           <ShareIcon />
-          친구에게 공유
+          {t.trip.menuShare}
         </button>
         <button
           className="sheet__item"
@@ -296,7 +300,7 @@ export function TripScreen() {
           }}
         >
           <UsersIcon />
-          멤버 · 초대 코드
+          {t.trip.menuMembers}
         </button>
 
         <div className="sheet__sep" />
@@ -313,7 +317,7 @@ export function TripScreen() {
             }}
           >
             <TrashIcon />
-            여행 삭제
+            {t.trip.menuDelete}
           </button>
         ) : (
           <button
@@ -324,7 +328,7 @@ export function TripScreen() {
             }}
           >
             <LeaveIcon />
-            여행에서 나가기
+            {t.trip.menuLeave}
           </button>
         )}
 
@@ -334,8 +338,8 @@ export function TripScreen() {
 
       {confirm === 'delete' && (
         <ConfirmSheet
-          title="여행을 삭제할까요?"
-          confirmLabel="삭제"
+          title={t.trip.deleteTitle}
+          confirmLabel={t.trip.deleteConfirm}
           danger
           onClose={() => setConfirm(null)}
           onConfirm={async () => {
@@ -344,16 +348,16 @@ export function TripScreen() {
           }}
         >
           <p>
-            <strong>{trip.name}</strong>의 일정·준비물이 모두 지워집니다. 되돌릴 수 없습니다.
+            <Rich text={t.trip.deleteBody(trip.name)} />
           </p>
-          {others > 0 && <p>함께하던 {others}명도 더 이상 이 여행을 볼 수 없습니다.</p>}
+          {others > 0 && <p>{t.trip.deleteOthers(others)}</p>}
         </ConfirmSheet>
       )}
 
       {confirm === 'leave' && (
         <ConfirmSheet
-          title="여행에서 나갈까요?"
-          confirmLabel="나가기"
+          title={t.trip.leaveTitle}
+          confirmLabel={t.trip.leaveConfirm}
           danger
           onClose={() => setConfirm(null)}
           onConfirm={async () => {
@@ -362,10 +366,9 @@ export function TripScreen() {
           }}
         >
           <p>
-            내 목록에서 <strong>{trip.name}</strong> 여행이 사라집니다. 일정은 남은
-            사람들에게 그대로 남습니다.
+            <Rich text={t.trip.leaveBody(trip.name)} />
           </p>
-          <p>다시 들어오려면 초대 링크를 새로 받아야 합니다.</p>
+          <p>{t.trip.leaveRejoin}</p>
         </ConfirmSheet>
       )}
 

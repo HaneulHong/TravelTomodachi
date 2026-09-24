@@ -20,6 +20,7 @@ import { create } from 'zustand';
 import { getTripRepository, type DayPatch, type RemoteChange } from '@/data';
 import { bySortKey, keyBetween, keyForMove } from '@/domain/fractionalIndex';
 import type { ChecklistItem, Item, Leg, TransportMode, Trip, TripDay } from '@/domain/types';
+import { getMessages } from '@/i18n/store';
 
 const repository = getTripRepository();
 
@@ -119,7 +120,7 @@ export const useTripStore = create<TripState>()((set, get) => {
       set((state) => ({
         ...state,
         ...previous,
-        error: err instanceof Error ? err.message : '저장하지 못했습니다',
+        error: err instanceof Error ? err.message : getMessages().errors.saveFailed,
       }));
     });
   }
@@ -237,7 +238,7 @@ export const useTripStore = create<TripState>()((set, get) => {
       } catch (err: unknown) {
         set({
           loading: false,
-          error: err instanceof Error ? err.message : '여행을 읽지 못했습니다',
+          error: err instanceof Error ? err.message : getMessages().errors.readTrips,
         });
       }
     },
@@ -330,7 +331,7 @@ export const useTripStore = create<TripState>()((set, get) => {
         // 맨 뒤에 추가 — fractional index의 정수부만 증가하므로 키가 짧게 유지된다
         sortKey: keyBetween(last, null),
         kind: draft.kind ?? 'place',
-        title: draft.title ?? '새 일정',
+        title: draft.title ?? getMessages().itemEdit.defaultTitle,
         placeName: draft.placeName,
         coord: draft.coord,
         toPlaceName: draft.toPlaceName,

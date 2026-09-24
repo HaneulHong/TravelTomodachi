@@ -1,0 +1,354 @@
+/**
+ * English. 모양은 ko.ts를 따른다 — 빠진 문구가 있으면 빌드가 실패한다.
+ * 좁은 폰(320px)에서 버튼·칩이 넘치지 않게 짧은 표현을 고른다.
+ */
+
+import type { Messages } from './ko';
+
+export const en: Messages = {
+  common: {
+    back: 'Back',
+    menu: 'Menu',
+    profile: 'Profile',
+    mainNav: 'Main',
+    tripDates: 'Trip dates',
+    save: 'Save',
+    add: 'Add',
+    delete: 'Delete',
+    cancel: 'Cancel',
+    processing: 'Working…',
+    failed: 'Something went wrong',
+    loading: 'Loading…',
+    beta: 'beta',
+    tripNotFound: 'Trip not found.',
+    itemNotFound: 'Item not found.',
+    noInfo: 'No data',
+    querying: 'Checking',
+    dayN: (n) => `Day ${n}`,
+    dayWithDate: (n, date) => `Day ${n} · ${date}`,
+  },
+
+  tabs: { home: 'Home', schedule: 'Plan', map: 'Map' },
+
+  kind: {
+    place: 'Place',
+    flight: 'Flight',
+    train: 'Train',
+    bus: 'Bus',
+    ferry: 'Ferry',
+  },
+
+  transport: {
+    walk: 'Walk',
+    transit: 'Transit',
+    car: 'Car',
+  },
+
+  carrierLabel: {
+    place: '',
+    flight: 'Flight no.',
+    train: 'Train',
+    bus: 'Bus route',
+    ferry: 'Route · Ship',
+  },
+
+  carrierPlaceholder: {
+    place: '',
+    flight: 'e.g. KE1201',
+    train: 'e.g. Shinkansen Nozomi 21',
+    bus: 'e.g. Airport Limousine 6001',
+    ferry: 'e.g. Busan → Fukuoka Beetle',
+  },
+
+  region: { KR: 'Korea', GLOBAL: 'Abroad' },
+
+  leg: {
+    transitMissing: 'No transit data',
+    crossBorder: 'International · enter manually',
+    crossBorderShort: 'International',
+    unknownTap: 'No route info · tap to enter',
+    unknown: 'No route info',
+    manual: 'manual',
+  },
+
+  signIn: {
+    method: {
+      google: 'Continue with Google',
+      apple: 'Continue with Apple',
+      dev: 'Try with a dev account',
+    },
+    tagline: 'Plan trips together with friends',
+    invited: "You've been invited to a trip. Sign in and you'll go straight to it.",
+    devNote:
+      'No backend is connected yet, so the session stays **in this browser only**. Invites and shared editing work once Supabase is connected.',
+    privacy: 'We only store your nickname. No email, no real name.',
+  },
+
+  unavailable: {
+    title: 'The service is temporarily unavailable',
+    body: "We're under maintenance or hit a temporary problem. Please try again in a moment.",
+    retry: 'Try again',
+  },
+
+  home: {
+    title: 'Home',
+    list: 'My trips',
+    empty: 'No trips yet. Create your first one below.',
+    dayCount: (n) => (n === 1 ? '1 day' : `${n} days`),
+    bothRegions: 'Korea + abroad',
+    dday: (n) => `D-${n}`,
+    departsToday: 'Leaving today',
+    ongoing: 'Ongoing · past',
+    newTrip: 'New trip',
+    joinByCode: 'Join with invite code',
+  },
+
+  trip: {
+    title: 'Plan',
+    notFound: "Trip not found. It may have been deleted, or you're no longer a member.",
+    tzBanner: (delta, city) =>
+      `Time difference from yesterday: **${delta}**. All times below are **local time in ${city}**.`,
+    emptyDay: 'Nothing planned for this day yet.',
+    addItem: 'Add to plan',
+    menuChecklist: 'Checklist',
+    menuShare: 'Share with friends',
+    menuMembers: 'Members · invite code',
+    menuDelete: 'Delete trip',
+    menuLeave: 'Leave trip',
+    deleteTitle: 'Delete this trip?',
+    deleteConfirm: 'Delete',
+    deleteBody: (name) =>
+      `All plans and checklist items in **${name}** will be deleted. This can't be undone.`,
+    deleteOthers: (n) =>
+      n === 1
+        ? 'The other member will also lose access to this trip.'
+        : `The other ${n} members will also lose access to this trip.`,
+    leaveTitle: 'Leave this trip?',
+    leaveConfirm: 'Leave',
+    leaveBody: (name) =>
+      `**${name}** will disappear from your list. The plan stays as is for everyone else.`,
+    leaveRejoin: "You'll need a new invite link to come back.",
+  },
+
+  dayEdit: {
+    label: 'Day settings',
+    city: 'City',
+    timezone: 'Time zone',
+    keepTimes: (city) => `Times stay the same. A 09:00 plan becomes 09:00 local time in ${city}.`,
+    withFollowing: (n) =>
+      n === 1 ? 'Also change the next day' : `Also change the following ${n} days`,
+    until: (date, city) => `Until ${date} · now ${city}`,
+  },
+
+  tripCreate: {
+    title: 'New trip',
+    create: 'Create',
+    creating: 'Creating…',
+    cover: 'Cover',
+    coverAria: (emoji) => `Cover ${emoji}`,
+    name: 'Trip name',
+    namePlaceholder: 'e.g. Tokyo & Osaka, 6 days',
+    start: 'Start',
+    end: 'End',
+    timezone: 'Default time zone',
+    timezoneHint:
+      'Every day gets this time zone. On days you move to another city, tap the city name on the plan screen to change it from that day.',
+    dateCount: (n) => (n === 1 ? '1 day will be created' : `${n} days will be created`),
+    submit: 'Create trip',
+    failed: "Couldn't create the trip",
+  },
+
+  itemEdit: {
+    titleNew: 'Add to plan',
+    titleEdit: 'Edit plan',
+    kind: 'Type',
+    title: 'Title',
+    titlePlaceholder: 'e.g. Lunch · ramen',
+    place: 'Place',
+    placePlaceholder: 'Search places (e.g. Shibuya Crossing)',
+    depart: 'Departs from',
+    departPlaceholder: 'e.g. Seoul Station, Incheon Airport',
+    arrive: 'Arrives at',
+    arrivePlaceholder: 'e.g. Busan Station, Jeju Port',
+    time: 'Time',
+    stay: 'Duration',
+    minutesSuffix: 'min',
+    memo: 'Notes',
+    memoPlaceholder: 'Booking number, things to bring, tips…',
+    defaultTitle: 'New plan',
+  },
+
+  itemDetail: {
+    stay: (d) => `Stay ${d}`,
+    howToMove: 'Getting there',
+    firstOfDay: 'First plan of the day — nothing before it.',
+    transitMissing:
+      "There's no public transit data for this area, so only walking and driving were calculated. If you'll use local options like Grab or tuk-tuks, enter the time below.",
+    crossBorder:
+      "This leg crosses a border and can't be routed. Please enter the flight or train details yourself.",
+    moveTime: 'Travel time',
+    minus5: '5 minutes less',
+    plus5: '5 minutes more',
+    saveManual: 'Save this time',
+    manualNote: "Entered manually. Route results won't overwrite it.",
+    revertAuto: 'Go back to automatic',
+    memo: 'Notes',
+    noMemo: 'No notes yet.',
+    drawnLine: 'Line on the map',
+    viaTransit: 'Transit lines found',
+    viaCar: 'Driving route along roads and sea routes',
+    straight: 'No route found, so the two terminals are joined with a dashed straight line.',
+    coordNote: 'Found from coordinates only.',
+    carrierDiffers: (code) => ` It may differ from "${code}" you entered.`,
+    edit: 'Edit',
+  },
+
+  edited: {
+    leftMember: 'Former member',
+    title: (name, when) => `Edited by ${name ?? 'you'}${when ? ` · ${when}` : ''}`,
+    line: (name) => `Last edited by ${name ?? 'you'}`,
+  },
+
+  map: {
+    title: 'Map',
+    noCoords: 'No plans with a location on this day.',
+    noTime: 'No time set',
+    startPoint: 'Starting point of the day.',
+    loading: 'Loading map…',
+    failed: "Couldn't load the map",
+    fallback: "Couldn't load the map, so here's a simple one. The order and route are unchanged.",
+    schematic: 'Simple map',
+    pinAria: (n, time, name) => `Stop ${n}: ${time ? `${time} ` : ''}${name}`,
+  },
+
+  place: {
+    searchFailed: "Couldn't find places",
+    searchHttpFailed: (status) => `Place search failed (${status}). Please try again shortly.`,
+    searching: 'Searching…',
+    noResults: 'No matches. Try the local language or English (e.g. Tokyo Skytree).',
+    noCoord: "No coordinates, so it won't show on the map.",
+  },
+
+  credits: {
+    title: 'Data sources',
+    searchUse: 'Place search · routing',
+    osm: '© OpenStreetMap contributors',
+    transitUse: 'Public transit',
+    transitous: 'Transitous (agency GTFS)',
+  },
+
+  checklist: {
+    title: 'Checklist',
+    empty: 'No items yet.',
+    addPlaceholder: 'Add item',
+  },
+
+  members: {
+    title: 'Members',
+    screenTitle: 'Members · Invite',
+    code: 'Invite code',
+    codeAria: (spelled) => `Invite code ${spelled}`,
+    sendLink: 'Send invite link',
+    regenerate: 'Change invite code',
+    count: (n) => (n === 1 ? '1 person' : `${n} people`),
+    me: ' (you)',
+    owner: 'Owner',
+    kick: 'Remove',
+    alone: "It's just you so far. Send the invite link and friends can join and edit right away.",
+    kickTitle: (name) => `Remove ${name}?`,
+    kickBody: "They won't be able to see this trip anymore. Their edits stay.",
+    kickBody2:
+      'If they still have the invite link, they can rejoin. Change the invite code to stop that.',
+    regenTitle: 'Change the invite code?',
+    regenConfirm: 'Make new code',
+    regenBody: (code) => `Links and the code **${code}** sent so far will stop working.`,
+    regenBody2: 'Current members stay.',
+  },
+
+  invite: {
+    title: 'Join a trip',
+    joining: 'Joining…',
+    code: 'Invite code',
+    placeholder: 'e.g. 5G5D5UNX',
+    hint: 'Not case-sensitive. If you open a link from a friend, this screen joins for you.',
+    join: 'Join',
+    goHome: 'Home',
+    failed: "Couldn't join",
+  },
+
+  share: {
+    text: (name, code) => `Let's plan ${name} together (invite code ${code})`,
+    textNoUrl: (name, code) =>
+      `Let's plan ${name} together\nInvite code: ${code}\nIn the app, tap "Join with invite code" and enter it.`,
+    copiedLink: 'Invite link copied',
+    copiedCode: 'Invite code copied',
+    codeToast: (code) => `Invite code: ${code}`,
+  },
+
+  profile: {
+    title: 'Profile',
+    notSignedIn: "You're not signed in.",
+    via: {
+      google: 'Signed in with Google',
+      apple: 'Signed in with Apple',
+      dev: 'Signed in with a dev account',
+    },
+    nickname: 'Nickname',
+    nicknamePlaceholder: 'Name your friends will see',
+    nicknameHint: (tag) =>
+      `It's fine if someone else uses it${tag ? ` — the number (#${tag}) tells you apart` : ''}. You can change it anytime.`,
+    saved: 'Saved',
+    saveNickname: 'Save nickname',
+    signOut: 'Sign out',
+    privacy: 'We only store your nickname. No email, no real name.',
+    defaultNickname: 'Traveler',
+    language: 'Language',
+    languageAuto: 'Use device language',
+    languageAutoHint: (name) => `Device language: ${name}`,
+    languageManualHint: 'Only this device uses the language you pick.',
+  },
+
+  nickname: {
+    empty: 'Please enter a nickname',
+    tooLong: (max) => `Nicknames can be up to ${max} characters`,
+    hash: "Nicknames can't contain '#'",
+  },
+
+  errors: {
+    signInFailed: "Couldn't sign in",
+    signInCancelled: 'Sign-in was cancelled',
+    signInNoCode: 'The sign-in response had no code',
+    unsupportedMethod: 'This sign-in method is not supported',
+    notSignedIn: "You're not signed in",
+    needSignIn: 'Please sign in',
+    nicknameFailed: "Couldn't change the nickname",
+    readProfile: "Couldn't load the profile",
+    createProfile: "Couldn't create the profile",
+    saveFailed: "Couldn't save",
+    readTrips: "Couldn't load trips",
+    readMembers: "Couldn't load members",
+    readDays: "Couldn't load days",
+    readItems: "Couldn't load plans",
+    createTrip: "Couldn't create the trip",
+    createDays: "Couldn't create the days",
+    removeMember: "Couldn't remove the member",
+    removeMemberNone: 'No permission, or the member already left',
+    deleteTrip: "Couldn't delete the trip",
+    deleteTripNotOwner: 'Only the trip owner can delete it',
+    createItem: "Couldn't add the plan",
+    updateItem: "Couldn't update the plan",
+    deleteItem: "Couldn't delete the plan",
+    updateDays: "Couldn't update the days",
+    addChecklist: "Couldn't add the item",
+    updateChecklist: "Couldn't update the item",
+    deleteChecklist: "Couldn't delete the item",
+  },
+
+  serverErrors: {
+    needSignIn: 'Please sign in',
+    codeNotFound: "That invite code doesn't exist",
+    onlyOwnerRegenerate: 'Only the trip owner can change the invite code',
+    regenerateFailed: "Couldn't make a new invite code. Please try again",
+    nicknameCrowded: 'Too many people use this nickname. Please pick another one',
+  },
+};

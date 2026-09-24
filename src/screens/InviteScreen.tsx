@@ -12,6 +12,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AppHeader } from '@/components/AppHeader';
+import { useT } from '@/i18n';
 import { useTripStore } from '@/store/tripStore';
 
 type Status = 'idle' | 'joining' | 'failed';
@@ -21,6 +22,7 @@ export function InviteScreen() {
   const navigate = useNavigate();
   const joinTrip = useTripStore((s) => s.joinTrip);
   const trips = useTripStore((s) => s.trips);
+  const t = useT();
 
   const [code, setCode] = useState(codeFromLink ?? '');
   const [status, setStatus] = useState<Status>('idle');
@@ -47,7 +49,7 @@ export function InviteScreen() {
       navigate(`/trip/${tripId}${joined ? `?date=${joined.startDate}` : ''}`, { replace: true });
     } catch (err: unknown) {
       setStatus('failed');
-      setError(err instanceof Error ? err.message : '참가하지 못했습니다');
+      setError(err instanceof Error ? err.message : t.invite.failed);
     }
   };
 
@@ -64,31 +66,28 @@ export function InviteScreen() {
 
   return (
     <div className="app">
-      <AppHeader title="초대 참가" back />
+      <AppHeader title={t.invite.title} back />
 
       <main className="main main--no-tabs">
         <div className="form">
-          {status === 'joining' && <p className="empty">참가하는 중…</p>}
+          {status === 'joining' && <p className="empty">{t.invite.joining}</p>}
 
           {status !== 'joining' && (
             <>
               <label className="form__row">
-                <span className="form__label">초대 코드</span>
+                <span className="form__label">{t.invite.code}</span>
                 <input
                   className="form__input invite__code"
                   value={code}
                   onChange={(e) => setCode(e.target.value)}
-                  placeholder="예: 5G5D5UNX"
+                  placeholder={t.invite.placeholder}
                   autoCapitalize="characters"
                   autoCorrect="off"
                   spellCheck={false}
                   maxLength={12}
                   autoFocus={!codeFromLink}
                 />
-                <p className="form__hint">
-                  대소문자는 가리지 않습니다. 친구에게 받은 링크를 열면 이 화면이 알아서
-                  참가시킵니다.
-                </p>
+                <p className="form__hint">{t.invite.hint}</p>
               </label>
 
               {error && <p className="form__hint form__hint--error">{error}</p>}
@@ -99,11 +98,11 @@ export function InviteScreen() {
                   onClick={() => void join(code)}
                   disabled={code.trim().length === 0}
                 >
-                  참가하기
+                  {t.invite.join}
                 </button>
                 {alreadyIn && (
                   <button className="btn" onClick={() => navigate('/')}>
-                    홈으로
+                    {t.invite.goHome}
                   </button>
                 )}
               </div>

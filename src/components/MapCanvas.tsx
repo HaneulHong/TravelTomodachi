@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { SHOW_DEV_HINTS } from '@/config';
+import { useT } from '@/i18n';
 import { createSchematicMapRenderer } from '@/providers';
 import type { MapHandle, MapRenderer, MapStop, PathSegment } from '@/providers';
 
@@ -34,6 +35,7 @@ function prefersDark(): boolean {
 export function MapCanvas({ renderer, stops, path, onStopClick }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const handleRef = useRef<MapHandle | null>(null);
+  const t = useT();
   const [status, setStatus] = useState<Status>('loading');
   const [error, setError] = useState<string | null>(null);
 
@@ -173,12 +175,12 @@ export function MapCanvas({ renderer, stops, path, onStopClick }: Props) {
       <div className="mapstage__canvas" ref={containerRef} />
 
       {status === 'loading' && active.configured && (
-        <div className="mapstage__overlay">지도를 불러오는 중…</div>
+        <div className="mapstage__overlay">{t.map.loading}</div>
       )}
 
       {status === 'error' && (
         <div className="mapstage__overlay mapstage__overlay--error">
-          <strong>지도를 불러오지 못했습니다</strong>
+          <strong>{t.map.failed}</strong>
           {/* 원인 문구에는 키·리퍼러 같은 설정 얘기가 들어 있어 개발 중에만 */}
           {SHOW_DEV_HINTS && <span>{error}</span>}
         </div>
@@ -189,9 +191,7 @@ export function MapCanvas({ renderer, stops, path, onStopClick }: Props) {
         사용자가 할 수 있는 일이 없는데 환경변수 이름을 보여줘 봐야 불안만 준다.
       */}
       {!SHOW_DEV_HINTS && (fallbackReason || !renderer.configured) && (
-        <div className="mapstage__note">
-          지도를 불러오지 못해 간략 지도로 보여드립니다. 일정 순서와 동선은 그대로입니다.
-        </div>
+        <div className="mapstage__note">{t.map.fallback}</div>
       )}
 
       {/* SDK가 실패해서 내려온 경우: 키는 있으니 환경변수 안내는 맞지 않는다 */}
@@ -218,7 +218,10 @@ export function MapCanvas({ renderer, stops, path, onStopClick }: Props) {
       )}
 
       {active.configured && status === 'ready' && (
-        <div className="mapstage__attr">{active.attribution}</div>
+        <div className="mapstage__attr">
+          {/* 간략 지도의 표시는 출처가 아니라 설명이라 화면 언어로 */}
+          {active.id.startsWith('schematic') ? t.map.schematic : active.attribution}
+        </div>
       )}
     </div>
   );

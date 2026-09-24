@@ -1,5 +1,5 @@
 /**
- * 프로필 — 닉네임과 로그아웃.
+ * 프로필 — 닉네임, 언어, 로그아웃.
  *
  * 받는 정보가 닉네임 하나뿐이라 화면도 이만큼이면 된다. 설정할 게 늘어나면
  * 그때 항목을 붙인다.
@@ -7,21 +7,67 @@
 
 import { useState } from 'react';
 import { AppHeader } from '@/components/AppHeader';
-import { initialOf, NICKNAME_MAX, nicknameProblem, type SignInMethod } from '@/auth';
-import { VERSION_LABEL } from '@/config';
+import { initialOf, NICKNAME_MAX, nicknameMessage, nicknameProblem } from '@/auth';
+import { versionLabel } from '@/config';
+import { LOCALE_NAME, LOCALES, useLocaleSettings, useT } from '@/i18n';
 import { useAuthStore } from '@/store/authStore';
 
-const VIA_LABEL: Record<SignInMethod, string> = {
-  google: 'Google 계정',
-  apple: 'Apple 계정',
-  dev: '개발용 계정',
-};
+/**
+ * 언어 설정. 기본은 기기 언어를 따르고, 끄면 세 언어 중에서 고른다.
+ *
+ * 끌 때는 지금 보이는 언어로 고정한다 — 끄자마자 화면이 다른 언어로 바뀌면
+ * 무엇을 눌렀는지 헷갈린다. 바꾸고 싶으면 그다음에 고른다.
+ */
+function LanguageSetting() {
+  const t = useT();
+  const { preference, device, locale, setPreference } = useLocaleSettings();
+  const auto = preference === 'auto';
+
+  return (
+    <div className="form__row">
+      <span className="form__label">{t.profile.language}</span>
+      <label className="form__check">
+        <input
+          type="checkbox"
+          checked={auto}
+          onChange={(e) => setPreference(e.target.checked ? 'auto' : locale)}
+        />
+        <span>
+          {t.profile.languageAuto}
+          <span className="form__check-sub">{t.profile.languageAutoHint(LOCALE_NAME[device])}</span>
+        </span>
+      </label>
+
+      {!auto && (
+        <>
+          <div className="seg seg--3" role="radiogroup" aria-label={t.profile.language}>
+            {LOCALES.map((l) => (
+              <button
+                key={l}
+                role="radio"
+                aria-checked={l === locale}
+                // 언어 이름은 그 언어로 적는다 — 못 읽는 언어로 적혀 있으면 못 찾는다
+                lang={l}
+                className={`seg__btn${l === locale ? ' seg__btn--on' : ''}`}
+                onClick={() => setPreference(l)}
+              >
+                {LOCALE_NAME[l]}
+              </button>
+            ))}
+          </div>
+          <p className="form__hint">{t.profile.languageManualHint}</p>
+        </>
+      )}
+    </div>
+  );
+}
 
 export function ProfileScreen() {
   const account = useAuthStore((s) => s.account);
   const updateNickname = useAuthStore((s) => s.updateNickname);
   const signOut = useAuthStore((s) => s.signOut);
   const error = useAuthStore((s) => s.error);
+  const t = useT();
 
   const [draft, setDraft] = useState(account?.nickname ?? '');
   const [saved, setSaved] = useState(false);
@@ -29,9 +75,9 @@ export function ProfileScreen() {
   if (!account) {
     return (
       <div className="app">
-        <AppHeader title="프로필" back />
+        <AppHeader title={t.profile.title} back />
         <main className="main main--no-tabs">
-          <p className="empty">로그인 상태가 아닙니다.</p>
+          <p className="empty">{t.profile.notSignedIn}</p>
         </main>
       </div>
     );
@@ -52,7 +98,7 @@ export function ProfileScreen() {
 
   return (
     <div className="app">
-      <AppHeader title="프로필" back />
+      <AppHeader title={t.profile.title} back />
 
       <main className="main main--no-tabs">
         <div className="form">
@@ -65,26 +111,24 @@ export function ProfileScreen() {
               {account.nickname}
               {account.tag && <span className="profile__tag">#{account.tag}</span>}
             </span>
-            <span className="profile__via">{VIA_LABEL[account.via]}으로 로그인됨</span>
+            <span className="profile__via">{t.profile.via[account.via]}</span>
           </div>
 
           <label className="form__row">
-            <span className="form__label">닉네임</span>
+            <span className="form__label">{t.profile.nickname}</span>
             <input
               className="form__input"
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
-              placeholder="친구들에게 보일 이름"
+              placeholder={t.profile.nicknamePlaceholder}
               maxLength={NICKNAME_MAX}
             />
             {problem ? (
-              <p className="form__hint form__hint--error">{problem}</p>
-            ) : (
-              <p className="form__hint">
-                다른 사람과 같아도 됩니다
-                {account.tag ? `. 뒤의 번호(#${account.tag})로 구분합니다` : ''}. 언제든 바꿀
-                수 있습니다.
+              <p className="form__hint form__hint--error">
+                {nicknameMessage(problem, t.nickname)}
               </p>
+            ) : (
+              <p className="form__hint">{t.profile.nicknameHint(account.tag || undefined)}</p>
             )}
           </label>
 
@@ -92,18 +136,18 @@ export function ProfileScreen() {
 
           <div className="form__actions">
             <button className="btn btn--primary" onClick={() => void save()} disabled={!changed}>
-              {saved ? '저장했습니다' : '닉네임 저장'}
+              {saved ? t.profile.saved : t.profile.saveNickname}
             </button>
             <button className="btn" onClick={() => void signOut()}>
-              로그아웃
+              {t.profile.signOut}
             </button>
           </div>
 
-          <p className="signin__privacy">
-            저장하는 정보는 닉네임뿐입니다. 이메일과 실명은 받지 않습니다.
-          </p>
+          <LanguageSetting />
 
-          <p className="signin__version">TravelTomodachi {VERSION_LABEL}</p>
+          <p className="signin__privacy">{t.profile.privacy}</p>
+
+          <p className="signin__version">TravelTomodachi {versionLabel(t.common.beta)}</p>
         </div>
       </main>
     </div>

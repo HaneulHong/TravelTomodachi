@@ -9,15 +9,9 @@ import { useDayLegs } from '@/hooks/useDayLegs';
 import { useSegmentRoutes } from '@/hooks/useSegmentRoutes';
 import { formatDistance } from '@/domain/geo';
 import { formatMinutes, tzShortLabel } from '@/domain/time';
+import { isSegmentKind, type Coord, type TransportMode } from '@/domain/types';
+import { useLocale, useT } from '@/i18n';
 import {
-  ITEM_KIND_LABEL,
-  TRANSPORT_LABEL,
-  isSegmentKind,
-  type Coord,
-  type TransportMode,
-} from '@/domain/types';
-import {
-  REGION_LABEL,
   getMapRenderer,
   getRouteProviderFor,
   resolveMapRegion,
@@ -35,6 +29,8 @@ export function ItemDetailScreen() {
   const allItems = useTripStore((s) => s.items);
   const setLegManually = useTripStore((s) => s.setLegManually);
   const clearManualLeg = useTripStore((s) => s.clearManualLeg);
+  const t = useT();
+  const locale = useLocale();
 
   const item = allItems.find((i) => i.id === itemId);
 
@@ -66,9 +62,9 @@ export function ItemDetailScreen() {
   if (!trip || !item) {
     return (
       <div className="app">
-        <AppHeader title="일정" back />
+        <AppHeader title={t.trip.title} back />
         <main className="main main--no-tabs">
-          <p className="empty">항목을 찾을 수 없습니다.</p>
+          <p className="empty">{t.common.itemNotFound}</p>
         </main>
       </div>
     );
@@ -103,7 +99,7 @@ export function ItemDetailScreen() {
         <div className="detail">
           {/* 일정 명세 */}
           <section className="card detail__hero">
-            <span className="chip">{ITEM_KIND_LABEL[item.kind]}</span>
+            <span className="chip">{t.kind[item.kind]}</span>
             <h2 className="detail__title">{item.title}</h2>
             {item.placeName && (
               <div className="detail__place">
@@ -118,7 +114,7 @@ export function ItemDetailScreen() {
                 </span>
               )}
               {item.durationMin !== undefined && (
-                <span className="chip">체류 {formatMinutes(item.durationMin)}</span>
+                <span className="chip">{t.itemDetail.stay(formatMinutes(item.durationMin, locale))}</span>
               )}
               {item.carrierCode && <span className="chip">{item.carrierCode}</span>}
             </div>
@@ -127,12 +123,10 @@ export function ItemDetailScreen() {
 
           {/* 이동 방법 · 이동 시간 */}
           <section className="card field">
-            <div className="field__label">이동 방법</div>
+            <div className="field__label">{t.itemDetail.howToMove}</div>
 
             {!prev && (
-              <div className="field__value field__value--muted">
-                이 날의 첫 일정입니다. 이전 구간이 없습니다.
-              </div>
+              <div className="field__value field__value--muted">{t.itemDetail.firstOfDay}</div>
             )}
 
             {prev && (
@@ -162,17 +156,17 @@ export function ItemDetailScreen() {
                         }}
                       >
                         <div className="mode__name">
-                          <Icon /> {TRANSPORT_LABEL[mode]}
+                          <Icon /> {t.transport[mode]}
                         </div>
                         <div className="mode__val">
-                          {result?.available ? formatMinutes(result.minutes) : '—'}
+                          {result?.available ? formatMinutes(result.minutes, locale) : '—'}
                         </div>
                         <div className="mode__sub">
                           {result?.available
                             ? formatDistance(result.distanceM)
                             : unavailable
-                              ? '정보 없음'
-                              : '조회 중'}
+                              ? t.common.noInfo
+                              : t.common.querying}
                         </div>
                       </button>
                     );
@@ -183,25 +177,19 @@ export function ItemDetailScreen() {
                 {legInfo?.transitMissing && (
                   <div className="banner" style={{ marginTop: 12 }}>
                     <AlertIcon className="banner__icon" />
-                    <div>
-                      이 지역은 대중교통 데이터가 제공되지 않습니다. 도보·차량만 계산했습니다.
-                      실제로 그랩·툭툭 같은 현지 수단을 쓴다면 아래에서 직접 적어두세요.
-                    </div>
+                    <div>{t.itemDetail.transitMissing}</div>
                   </div>
                 )}
 
                 {legInfo?.status === 'cross_border' && (
                   <div className="banner" style={{ marginTop: 12 }}>
                     <AlertIcon className="banner__icon" />
-                    <div>
-                      국경을 넘는 구간입니다. 길찾기로는 계산되지 않으니 항공편·기차 정보를
-                      직접 입력해 주세요.
-                    </div>
+                    <div>{t.itemDetail.crossBorder}</div>
                   </div>
                 )}
 
                 <div className="field__label" style={{ marginTop: 18 }}>
-                  이동 시간
+                  {t.itemDetail.moveTime}
                 </div>
                 <div className="stepper">
                   <button
@@ -209,15 +197,15 @@ export function ItemDetailScreen() {
                     onClick={() =>
                       setDraftMinutes(Math.max(0, (draftMinutes ?? shownMinutes) - 5))
                     }
-                    aria-label="5분 줄이기"
+                    aria-label={t.itemDetail.minus5}
                   >
                     −
                   </button>
-                  <div className="stepper__val">{formatMinutes(shownMinutes)}</div>
+                  <div className="stepper__val">{formatMinutes(shownMinutes, locale)}</div>
                   <button
                     className="stepper__btn"
                     onClick={() => setDraftMinutes((draftMinutes ?? shownMinutes) + 5)}
-                    aria-label="5분 늘리기"
+                    aria-label={t.itemDetail.plus5}
                   >
                     +
                   </button>
@@ -229,7 +217,7 @@ export function ItemDetailScreen() {
                     style={{ marginTop: 10 }}
                     onClick={() => commitMinutes(activeMode ?? 'walk', draftMinutes)}
                   >
-                    직접 입력한 시간으로 저장
+                    {t.itemDetail.saveManual}
                   </button>
                 )}
 
@@ -239,14 +227,14 @@ export function ItemDetailScreen() {
                       className="field__value field__value--muted"
                       style={{ marginTop: 10, fontSize: 12.5 }}
                     >
-                      직접 입력한 값입니다. 길찾기 결과로 덮어쓰지 않습니다.
+                      {t.itemDetail.manualNote}
                     </div>
                     <button
                       className="btn btn--ghost"
                       style={{ marginTop: 6 }}
                       onClick={() => clearManualLeg(item.id)}
                     >
-                      자동 계산으로 되돌리기
+                      {t.itemDetail.revertAuto}
                     </button>
                   </>
                 )}
@@ -256,9 +244,9 @@ export function ItemDetailScreen() {
 
           {/* 디스크립션 */}
           <section className="card field">
-            <div className="field__label">메모</div>
+            <div className="field__label">{t.itemDetail.memo}</div>
             <div className={`field__value${item.description ? '' : ' field__value--muted'}`}>
-              {item.description ?? '아직 메모가 없습니다.'}
+              {item.description ?? t.itemDetail.noMemo}
             </div>
           </section>
 
@@ -273,11 +261,11 @@ export function ItemDetailScreen() {
           */}
           {isSegmentKind(item.kind) && item.toCoord && (
             <section className="card field">
-              <div className="field__label">지도에 그려진 선</div>
+              <div className="field__label">{t.itemDetail.drawnLine}</div>
 
               {segmentRoute?.via === 'transit' && (
                 <div className="field__value">
-                  조회된 대중교통 노선
+                  {t.itemDetail.viaTransit}
                   {segmentRoute.lines && segmentRoute.lines.length > 0 && (
                     <div className="routesrc__lines">
                       {segmentRoute.lines.map((line, i) => (
@@ -291,18 +279,16 @@ export function ItemDetailScreen() {
               )}
 
               {segmentRoute?.via === 'car' && (
-                <div className="field__value">도로·항로를 따라간 차량 경로</div>
+                <div className="field__value">{t.itemDetail.viaCar}</div>
               )}
 
               {!segmentRoute && (
-                <div className="field__value field__value--muted">
-                  경로를 못 찾아 두 터미널을 직선(점선)으로 이었습니다.
-                </div>
+                <div className="field__value field__value--muted">{t.itemDetail.straight}</div>
               )}
 
               <div className="routesrc__note">
-                좌표만 보고 찾은 경로입니다.
-                {item.carrierCode ? ` 적어두신 "${item.carrierCode}"와 다를 수 있습니다.` : ''}
+                {t.itemDetail.coordNote}
+                {item.carrierCode ? t.itemDetail.carrierDiffers(item.carrierCode) : ''}
               </div>
             </section>
           )}
@@ -315,7 +301,7 @@ export function ItemDetailScreen() {
               <div className="field__label">이 구간에 쓰인 서비스</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap' }}>
-                  <span className="chip chip--accent">{REGION_LABEL[region]}</span>
+                  <span className="chip chip--accent">{t.region[region]}</span>
                   <span className="chip">{provider.label}</span>
                 </div>
                 <div style={{ fontSize: 12, color: 'var(--text-3)' }}>
@@ -338,7 +324,7 @@ export function ItemDetailScreen() {
           className="fab"
           onClick={() => navigate(`/trip/${tripId}/item/${itemId}/edit`)}
         >
-          <PencilIcon size={16} /> 수정
+          <PencilIcon size={16} /> {t.itemDetail.edit}
         </button>
       </div>
     </div>

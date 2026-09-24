@@ -10,6 +10,7 @@
 
 import { formatRelative } from '@/domain/time';
 import { memberLabel, type Item, type Member } from '@/domain/types';
+import { useLocale, useT } from '@/i18n';
 import { useTripStore } from '@/store/tripStore';
 
 interface Props {
@@ -18,20 +19,23 @@ interface Props {
   variant: 'avatar' | 'line';
 }
 
-/** 나간 멤버는 목록에 없다. 이름은 모르지만 "누군가 고쳤다"는 건 남긴다. */
-const LEFT_MEMBER: Omit<Member, 'id'> = { name: '나간 멤버', initial: '?', color: '#9a9488' };
-
 export function EditedBy({ item, members, variant }: Props) {
   const me = useTripStore((s) => s.currentUserId);
+  const t = useT();
+  const locale = useLocale();
   if (!item.updatedBy) return null;
 
-  const member = members.find((m) => m.id === item.updatedBy) ?? {
+  // 나간 멤버는 목록에 없다. 이름은 모르지만 "누군가 고쳤다"는 건 남긴다.
+  const member: Member = members.find((m) => m.id === item.updatedBy) ?? {
     id: item.updatedBy,
-    ...LEFT_MEMBER,
+    name: t.edited.leftMember,
+    initial: '?',
+    color: '#9a9488',
   };
   const isMe = member.id === me;
   const name = memberLabel(member, members);
-  const when = item.updatedAt ? formatRelative(item.updatedAt) : '';
+  const when = item.updatedAt ? formatRelative(item.updatedAt, Date.now(), locale) : '';
+  const who = isMe ? null : name;
 
   if (variant === 'avatar') {
     if (members.length < 2) return null;
@@ -39,7 +43,7 @@ export function EditedBy({ item, members, variant }: Props) {
       <span
         className="avatar avatar--sm edited__avatar"
         style={{ background: member.color }}
-        title={`${isMe ? '내가' : `${name}님이`} 고침${when ? ` · ${when}` : ''}`}
+        title={t.edited.title(who, when)}
       >
         {member.initial}
       </span>
@@ -52,7 +56,7 @@ export function EditedBy({ item, members, variant }: Props) {
         {member.initial}
       </span>
       <span>
-        {isMe ? '내가' : `${name}님이`} 마지막으로 고침
+        {t.edited.line(who)}
         {when && <span className="edited__when"> · {when}</span>}
       </span>
     </div>

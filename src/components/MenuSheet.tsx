@@ -1,4 +1,5 @@
 import { useEffect, type ReactNode } from 'react';
+import { useT } from '@/i18n';
 
 interface Props {
   open: boolean;
@@ -9,7 +10,8 @@ interface Props {
 }
 
 /** 스케치의 ≡ 메뉴. 체크리스트·공유 진입점이 여기 들어간다. */
-export function MenuSheet({ open, onClose, children, label = '메뉴' }: Props) {
+export function MenuSheet({ open, onClose, children, label }: Props) {
+  const t = useT();
   useEffect(() => {
     if (!open) return;
     function onKey(e: KeyboardEvent) {
@@ -24,7 +26,7 @@ export function MenuSheet({ open, onClose, children, label = '메뉴' }: Props) 
   return (
     <>
       <div className="sheet-backdrop" onClick={onClose} />
-      <div className="sheet" role="dialog" aria-modal="true" aria-label={label}>
+      <div className="sheet" role="dialog" aria-modal="true" aria-label={label ?? t.common.menu}>
         <div className="sheet__handle" />
         {children}
       </div>

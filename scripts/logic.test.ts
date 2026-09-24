@@ -27,6 +27,12 @@ import { memberLabel, type Member, type TripDay } from '../src/domain/types';
 import { colorOf, fullName, nicknameProblem } from '../src/auth/types';
 import { inviteCodeFromAppUrl, inviteCodeFromHash } from '../src/auth/pendingInvite';
 import { normalizeBaseUrl } from '../src/platform/baseUrl';
+import { detectLocale, isLocalePreference } from '../src/i18n/locales';
+import { isDefaultZoneLabel, zoneLabel, zoneOptions } from '../src/domain/timezones';
+import { formatDateLabel, formatWeekday } from '../src/domain/time';
+import { ko } from '../src/i18n/messages/ko';
+import { en } from '../src/i18n/messages/en';
+import { ja } from '../src/i18n/messages/ja';
 
 let passed = 0;
 let failed = 0;
@@ -341,14 +347,71 @@ console.log('\n── 닉네임 번호 ──');
   eq('전체 이름', fullName('여행자', '0421'), '여행자#0421');
   eq('번호 없으면 이름만', fullName('여행자', ''), '여행자');
 
-  eq('빈 닉네임', nicknameProblem('   '), '닉네임을 입력해 주세요');
-  ok("'#' 금지", nicknameProblem('여행#1') !== null);
-  ok('20자 넘으면 안 됨', nicknameProblem('가'.repeat(21)) !== null);
+  eq('빈 닉네임', nicknameProblem('   '), 'empty');
+  eq("'#' 금지", nicknameProblem('여행#1'), 'hash');
+  eq('20자 넘으면 안 됨', nicknameProblem('가'.repeat(21)), 'tooLong');
   eq('20자는 됨', nicknameProblem('가'.repeat(20)), null);
   eq('이모지 20개는 됨 (코드 포인트로 센다)', nicknameProblem('🧳'.repeat(20)), null);
   eq('보통 닉네임', nicknameProblem('하늘'), null);
 
   ok('색은 id로 — 같은 입력이면 같은 색', colorOf('user-1') === colorOf('user-1'));
+}
+
+console.log('\n── 언어 ──');
+{
+  eq('한국어 기기', detectLocale(['ko-KR', 'en-US']), 'ko');
+  eq('일본어 기기', detectLocale(['ja-JP']), 'ja');
+  eq('영어 기기', detectLocale(['en-GB']), 'en');
+  eq('지원 안 하는 언어 다음 순위', detectLocale(['fr-FR', 'ja']), 'ja');
+  eq('지원하는 게 없으면 영어', detectLocale(['fr-FR', 'zh-CN']), 'en');
+  eq('목록이 비면 영어', detectLocale([]), 'en');
+  eq('밑줄 표기도', detectLocale(['ja_JP']), 'ja');
+  ok('설정값 auto', isLocalePreference('auto'));
+  ok('설정값 ja', isLocalePreference('ja'));
+  ok('설정값 이상한 값은 거절', !isLocalePreference('fr') && !isLocalePreference(null));
+
+  eq('날짜 ko', formatDateLabel('2026-11-03'), '11월 3일 (화)');
+  eq('날짜 en', formatDateLabel('2026-11-03', 'en'), 'Tue, Nov 3');
+  eq('날짜 ja', formatDateLabel('2026-11-03', 'ja'), '11月3日(火)');
+  eq('요일 en', formatWeekday('2026-11-03', 'en'), 'Tue');
+  eq('요일 ja', formatWeekday('2026-11-03', 'ja'), '火');
+  eq('시간 en', formatMinutes(95, 'en'), '1h 35m');
+  eq('시간 ja', formatMinutes(95, 'ja'), '1時間35分');
+  eq('분만 ja', formatMinutes(40, 'ja'), '40分');
+  eq('시차 en', formatOffsetDelta(-120, 'en'), '-2h');
+  eq('시차 없음 ja', formatOffsetDelta(0, 'ja'), 'なし');
+  const now2 = Date.parse('2026-11-03T12:00:00Z');
+  const ago2 = (ms: number) => new Date(now2 - ms).toISOString();
+  eq('방금 en', formatRelative(ago2(10_000), now2, 'en'), 'just now');
+  eq('분 전 en', formatRelative(ago2(5 * 60_000), now2, 'en'), '5 min. ago');
+  eq('시간 전 ja', formatRelative(ago2(3 * 3_600_000), now2, 'ja'), '3 時間前');
+
+  eq('도시 이름 en', zoneLabel('Asia/Bangkok', 'en'), 'Bangkok');
+  eq('도시 이름 ja', zoneLabel('Asia/Tokyo', 'ja'), '東京');
+  eq('목록에 없는 타임존', zoneLabel('America/Argentina/Buenos_Aires', 'ja'), 'Buenos Aires');
+  ok('다른 언어로 저장된 기본 이름도 알아본다', isDefaultZoneLabel('Asia/Bangkok', '방콕'));
+  ok('직접 적은 이름은 기본값이 아니다', !isDefaultZoneLabel('Asia/Bangkok', '카오산'));
+  eq('선택지 언어', zoneOptions('en').find((z) => z.id === 'Asia/Seoul')?.label, 'Seoul');
+
+  /*
+   * 타입이 키 누락은 막지만, 빈 문자열로 채워 넣은 번역은 못 막는다.
+   * ko에서 비어 있지 않은 문구는 다른 언어에서도 비어 있으면 안 된다.
+   */
+  const emptyWhereKoIsNot = (a: unknown, b: unknown, path: string): string[] => {
+    if (typeof a === 'string') return a !== '' && b === '' ? [path] : [];
+    if (a && typeof a === 'object') {
+      return Object.keys(a).flatMap((k) =>
+        emptyWhereKoIsNot(
+          (a as Record<string, unknown>)[k],
+          (b as Record<string, unknown>)[k],
+          `${path}.${k}`,
+        ),
+      );
+    }
+    return [];
+  };
+  eq('en에 빈 번역 없음', emptyWhereKoIsNot(ko, en, 'en').join(','), '');
+  eq('ja에 빈 번역 없음', emptyWhereKoIsNot(ko, ja, 'ja').join(','), '');
 }
 
 console.log(`\n${failed === 0 ? '✓ 전부 통과' : '✗ 실패 있음'} — ${passed} passed, ${failed} failed\n`);

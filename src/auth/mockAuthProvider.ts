@@ -14,9 +14,11 @@
  * 이 파일이 통째로 사라져도 화면 코드는 그대로다.
  */
 
+import { getMessages } from '@/i18n/store';
 import {
   colorOf,
   initialOf,
+  nicknameMessage,
   nicknameProblem,
   type Account,
   type AuthProvider,
@@ -100,7 +102,7 @@ export const mockAuthProvider: AuthProvider = {
   async updateNickname(nickname: string): Promise<Account> {
     if (!session) throw new Error('로그인 상태가 아닙니다');
     const problem = nicknameProblem(nickname);
-    if (problem) throw new Error(problem);
+    if (problem) throw new Error(nicknameMessage(problem, getMessages().nickname));
     const trimmed = nickname.trim();
 
     session = {

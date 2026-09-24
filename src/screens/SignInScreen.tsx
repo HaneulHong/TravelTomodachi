@@ -7,14 +7,10 @@
 
 import { hasBackend, type SignInMethod } from '@/auth';
 import { AppleIcon, GoogleIcon } from '@/components/icons';
-import { VERSION_LABEL } from '@/config';
+import { versionLabel } from '@/config';
+import { Rich } from '@/i18n/Rich';
+import { useT } from '@/i18n';
 import { useAuthStore } from '@/store/authStore';
-
-const METHOD_LABEL: Record<SignInMethod, string> = {
-  google: 'Google로 계속하기',
-  apple: 'Apple로 계속하기',
-  dev: '개발용 계정으로 둘러보기',
-};
 
 function MethodIcon({ method }: { method: SignInMethod }) {
   if (method === 'google') return <GoogleIcon />;
@@ -31,6 +27,7 @@ interface Props {
 export function SignInScreen({ methods, invited = false }: Props) {
   const signIn = useAuthStore((s) => s.signIn);
   const error = useAuthStore((s) => s.error);
+  const t = useT();
 
   return (
     <div className="app">
@@ -38,7 +35,7 @@ export function SignInScreen({ methods, invited = false }: Props) {
         <div className="signin__brand">
           <span className="signin__mark">🧳</span>
           <h1 className="signin__title">TravelTomodachi</h1>
-          <p className="signin__sub">친구들과 함께 만드는 여행 일정</p>
+          <p className="signin__sub">{t.signIn.tagline}</p>
         </div>
 
         {/*
@@ -46,9 +43,7 @@ export function SignInScreen({ methods, invited = false }: Props) {
           그냥 닫는다. 로그인하면 바로 그 여행에 들어간다는 걸 먼저 말해준다.
         */}
         {invited && (
-          <p className="signin__invited">
-            여행에 초대받았습니다. 로그인하면 바로 그 일정으로 들어갑니다.
-          </p>
+          <p className="signin__invited">{t.signIn.invited}</p>
         )}
 
         <div className="signin__methods">
@@ -59,7 +54,7 @@ export function SignInScreen({ methods, invited = false }: Props) {
               onClick={() => void signIn(method)}
             >
               <MethodIcon method={method} />
-              {METHOD_LABEL[method]}
+              {t.signIn.method[method]}
             </button>
           ))}
         </div>
@@ -73,16 +68,13 @@ export function SignInScreen({ methods, invited = false }: Props) {
         */}
         {!hasBackend && (
           <p className="signin__note">
-            아직 백엔드가 연결되지 않아 <strong>이 브라우저에만</strong> 세션이 남습니다.
-            친구 초대와 공동 편집은 Supabase를 연결한 뒤에 동작합니다.
+            <Rich text={t.signIn.devNote} />
           </p>
         )}
 
-        <p className="signin__privacy">
-          닉네임 외에는 아무것도 저장하지 않습니다. 이메일과 실명은 받지 않습니다.
-        </p>
+        <p className="signin__privacy">{t.signIn.privacy}</p>
 
-        <p className="signin__version">{VERSION_LABEL}</p>
+        <p className="signin__version">{versionLabel(t.common.beta)}</p>
       </main>
     </div>
   );

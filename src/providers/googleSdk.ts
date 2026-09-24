@@ -7,6 +7,8 @@
  * 두 번 로드되고 Google이 콘솔에 경고를 남긴다.
  */
 
+import { getLocale } from '@/i18n/store';
+
 const CALLBACK_NAME = '__ttGoogleMapsReady';
 
 /**
@@ -65,7 +67,9 @@ export function loadGoogleSdk(apiKey: string): Promise<void> {
       libraries: 'maps,marker',
       loading: 'async',
       callback: CALLBACK_NAME,
-      language: 'ko',
+      // 지명·지도 글자를 화면 언어로. SDK는 페이지당 한 번만 뜨므로 언어를 바꾸면
+      // 지도 글자는 다음에 앱을 열 때 따라온다.
+      language: getLocale(),
     });
 
     const script = document.createElement('script');

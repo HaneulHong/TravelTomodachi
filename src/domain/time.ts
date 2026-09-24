@@ -7,36 +7,64 @@
  * 봐야 해서 외부 API에 넘길 때만 변환한다. 변환은 이 파일 안에서만 한다.
  */
 
+import { INTL_TAG, type Locale } from '../i18n/locales';
 import type { TripDay } from './types';
 
-/** '2026-11-03' → '11월 3일 (화)' */
-export function formatDateLabel(date: string): string {
+/*
+ * 언어는 인자로 받는다. 기본값 'ko'는 테스트와 예전 호출부를 위한 것 —
+ * 화면에서는 useLocale()이 준 값을 넘긴다.
+ */
+
+/** 시간 단위 이름. Intl.DurationFormat은 아직 브라우저마다 달라서 직접 둔다. */
+const UNIT: Record<Locale, { h: string; m: string; join: string; same: string }> = {
+  ko: { h: '시간', m: '분', join: ' ', same: '동일' },
+  en: { h: 'h', m: 'm', join: ' ', same: 'none' },
+  ja: { h: '時間', m: '分', join: '', same: 'なし' },
+};
+
+/** '2026-11-03' → '11월 3일 (화)' · 'Tue, Nov 3' · '11月3日(火)' */
+export function formatDateLabel(date: string, locale: Locale = 'ko'): string {
   const d = new Date(`${date}T12:00:00Z`);
-  return new Intl.DateTimeFormat('ko-KR', {
-    month: 'long',
+  return new Intl.DateTimeFormat(INTL_TAG[locale], {
+    // 영어는 월 이름이 길어(September) 좁은 폰에서 줄이 넘친다
+    month: locale === 'en' ? 'short' : 'long',
     day: 'numeric',
     weekday: 'short',
     timeZone: 'UTC',
   }).format(d);
 }
 
+/** 월·일만. '11월 3일' · 'Nov 3' · '11月3日' */
+function formatMonthDay(d: Date, locale: Locale): string {
+  return new Intl.DateTimeFormat(INTL_TAG[locale], {
+    month: locale === 'en' ? 'short' : 'long',
+    day: 'numeric',
+  }).format(d);
+}
+
+const RELATIVE_NOW: Record<Locale, string> = { ko: '방금', en: 'just now', ja: 'たった今' };
+
 /**
  * 고친 시각을 "얼마 전"으로. 누가 언제 바꿨는지 볼 때 쓴다.
  * 일주일이 넘으면 날짜로 쓴다 — '23일 전'은 언제인지 다시 세어봐야 한다.
  * 기기 시계가 조금 틀려 미래 시각이 오면 '방금'으로 본다.
  */
-export function formatRelative(iso: string, now: number = Date.now()): string {
+export function formatRelative(
+  iso: string,
+  now: number = Date.now(),
+  locale: Locale = 'ko',
+): string {
   const then = Date.parse(iso);
   if (Number.isNaN(then)) return '';
   const min = Math.floor((now - then) / 60_000);
-  if (min < 1) return '방금';
-  if (min < 60) return `${min}분 전`;
+  if (min < 1) return RELATIVE_NOW[locale];
+  const rtf = new Intl.RelativeTimeFormat(INTL_TAG[locale], { numeric: 'always', style: 'short' });
+  if (min < 60) return rtf.format(-min, 'minute');
   const hours = Math.floor(min / 60);
-  if (hours < 24) return `${hours}시간 전`;
+  if (hours < 24) return rtf.format(-hours, 'hour');
   const days = Math.floor(hours / 24);
-  if (days < 7) return `${days}일 전`;
-  const d = new Date(then);
-  return `${d.getMonth() + 1}월 ${d.getDate()}일`;
+  if (days < 7) return rtf.format(-days, 'day');
+  return formatMonthDay(new Date(then), locale);
 }
 
 /** '2026-11-03' → '11.3' (날짜 칩처럼 좁은 자리용) */
@@ -45,10 +73,10 @@ export function formatDateShort(date: string): string {
   return `${Number(m)}.${Number(d)}`;
 }
 
-/** '2026-11-03' → '화' */
-export function formatWeekday(date: string): string {
+/** '2026-11-03' → '화' · 'Tue' · '火' */
+export function formatWeekday(date: string, locale: Locale = 'ko'): string {
   const d = new Date(`${date}T12:00:00Z`);
-  return new Intl.DateTimeFormat('ko-KR', { weekday: 'short', timeZone: 'UTC' }).format(d);
+  return new Intl.DateTimeFormat(INTL_TAG[locale], { weekday: 'short', timeZone: 'UTC' }).format(d);
 }
 
 /** 'Asia/Bangkok' → 'GMT+7' */
@@ -125,26 +153,26 @@ export function followingSameDays(days: TripDay[], date: string): string[] {
   return out;
 }
 
+/** 시·분을 그 언어로. 1시간 35분 · 1h 35m · 1時間35分 */
+function hoursMinutes(h: number, m: number, locale: Locale): string {
+  const u = UNIT[locale];
+  if (h === 0) return `${m}${u.m}`;
+  if (m === 0) return `${h}${u.h}`;
+  return `${h}${u.h}${u.join}${m}${u.m}`;
+}
+
 /** 540 → '+9시간', -180 → '-3시간', 90 → '+1시간 30분' */
-export function formatOffsetDelta(minutes: number): string {
-  if (minutes === 0) return '동일';
+export function formatOffsetDelta(minutes: number, locale: Locale = 'ko'): string {
+  if (minutes === 0) return UNIT[locale].same;
   const sign = minutes > 0 ? '+' : '-';
   const abs = Math.abs(minutes);
-  const h = Math.floor(abs / 60);
-  const m = abs % 60;
-  if (h === 0) return `${sign}${m}분`;
-  if (m === 0) return `${sign}${h}시간`;
-  return `${sign}${h}시간 ${m}분`;
+  return sign + hoursMinutes(Math.floor(abs / 60), abs % 60, locale);
 }
 
 /** 95 → '1시간 35분', 40 → '40분' */
-export function formatMinutes(minutes: number): string {
+export function formatMinutes(minutes: number, locale: Locale = 'ko'): string {
   const safe = Math.max(0, Math.round(minutes));
-  const h = Math.floor(safe / 60);
-  const m = safe % 60;
-  if (h === 0) return `${m}분`;
-  if (m === 0) return `${h}시간`;
-  return `${h}시간 ${m}분`;
+  return hoursMinutes(Math.floor(safe / 60), safe % 60, locale);
 }
 
 /** '09:00' + 90분 → '10:30'. 자정을 넘기면 24시간으로 감싼다. */

@@ -2157,3 +2157,20 @@ select.form__input {
   letter-spacing: 0.02em;
   color: var(--text-3);
 }
+
+/* 언어 고르기처럼 선택지가 셋인 경우. 기본 .seg는 일정 종류 5칸이다. */
+.seg--3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+/*
+ * 일본어 화면. 띄어쓰기가 없어서 keep-all(위 .app)이면 문장부호에서만 줄이 바뀌고
+ * 「、」「。」가 혼자 다음 줄로 떨어진다. 일본어는 글자 사이에서 바꾸는 게 맞다.
+ * auto-phrase는 문절 단위로 바꾼다(크롬 계열). 모르는 브라우저는 앞의 normal을 쓴다.
+ * <html lang>은 i18n/store가 화면 언어로 맞춘다.
+ */
+.app:lang(ja) {
+  word-break: normal;
+  word-break: auto-phrase;
+  line-break: strict;
+}

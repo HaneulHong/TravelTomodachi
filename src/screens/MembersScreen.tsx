@@ -19,6 +19,8 @@ import { ConfirmSheet } from '@/components/ConfirmSheet';
 import { ShareIcon } from '@/components/icons';
 import { memberLabel, type Member } from '@/domain/types';
 import { useInviteShare } from '@/hooks/useInviteShare';
+import { useLocale, useT } from '@/i18n';
+import { Rich } from '@/i18n/Rich';
 import { useTripStore } from '@/store/tripStore';
 
 type Pending = { kind: 'kick'; member: Member } | { kind: 'regenerate' } | null;
@@ -30,15 +32,17 @@ export function MembersScreen() {
   const removeMember = useTripStore((s) => s.removeMember);
   const regenerateInviteCode = useTripStore((s) => s.regenerateInviteCode);
   const { share, toast } = useInviteShare();
+  const t = useT();
+  const locale = useLocale();
 
   const [pending, setPending] = useState<Pending>(null);
 
   if (!trip) {
     return (
       <div className="app">
-        <AppHeader title="멤버" back />
+        <AppHeader title={t.members.title} back />
         <main className="main main--no-tabs">
-          <p className="empty">여행을 찾을 수 없습니다.</p>
+          <p className="empty">{t.common.tripNotFound}</p>
         </main>
       </div>
     );
@@ -49,34 +53,34 @@ export function MembersScreen() {
   // 만든 사람을 맨 위에, 그다음 나, 나머지는 이름순
   const members = [...trip.members].sort((a, b) => {
     const rank = (m: Member) => (m.id === trip.ownerId ? 0 : m.id === me ? 1 : 2);
-    return rank(a) - rank(b) || a.name.localeCompare(b.name, 'ko');
+    return rank(a) - rank(b) || a.name.localeCompare(b.name, locale);
   });
 
   return (
     <div className="app">
-      <AppHeader title="멤버 · 초대" back />
+      <AppHeader title={t.members.screenTitle} back />
 
       <main className="main main--no-tabs">
         <div className="section">
           <section className="card invitecard">
-            <div className="invitecard__label">초대 코드</div>
+            <div className="invitecard__label">{t.members.code}</div>
             {/* 전화로 불러줄 수 있게 크게. 헷갈리는 글자(0/O, 1/I/L)는 애초에 안 쓴다. */}
-            <div className="invitecard__code" aria-label={`초대 코드 ${trip.inviteCode.split('').join(' ')}`}>
+            <div className="invitecard__code" aria-label={t.members.codeAria(trip.inviteCode.split('').join(' '))}>
               {trip.inviteCode}
             </div>
             <button className="btn btn--primary" onClick={() => void share(trip)}>
-              <ShareIcon size={17} /> 초대 링크 보내기
+              <ShareIcon size={17} /> {t.members.sendLink}
             </button>
             {isOwner && (
               <button className="invitecard__reset" onClick={() => setPending({ kind: 'regenerate' })}>
-                초대 코드 바꾸기
+                {t.members.regenerate}
               </button>
             )}
           </section>
         </div>
 
         <div className="section">
-          <div className="members__head">함께하는 사람 {members.length}명</div>
+          <div className="members__head">{t.members.count(members.length)}</div>
           <ul className="members">
             {members.map((m) => {
               const owner = m.id === trip.ownerId;
@@ -90,15 +94,15 @@ export function MembersScreen() {
                     {m.name}
                     {/* 멤버 화면에서는 늘 번호를 보인다 — 누가 누군지 확인하는 곳이다 */}
                     {m.tag && <span className="member__tag">#{m.tag}</span>}
-                    {self && <span className="member__me"> (나)</span>}
+                    {self && <span className="member__me">{t.members.me}</span>}
                   </span>
-                  {owner && <span className="chip chip--accent">만든 사람</span>}
+                  {owner && <span className="chip chip--accent">{t.members.owner}</span>}
                   {isOwner && !owner && (
                     <button
                       className="member__kick"
                       onClick={() => setPending({ kind: 'kick', member: m })}
                     >
-                      내보내기
+                      {t.members.kick}
                     </button>
                   )}
                 </li>
@@ -106,17 +110,15 @@ export function MembersScreen() {
             })}
           </ul>
           {members.length === 1 && (
-            <p className="form__hint members__alone">
-              아직 혼자입니다. 초대 링크를 보내면 친구가 바로 들어와 같이 고칠 수 있습니다.
-            </p>
+            <p className="form__hint members__alone">{t.members.alone}</p>
           )}
         </div>
       </main>
 
       {pending?.kind === 'kick' && (
         <ConfirmSheet
-          title={`${memberLabel(pending.member, trip.members)}님을 내보낼까요?`}
-          confirmLabel="내보내기"
+          title={t.members.kickTitle(memberLabel(pending.member, trip.members))}
+          confirmLabel={t.members.kick}
           danger
           onClose={() => setPending(null)}
           onConfirm={async () => {
@@ -124,18 +126,15 @@ export function MembersScreen() {
             setPending(null);
           }}
         >
-          <p>이 여행을 더 이상 볼 수 없게 됩니다. 이미 고친 일정은 그대로 남습니다.</p>
-          <p>
-            초대 링크를 아직 갖고 있으면 다시 들어올 수 있습니다. 막으려면 초대 코드도
-            바꾸세요.
-          </p>
+          <p>{t.members.kickBody}</p>
+          <p>{t.members.kickBody2}</p>
         </ConfirmSheet>
       )}
 
       {pending?.kind === 'regenerate' && (
         <ConfirmSheet
-          title="초대 코드를 바꿀까요?"
-          confirmLabel="새 코드 만들기"
+          title={t.members.regenTitle}
+          confirmLabel={t.members.regenConfirm}
           onClose={() => setPending(null)}
           onConfirm={async () => {
             await regenerateInviteCode(trip.id);
@@ -143,10 +142,9 @@ export function MembersScreen() {
           }}
         >
           <p>
-            지금까지 보낸 링크와 코드 <strong>{trip.inviteCode}</strong>로는 더 이상 들어올 수
-            없습니다.
+            <Rich text={t.members.regenBody(trip.inviteCode)} />
           </p>
-          <p>이미 들어온 멤버는 그대로입니다.</p>
+          <p>{t.members.regenBody2}</p>
         </ConfirmSheet>
       )}
 
