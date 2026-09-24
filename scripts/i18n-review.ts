@@ -35,6 +35,7 @@ const SECTION: Record<keyof Messages, [ko: string, en: string, ja: string]> = {
   signIn: ['로그인 화면', 'Sign-in screen', 'ログイン画面'],
   unavailable: ['점검 화면', 'Maintenance screen', 'メンテナンス画面'],
   home: ['홈', 'Home', 'ホーム'],
+  today: ['홈의 오늘 카드 (여행 중)', 'Today card', '今日のカード'],
   trip: ['일정 화면', 'Plan screen', '予定画面'],
   dayEdit: ['날짜 설정', 'Day settings', '日付の設定'],
   tripCreate: ['새 여행 만들기', 'New trip', '新しい旅行'],

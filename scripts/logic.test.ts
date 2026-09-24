@@ -23,10 +23,11 @@ import {
   formatRelative,
 } from '../src/domain/time';
 import { haversineMeters, formatDistance, normalizePoints } from '../src/domain/geo';
-import { memberLabel, type Member, type TripDay } from '../src/domain/types';
+import { memberLabel, type Item, type Member, type Trip, type TripDay } from '../src/domain/types';
 import { colorOf, fullName, nicknameProblem } from '../src/auth/types';
 import { inviteCodeFromAppUrl, inviteCodeFromHash } from '../src/auth/pendingInvite';
 import { normalizeBaseUrl } from '../src/platform/baseUrl';
+import { findToday, localNow, minutesUntil, nextItem } from '../src/domain/today';
 import { balances, convert, currencyDigits, settle, transfers } from '../src/domain/settle';
 import {
   dropIndex,
@@ -442,6 +443,32 @@ console.log('\n── 가계부 정산 ──');
   const s2 = settle(mixed, 'KRW', null);
   eq('환율 없으면 통화별로', !s2.unified && s2.groups.map((g) => g.currency).sort().join(','), 'JPY,KRW');
   eq('나눌 사람 없는 지출은 빠짐', settle([e(1000, 'KRW', 'a', [])], 'KRW', null).groups.length, 0);
+}
+
+console.log('\n── 여행 중 오늘 ──');
+{
+  // 2026-11-04 14:30 UTC = 서울 23:30, 방콕 21:30, 같은 날
+  const now = new Date('2026-11-04T14:30:00Z');
+  eq('서울 현지', JSON.stringify(localNow('Asia/Seoul', now)), '{"date":"2026-11-04","time":"23:30"}');
+  eq('방콕 현지', localNow('Asia/Bangkok', now).time, '21:30');
+  // 15:30 UTC = 서울은 다음 날 00:30, 방콕은 아직 22:30
+  const later = new Date('2026-11-04T15:30:00Z');
+  eq('서울은 이미 다음 날', localNow('Asia/Seoul', later).date, '2026-11-05');
+
+  const mkTrip = (days: TripDay[]) =>
+    ({ id: 't', name: 'x', startDate: days[0]!.date, endDate: days[days.length - 1]!.date, ownerId: 'a', inviteCode: 'X', coverEmoji: '🧳', members: [], days }) as Trip;
+  const trip = mkTrip([
+    { date: '2026-11-04', timezone: 'Asia/Bangkok', cityLabel: '방콕' },
+    { date: '2026-11-05', timezone: 'Asia/Bangkok', cityLabel: '방콕' },
+  ]);
+  // 기기가 서울이라 이미 11/5여도, 방콕 날짜로는 아직 11/4
+  eq('현지 날짜로 오늘을 고른다', findToday([trip], later)?.dayIndex, 0);
+  eq('여행 기간이 아니면 없음', findToday([trip], new Date('2026-12-01T00:00:00Z')), null);
+
+  const it = (id: string, localTime?: string) => ({ id, localTime }) as Item;
+  eq('다음 일정은 시각으로', nextItem([it('a', '09:00'), it('b', '18:00'), it('c', '12:00')], '10:00')?.id, 'c');
+  eq('다 지났으면 없음', nextItem([it('a', '09:00')], '23:00'), null);
+  eq('남은 분', minutesUntil('14:05', '15:30'), 85);
 }
 
 console.log('\n── 언어 ──');

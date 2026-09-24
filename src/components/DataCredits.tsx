@@ -14,6 +14,7 @@
 import { useT } from '@/i18n';
 import { platform } from '@/platform';
 import { RATES_ATTRIBUTION } from '@/providers/rates';
+import { WEATHER_ATTRIBUTION } from '@/providers/weather';
 
 interface Credit {
   /** 어디에 쓰이는지 — 사용자가 "그래서 뭐가 이걸 쓰는데?"를 알 수 있게 */
@@ -29,6 +30,12 @@ export function DataCredits() {
       use: t.credits.searchUse,
       name: t.credits.osm,
       url: 'https://www.openstreetmap.org/copyright',
+    },
+    {
+      // Open-Meteo는 CC BY 4.0 — 출처 표시가 조건이다 (providers/weather.ts)
+      use: t.credits.weatherUse,
+      name: WEATHER_ATTRIBUTION.name,
+      url: WEATHER_ATTRIBUTION.url,
     },
     {
       // 무료 환율 API의 사용 조건이 출처 표시다 (providers/rates.ts)

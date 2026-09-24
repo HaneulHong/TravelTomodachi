@@ -14,6 +14,7 @@ import { formatMinutes } from '@/domain/time';
 import type { Coord, TransportMode } from '@/domain/types';
 import { useLocale, useT } from '@/i18n';
 import { getMapRenderer, resolveMapRegion, type MapStop, type PathSegment } from '@/providers';
+import { defaultDateFor } from '@/domain/today';
 import { useTripStore } from '@/store/tripStore';
 
 const MODES: TransportMode[] = ['walk', 'transit', 'car'];
@@ -28,7 +29,8 @@ export function MapScreen() {
   const trip = useTripStore((s) => s.getTrip(tripId));
   const allItems = useTripStore((s) => s.items);
 
-  const activeDate = search.get('date') ?? trip?.startDate ?? '';
+  // 날짜가 주소에 없으면 여행 중엔 오늘, 아니면 첫날
+  const activeDate = search.get('date') ?? (trip ? defaultDateFor(trip) : '');
 
   const items = useMemo(
     () =>

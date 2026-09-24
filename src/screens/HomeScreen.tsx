@@ -1,6 +1,8 @@
 import { useNavigate } from 'react-router-dom';
 import { AppHeader } from '@/components/AppHeader';
 import { BottomTabs } from '@/components/BottomTabs';
+import { TodayCard } from '@/components/TodayCard';
+import { defaultDateFor } from '@/domain/today';
 import { GlobeIcon, PlusIcon } from '@/components/icons';
 import { daysUntil, formatDateLabel, tripLengthDays } from '@/domain/time';
 import { useLocale, useT, type Messages } from '@/i18n';
@@ -18,11 +20,11 @@ function tripRegions(trip: Trip, coords: { tripId: string; lat: number; lng: num
   return [...set];
 }
 
-function countdownLabel(startDate: string, t: Messages): string {
-  const d = daysUntil(startDate);
+function countdownLabel(trip: Trip, t: Messages): string {
+  const d = daysUntil(trip.startDate);
   if (d > 0) return t.home.dday(d);
   if (d === 0) return t.home.departsToday;
-  return t.home.ongoing;
+  return daysUntil(trip.endDate) >= 0 ? t.home.ongoing : t.home.past;
 }
 
 export function HomeScreen() {
@@ -44,6 +46,11 @@ export function HomeScreen() {
       />
 
       <main className="main">
+        {/* 여행 중일 때만 그려진다 */}
+        <div className="section today-section">
+          <TodayCard />
+        </div>
+
         <section className="section">
           <h2 className="section__title">{t.home.list}</h2>
 
@@ -58,7 +65,7 @@ export function HomeScreen() {
               <button
                 key={trip.id}
                 className="trip-card"
-                onClick={() => navigate(`/trip/${trip.id}?date=${trip.startDate}`)}
+                onClick={() => navigate(`/trip/${trip.id}?date=${defaultDateFor(trip)}`)}
               >
                 <div className="trip-card__top">
                   <span className="trip-card__emoji" aria-hidden>
@@ -100,7 +107,7 @@ export function HomeScreen() {
                         </span>
                       ))
                     )}
-                    <span className="chip chip--accent">{countdownLabel(trip.startDate, t)}</span>
+                    <span className="chip chip--accent">{countdownLabel(trip, t)}</span>
                   </div>
                 </div>
               </button>

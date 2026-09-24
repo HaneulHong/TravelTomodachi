@@ -45,6 +45,7 @@ import { isSegmentKind, type Item } from '@/domain/types';
 import { useLocale, useT } from '@/i18n';
 import { Rich } from '@/i18n/Rich';
 import { platform } from '@/platform';
+import { defaultDateFor } from '@/domain/today';
 import { useTripStore } from '@/store/tripStore';
 
 /** 구간 종류별 칩 색. 수단이 다르면 한눈에 갈려야 한다. */
@@ -136,7 +137,8 @@ export function TripScreen() {
   const trip = useTripStore((s) => s.getTrip(tripId));
   const allItems = useTripStore((s) => s.items);
 
-  const activeDate = search.get('date') ?? trip?.startDate ?? '';
+  // 날짜가 주소에 없으면 여행 중엔 오늘, 아니면 첫날
+  const activeDate = search.get('date') ?? (trip ? defaultDateFor(trip) : '');
   const dayIndex = trip?.days.findIndex((d) => d.date === activeDate) ?? -1;
   const day = dayIndex >= 0 ? trip?.days[dayIndex] : undefined;
   const prevDay = dayIndex > 0 ? trip?.days[dayIndex - 1] : undefined;
