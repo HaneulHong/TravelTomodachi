@@ -318,6 +318,16 @@ export const en: Messages = {
     languageManualHint: 'Only this device uses the language you pick.',
   },
 
+  nicknameSetup: {
+    title: 'What should we call you?',
+    sub: 'Friends on the same trip will see this name.',
+    placeholder: 'e.g. Sky',
+    hint: "It's fine if someone else uses it. You can change it anytime in your profile.",
+    invited: "Once you pick a nickname, you'll go straight to the trip you were invited to.",
+    start: 'Get started',
+    later: 'Decide later',
+  },
+
   nickname: {
     empty: 'Please enter a nickname',
     tooLong: (max) => `Nicknames can be up to ${max} characters`,

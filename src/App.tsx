@@ -1,6 +1,7 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { HashRouter, Navigate, Route, Routes, useParams } from 'react-router-dom';
 import { getAuthProvider } from '@/auth';
+import { shouldAskNickname } from '@/auth/onboarding';
 import {
   inviteCodeFromAppUrl,
   inviteCodeFromHash,
@@ -20,6 +21,7 @@ import { MapScreen } from '@/screens/MapScreen';
 import { MembersScreen } from '@/screens/MembersScreen';
 import { ChecklistScreen } from '@/screens/ChecklistScreen';
 import { InviteScreen } from '@/screens/InviteScreen';
+import { NicknameSetupScreen } from '@/screens/NicknameSetupScreen';
 import { ProfileScreen } from '@/screens/ProfileScreen';
 import { SignInScreen } from '@/screens/SignInScreen';
 import { UnavailableScreen } from '@/screens/UnavailableScreen';
@@ -70,6 +72,12 @@ export function App() {
   const t = useT();
 
   const loadTrips = useTripStore((s) => s.load);
+
+  /**
+   * 첫 로그인 닉네임 화면을 이번 로그인에서 끝냈는지. 계정이 바뀌면 다시 판단한다.
+   * 판단 자체는 auth/onboarding.ts — 여기는 화면을 넘기기만 한다.
+   */
+  const [nicknameDoneFor, setNicknameDoneFor] = useState<string | null>(null);
 
   useEffect(() => {
     void restore();
@@ -143,6 +151,15 @@ export function App() {
     const code = inviteCodeFromHash(window.location.hash);
     if (code) stashInvite(code);
     return <SignInScreen methods={getAuthProvider().methods} invited={Boolean(code)} />;
+  }
+
+  if (nicknameDoneFor !== account.id && shouldAskNickname(account)) {
+    return (
+      <NicknameSetupScreen
+        userId={account.id}
+        onDone={() => setNicknameDoneFor(account.id)}
+      />
+    );
   }
 
   return (

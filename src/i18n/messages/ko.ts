@@ -334,6 +334,16 @@ export const ko = {
     languageManualHint: '이 기기에서만 고른 언어로 보입니다.',
   },
 
+  nicknameSetup: {
+    title: '뭐라고 불러 드릴까요?',
+    sub: '같은 여행 친구들에게 이 이름으로 보입니다.',
+    placeholder: '예: 하늘',
+    hint: '다른 사람과 같아도 됩니다. 프로필에서 언제든 바꿀 수 있습니다.',
+    invited: '닉네임을 정하면 초대받은 여행으로 바로 들어갑니다.',
+    start: '시작하기',
+    later: '나중에 정하기',
+  },
+
   nickname: {
     empty: '닉네임을 입력해 주세요',
     tooLong: (max: number) => `닉네임은 ${max}자까지입니다`,

@@ -314,6 +314,16 @@ export const ja: Messages = {
     languageManualHint: '選んだ言語はこの端末でだけ使われます。',
   },
 
+  nicknameSetup: {
+    title: '何と呼べばいいですか？',
+    sub: '同じ旅行の友だちにこの名前で表示されます。',
+    placeholder: '例: そら',
+    hint: 'ほかの人と同じでも大丈夫です。プロフィールでいつでも変更できます。',
+    invited: 'ニックネームを決めると、招待された旅行にすぐ入れます。',
+    start: 'はじめる',
+    later: 'あとで決める',
+  },
+
   nickname: {
     empty: 'ニックネームを入力してください',
     tooLong: (max) => `ニックネームは${max}文字までです`,

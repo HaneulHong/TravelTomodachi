@@ -2254,3 +2254,15 @@ select.form__input {
   vertical-align: -1px;
   margin-right: 2px;
 }
+
+/* ── 첫 로그인 닉네임 정하기 ─────────────────────────────────── */
+
+/* 로그인 화면의 큰 앱 이름 자리에 질문이 온다 — 한 줄에 들어가게 조금 줄인다 */
+.nickname-setup__title {
+  font-size: 22px;
+}
+
+.nickname-setup__form {
+  width: 100%;
+  text-align: left;
+}
