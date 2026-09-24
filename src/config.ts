@@ -8,7 +8,7 @@ export const APP_VERSION = __APP_VERSION__;
 /** 정식 출시 전. 버전 옆에 "베타"를 붙인다. 1.0에서 끈다. */
 export const IS_BETA = true;
 
-/** "v0.9.0 베타" · "v0.9.0 beta" — 베타 표시는 화면 언어로 받는다 */
+/** "v0.9.5 베타" · "v0.9.5 beta" — 베타 표시는 화면 언어로 받는다 */
 export function versionLabel(beta: string): string {
   return `v${APP_VERSION}${IS_BETA ? ` ${beta}` : ''}`;
 }

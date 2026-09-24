@@ -144,6 +144,14 @@
   box-sizing: border-box;
 }
 
+/*
+ * 기본 컨트롤(시간·날짜 선택기, 숫자 칸 화살표, 체크박스, 스크롤바)도 다크 모드를
+ * 따르게 한다. 없으면 어두운 화면에 흰 선택기·검은 아이콘이 뜬다.
+ */
+:root {
+  color-scheme: light dark;
+}
+
 html,
 body {
   margin: 0;
@@ -1328,7 +1336,9 @@ a {
   border-radius: var(--radius);
   border: 1px solid var(--border-strong);
   background: var(--surface);
-  font-size: 14px;
+  color: var(--text);
+  /* 16px 미만이면 iOS가 누를 때 화면을 확대한다 */
+  font-size: 16px;
   min-width: 0;
 }
 
@@ -1515,14 +1525,50 @@ a {
 }
 
 .form__input {
+  display: block;
   width: 100%;
   min-width: 0;
+  margin: 0;
   padding: 11px 12px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-strong);
   background: var(--surface);
   color: var(--text);
-  font-size: 14.5px;
+  /*
+   * 16px 미만이면 iOS Safari가 입력칸을 누를 때마다 화면을 확대하고,
+   * 확대된 채로 남아 옆으로 밀린다.
+   */
+  font-size: 16px;
+  line-height: 1.3;
+  /* 좁은 칸에 긴 값·안내문(통화 이름 등)이 들어가면 뚝 끊기지 않고 …로 */
+  text-overflow: ellipsis;
+}
+
+/* 한 줄 입력칸은 종류와 상관없이 같은 높이 — 옆에 나란히 놓여도 어긋나지 않게 */
+input.form__input,
+select.form__input {
+  height: 46px;
+}
+
+/*
+ * iOS Safari의 시간·날짜 칸은 자체 모양(더 큰 높이, 가운데 정렬, 줄지 않는 최소 폭)을
+ * 가지고 있어서, 옆 칸보다 커지고 아래 라벨을 덮으며 옆 칸을 침범했다.
+ * 기본 모양을 끄고 다른 입력칸과 똑같이 맞춘다.
+ */
+.form__input[type='time'],
+.form__input[type='date'] {
+  -webkit-appearance: none;
+  appearance: none;
+  text-align: left;
+}
+
+.form__input::-webkit-date-and-time-value {
+  text-align: left;
+  margin: 0;
+}
+
+.form__input::-webkit-datetime-edit {
+  padding: 0;
 }
 
 .form__input:focus {
@@ -1993,6 +2039,8 @@ select.form__input {
   background-size: 5px 5px, 5px 5px;
   background-repeat: no-repeat;
   padding-right: 32px;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 /* ── 초대 참가 ─────────────────────────────────────────────────── */
