@@ -1,5 +1,6 @@
 import type { Coord } from '@/domain/types';
 import type { Platform, SharePayload, ShareResult } from './types';
+import { normalizeBaseUrl } from './baseUrl';
 
 /**
  * 웹(PWA) 구현.
@@ -11,7 +12,7 @@ import type { Platform, SharePayload, ShareResult } from './types';
 
 /** 배포 환경의 공개 주소. .env의 VITE_PUBLIC_BASE_URL로 덮어쓸 수 있다. */
 const PUBLIC_BASE_URL =
-  (import.meta.env.VITE_PUBLIC_BASE_URL as string | undefined) ??
+  normalizeBaseUrl(import.meta.env.VITE_PUBLIC_BASE_URL as string | undefined) ||
   (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173');
 
 export const webPlatform: Platform = {

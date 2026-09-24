@@ -26,6 +26,7 @@ import { haversineMeters, formatDistance, normalizePoints } from '../src/domain/
 import { memberLabel, type Member, type TripDay } from '../src/domain/types';
 import { colorOf, fullName, nicknameProblem } from '../src/auth/types';
 import { inviteCodeFromAppUrl, inviteCodeFromHash } from '../src/auth/pendingInvite';
+import { normalizeBaseUrl } from '../src/platform/baseUrl';
 
 let passed = 0;
 let failed = 0;
@@ -312,6 +313,14 @@ console.log('\n── 초대 링크 파싱 ──');
   eq('코드 없는 링크', inviteCodeFromAppUrl(`${S}://invite/`, S), null);
   eq('웹 해시', inviteCodeFromHash('#/invite/ABCD1234'), 'ABCD1234');
   eq('웹 해시 — 초대 아님', inviteCodeFromHash('#/trip/1'), null);
+
+  const U = 'https://traveltomodachi.pages.dev';
+  eq('공개 주소 그대로', normalizeBaseUrl(U), U);
+  eq('끝 슬래시 제거', normalizeBaseUrl(`${U}/`), U);
+  eq('앞뒤 공백', normalizeBaseUrl(`  ${U}/ \n`), U);
+  eq('https:// 빠짐', normalizeBaseUrl('traveltomodachi.pages.dev'), U);
+  eq('빈 값', normalizeBaseUrl('  '), '');
+  eq('설정 없음', normalizeBaseUrl(undefined), '');
 }
 
 console.log('\n── 닉네임 번호 ──');
