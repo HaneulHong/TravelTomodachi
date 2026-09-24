@@ -153,6 +153,35 @@ export interface Expense {
   updatedBy?: string;
 }
 
+/** 후보 장소 — 날짜를 정하기 전의 "가고 싶은 곳". 일정에 넣으면 지워진다. */
+export interface Place {
+  id: string;
+  tripId: string;
+  name: string;
+  placeName?: string;
+  coord?: Coord;
+  note?: string;
+  createdBy?: string;
+  createdAt?: string;
+}
+
+/** 후보 장소에 준 표. 한 사람이 한 장소에 하나. */
+export interface PlaceVote {
+  placeId: string;
+  tripId: string;
+  userId: string;
+}
+
+/** 일정에 단 댓글. 고치기는 없다(지우고 다시 쓴다). */
+export interface Comment {
+  id: string;
+  tripId: string;
+  itemId: string;
+  authorId?: string;
+  body: string;
+  createdAt: string;
+}
+
 export interface ChecklistItem {
   id: string;
   tripId: string;

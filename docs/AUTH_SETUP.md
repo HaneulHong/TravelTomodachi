@@ -255,6 +255,7 @@ create trigger on_auth_user_created
 | [`supabase/sharing.sql`](../supabase/sharing.sql) | 누가 고쳤는지, 권한 구멍 막기, 초대 코드 바꾸기 (새 DB면 schema.sql에 이미 있음 — 돌려도 무해) |
 | [`supabase/profile-tag.sql`](../supabase/profile-tag.sql) | 닉네임 번호(#1234) |
 | [`supabase/expenses.sql`](../supabase/expenses.sql) | 공동 가계부 + 예약 번호 칸 (새 DB면 schema.sql에 이미 있음 — 돌려도 무해) |
+| [`supabase/collab.sql`](../supabase/collab.sql) | 후보 장소 투표 + 일정 댓글 (새 DB면 schema.sql에 이미 있음 — 돌려도 무해) |
 
 ---
 

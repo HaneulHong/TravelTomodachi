@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { AppHeader } from '@/components/AppHeader';
 import { SHOW_DEV_HINTS } from '@/config';
 import { EditedBy } from '@/components/EditedBy';
+import { ItemComments } from '@/components/ItemComments';
 import { MODE_ICON } from '@/components/TransportChip';
 import { AlertIcon, PencilIcon, PinIcon } from '@/components/icons';
 import { useDayLegs } from '@/hooks/useDayLegs';
@@ -29,6 +30,7 @@ export function ItemDetailScreen() {
   const allItems = useTripStore((s) => s.items);
   const setLegManually = useTripStore((s) => s.setLegManually);
   const clearManualLeg = useTripStore((s) => s.clearManualLeg);
+  const collabAvailable = useTripStore((s) => s.collabAvailable);
   const t = useT();
   const locale = useLocale();
 
@@ -272,6 +274,9 @@ export function ItemDetailScreen() {
               {item.description ?? t.itemDetail.noMemo}
             </div>
           </section>
+
+          {/* collab.sql 이전 DB면 댓글 테이블이 없다 — 칸을 숨긴다 */}
+          {collabAvailable && <ItemComments trip={trip} itemId={item.id} />}
 
           {/*
             터미널 구간이면 지도에 그려진 선의 출처를 밝힌다.

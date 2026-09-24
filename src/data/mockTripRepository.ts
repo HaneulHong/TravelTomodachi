@@ -8,8 +8,16 @@
  * 새로고침하면 처음 상태로 돌아간다. 그게 목의 성격이라 감추지 않는다.
  */
 
-import type { ChecklistItem, Expense, Item, Trip } from '@/domain/types';
-import { MOCK_CHECKLIST, MOCK_EXPENSES, MOCK_ITEMS, MOCK_TRIPS } from './mockTrips';
+import type { ChecklistItem, Comment, Expense, Item, Place, PlaceVote, Trip } from '@/domain/types';
+import {
+  MOCK_CHECKLIST,
+  MOCK_COMMENTS,
+  MOCK_EXPENSES,
+  MOCK_ITEMS,
+  MOCK_PLACES,
+  MOCK_TRIPS,
+  MOCK_VOTES,
+} from './mockTrips';
 import type { TripDraft, TripRepository, TripSnapshot } from './tripRepository';
 
 let idCounter = 0;
@@ -23,13 +31,26 @@ let trips: Trip[] = [...MOCK_TRIPS];
 let items: Item[] = [...MOCK_ITEMS];
 let checklist: ChecklistItem[] = [...MOCK_CHECKLIST];
 let expenses: Expense[] = [...MOCK_EXPENSES];
+let places: Place[] = [...MOCK_PLACES];
+let votes: PlaceVote[] = [...MOCK_VOTES];
+let comments: Comment[] = [...MOCK_COMMENTS];
 
 export const mockTripRepository: TripRepository = {
   id: 'mock-trips',
   persistent: false,
 
   async load(): Promise<TripSnapshot> {
-    return { trips, items, checklist, expenses, expensesAvailable: true };
+    return {
+      trips,
+      items,
+      checklist,
+      expenses,
+      expensesAvailable: true,
+      places,
+      votes,
+      comments,
+      collabAvailable: true,
+    };
   },
 
   async createTrip(draft: TripDraft): Promise<Trip> {
@@ -114,6 +135,28 @@ export const mockTripRepository: TripRepository = {
 
   async removeExpense(id): Promise<void> {
     expenses = expenses.filter((e) => e.id !== id);
+  },
+
+  async addPlace(place): Promise<void> {
+    places = [...places, place];
+  },
+
+  async removePlace(id): Promise<void> {
+    places = places.filter((p) => p.id !== id);
+    votes = votes.filter((v) => v.placeId !== id);
+  },
+
+  async setVote(vote, on): Promise<void> {
+    votes = votes.filter((v) => !(v.placeId === vote.placeId && v.userId === vote.userId));
+    if (on) votes = [...votes, vote];
+  },
+
+  async addComment(comment): Promise<void> {
+    comments = [...comments, comment];
+  },
+
+  async removeComment(id): Promise<void> {
+    comments = comments.filter((c) => c.id !== id);
   },
 
   // 혼자 쓰는 메모리 저장소라 다른 사람의 변경이 올 일이 없다

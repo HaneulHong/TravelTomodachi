@@ -27,6 +27,7 @@ import { memberLabel, type Item, type Member, type Trip, type TripDay } from '..
 import { colorOf, fullName, nicknameProblem } from '../src/auth/types';
 import { inviteCodeFromAppUrl, inviteCodeFromHash } from '../src/auth/pendingInvite';
 import { normalizeBaseUrl } from '../src/platform/baseUrl';
+import { rankPlaces } from '../src/domain/ideas';
 import { buildIcs } from '../src/domain/ics';
 import { optimizeDay, type RoutePoint } from '../src/domain/optimize';
 import { findToday, localNow, minutesUntil, nextItem } from '../src/domain/today';
@@ -527,6 +528,19 @@ console.log('\n── 캘린더 내보내기 ──');
   ok('특수문자 이스케이프', ics.includes('SUMMARY:왕궁\\; 입장') && ics.includes('X-WR-CALNAME:방콕\\, 도쿄'));
   ok('예약 번호·메모', ics.includes('예약 번호: AB12'));
   ok('75바이트 넘는 줄 없음', ics.split('\r\n').every((l) => new TextEncoder().encode(l).length <= 75));
+}
+
+console.log('\n── 후보 장소 순위 ──');
+{
+  const pl = (id: string, createdAt: string) => ({ id, tripId: 't', name: id, createdAt });
+  const vote = (placeId: string, userId: string) => ({ placeId, tripId: 't', userId });
+  const ranked = rankPlaces(
+    [pl('a', '2026-01-01'), pl('b', '2026-01-02'), pl('c', '2026-01-03')],
+    [vote('c', 'u1'), vote('c', 'u2'), vote('b', 'u1'), vote('c', 'u1')],
+  );
+  eq('표 많은 순', ranked.map((r) => r.place.id).join(''), 'cba');
+  eq('같은 사람 표는 한 번', ranked[0]!.voters.length, 2);
+  eq('표가 같으면 먼저 올린 곳', rankPlaces([pl('y', '2026-01-02'), pl('x', '2026-01-01')], []).map((r) => r.place.id).join(''), 'xy');
 }
 
 console.log('\n── 언어 ──');

@@ -152,6 +152,7 @@ export const ko = {
     reorderHint: '오른쪽 손잡이를 끌어 순서를 바꾸세요. 적어 둔 시각은 바뀌지 않습니다.',
     reorderHandle: (title: string) => `${title} 옮기기`,
     menuLedger: '가계부',
+    menuIdeas: '후보 장소',
     menuCalendar: '캘린더로 내보내기',
     menuShare: '친구에게 공유',
     menuMembers: '멤버 · 초대 코드',
@@ -334,6 +335,36 @@ export const ko = {
     receives: '받을 사람',
   },
 
+  ideas: {
+    title: '후보 장소',
+    needsDb: '후보 장소를 아직 쓸 수 없습니다. 잠시 후 다시 열어 주세요.',
+    empty: '가고 싶은 곳을 올리고 투표해 보세요. 표를 많이 받은 곳부터 일정에 넣으면 됩니다.',
+    add: '후보 올리기',
+    addTitle: '후보 장소 올리기',
+    where: '어디',
+    wherePlaceholder: '장소 검색 (예: 성수동 카페거리)',
+    note: '한마디',
+    notePlaceholder: '왜 가고 싶은지, 가격, 예약 필요 여부…',
+    addedBy: (name: string) => `${name} 올림`,
+    vote: '가고 싶어요',
+    voted: '투표함',
+    votes: (n: number) => `${n}표`,
+    toPlan: '일정에 넣기',
+    toPlanTitle: '어느 날에 넣을까요?',
+    toPlanHint: '그 날 일정 맨 뒤에 들어가고, 후보 목록에서는 빠집니다.',
+    removeTitle: (name: string) => `'${name}' 후보를 지울까요?`,
+    removeBody: '받은 표도 함께 지워집니다.',
+  },
+
+  comments: {
+    title: '댓글',
+    placeholder: '댓글 달기',
+    send: '보내기',
+    empty: '아직 댓글이 없습니다.',
+    delete: '지우기',
+    count: (n: number) => `댓글 ${n}개`,
+  },
+
   checklist: {
     title: '체크리스트',
     empty: '아직 항목이 없습니다.',
@@ -461,6 +492,11 @@ export const ko = {
     addExpense: '지출을 적지 못했습니다',
     updateExpense: '지출을 고치지 못했습니다',
     deleteExpense: '지출을 지우지 못했습니다',
+    addPlace: '후보 장소를 올리지 못했습니다',
+    removePlace: '후보 장소를 지우지 못했습니다',
+    vote: '투표하지 못했습니다',
+    addComment: '댓글을 달지 못했습니다',
+    deleteComment: '댓글을 지우지 못했습니다',
   },
 
   /**

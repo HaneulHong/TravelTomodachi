@@ -19,11 +19,14 @@
 import { colorOf, initialOf } from '@/auth';
 import type {
   ChecklistItem,
+  Comment,
   Coord,
   Expense,
   Item,
   ItemKind,
   Member,
+  Place,
+  PlaceVote,
   TransportMode,
   Trip,
   TripDay,
@@ -88,6 +91,33 @@ interface ItemRow {
   updated_at?: string | null;
   /** expenses.sql을 돌리기 전 DB에는 없다 */
   booking_ref?: string | null;
+}
+
+interface PlaceRow {
+  id: string;
+  trip_id: string;
+  name: string;
+  place_name: string | null;
+  lat: number | null;
+  lng: number | null;
+  note: string | null;
+  created_by: string | null;
+  created_at: string | null;
+}
+
+interface VoteRow {
+  place_id: string;
+  trip_id: string;
+  user_id: string;
+}
+
+interface CommentRow {
+  id: string;
+  trip_id: string;
+  item_id: string;
+  author_id: string | null;
+  body: string;
+  created_at: string;
 }
 
 interface ExpenseRow {
@@ -207,6 +237,34 @@ function toItemRow(patch: Partial<Item>): Record<string, unknown> {
   return row;
 }
 
+function toPlace(row: PlaceRow): Place {
+  return {
+    id: row.id,
+    tripId: row.trip_id,
+    name: row.name,
+    placeName: row.place_name ?? undefined,
+    coord: toCoord(row.lat, row.lng),
+    note: row.note ?? undefined,
+    createdBy: row.created_by ?? undefined,
+    createdAt: row.created_at ?? undefined,
+  };
+}
+
+function toVote(row: VoteRow): PlaceVote {
+  return { placeId: row.place_id, tripId: row.trip_id, userId: row.user_id };
+}
+
+function toComment(row: CommentRow): Comment {
+  return {
+    id: row.id,
+    tripId: row.trip_id,
+    itemId: row.item_id,
+    authorId: row.author_id ?? undefined,
+    body: row.body,
+    createdAt: row.created_at,
+  };
+}
+
 function toExpense(row: ExpenseRow): Expense {
   return {
     id: row.id,
@@ -292,22 +350,37 @@ export function createSupabaseTripRepository(): TripRepository {
       const trips = (tripRows ?? []) as TripRow[];
       const tripIds = trips.map((t) => t.id);
       if (tripIds.length === 0) {
-        return { trips: [], items: [], checklist: [], expenses: [], expensesAvailable: true };
+        return {
+          trips: [],
+          items: [],
+          checklist: [],
+          expenses: [],
+          expensesAvailable: true,
+          places: [],
+          votes: [],
+          comments: [],
+          collabAvailable: true,
+        };
       }
 
       // 남은 것들은 서로 기다릴 이유가 없다
-      const [membersByTrip, daysRes, itemsRes, checklistRes, expensesRes] = await Promise.all([
+      const [membersByTrip, daysRes, itemsRes, checklistRes, expensesRes, placesRes, votesRes, commentsRes] = await Promise.all([
         loadMembers(tripIds),
         client.from('trip_days').select('*').in('trip_id', tripIds).order('date'),
         client.from('items').select('*').in('trip_id', tripIds).order('sort_key'),
         client.from('checklist').select('*').in('trip_id', tripIds),
         client.from('expenses').select('*').in('trip_id', tripIds).order('created_at'),
+        client.from('places').select('*').in('trip_id', tripIds).order('created_at'),
+        client.from('place_votes').select('place_id,trip_id,user_id').in('trip_id', tripIds),
+        client.from('comments').select('*').in('trip_id', tripIds).order('created_at'),
       ]);
       /*
        * 가계부는 실패해도 나머지를 막지 않는다. expenses.sql을 돌리기 전 DB면
        * 테이블이 없어서 여기서 실패하는데, 그렇다고 일정까지 못 보면 안 된다.
        */
       const expensesAvailable = !expensesRes.error;
+      // 후보 장소·댓글도 같다 — collab.sql 이전 DB면 셋 다 실패한다
+      const collabAvailable = !placesRes.error && !votesRes.error && !commentsRes.error;
 
       if (daysRes.error) throw new Error(`${getMessages().errors.readDays}: ${daysRes.error.message}`);
       if (itemsRes.error) throw new Error(`${getMessages().errors.readItems}: ${itemsRes.error.message}`);
@@ -341,6 +414,10 @@ export function createSupabaseTripRepository(): TripRepository {
         })),
         expenses: ((expensesRes.data ?? []) as ExpenseRow[]).map(toExpense),
         expensesAvailable,
+        places: collabAvailable ? ((placesRes.data ?? []) as PlaceRow[]).map(toPlace) : [],
+        votes: collabAvailable ? ((votesRes.data ?? []) as VoteRow[]).map(toVote) : [],
+        comments: collabAvailable ? ((commentsRes.data ?? []) as CommentRow[]).map(toComment) : [],
+        collabAvailable,
       };
     },
 
@@ -518,6 +595,52 @@ export function createSupabaseTripRepository(): TripRepository {
       if (error) throw new Error(`${getMessages().errors.deleteExpense}: ${error.message}`);
     },
 
+    async addPlace(place: Place): Promise<void> {
+      const { error } = await client.from('places').insert({
+        id: place.id,
+        trip_id: place.tripId,
+        name: place.name,
+        place_name: place.placeName ?? null,
+        lat: place.coord?.lat ?? null,
+        lng: place.coord?.lng ?? null,
+        note: place.note ?? null,
+        // created_by는 DB가 auth.uid()로 채운다
+      });
+      if (error) throw new Error(`${getMessages().errors.addPlace}: ${error.message}`);
+    },
+
+    async removePlace(id: string): Promise<void> {
+      const { error } = await client.from('places').delete().eq('id', id);
+      if (error) throw new Error(`${getMessages().errors.removePlace}: ${error.message}`);
+    },
+
+    async setVote(vote: PlaceVote, on: boolean): Promise<void> {
+      const { error } = on
+        ? await client.from('place_votes').insert({ place_id: vote.placeId, trip_id: vote.tripId })
+        : await client
+            .from('place_votes')
+            .delete()
+            .eq('place_id', vote.placeId)
+            .eq('user_id', vote.userId);
+      if (error) throw new Error(`${getMessages().errors.vote}: ${error.message}`);
+    },
+
+    async addComment(comment: Comment): Promise<void> {
+      const { error } = await client.from('comments').insert({
+        id: comment.id,
+        trip_id: comment.tripId,
+        item_id: comment.itemId,
+        body: comment.body,
+        // author_id는 DB가 auth.uid()로 채우고, 남의 이름이면 RLS가 막는다
+      });
+      if (error) throw new Error(`${getMessages().errors.addComment}: ${error.message}`);
+    },
+
+    async removeComment(id: string): Promise<void> {
+      const { error } = await client.from('comments').delete().eq('id', id);
+      if (error) throw new Error(`${getMessages().errors.deleteComment}: ${error.message}`);
+    },
+
     subscribe(onChange: (change: RemoteChange) => void): () => void {
       /*
        * 테이블별로 필터를 걸지 않는다. 받을 수 있는 행은 RLS가 이미 걸러준다
@@ -563,6 +686,34 @@ export function createSupabaseTripRepository(): TripRepository {
             return;
           }
           onChange({ kind: 'expense-upsert', expense: toExpense(p.new as ExpenseRow) });
+        })
+        // 아래 셋도 collab.sql 이전 DB면 조용히 아무것도 안 받는다
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'places' }, (p) => {
+          if (p.eventType === 'DELETE') {
+            const id = (p.old as { id?: string }).id;
+            if (id) onChange({ kind: 'place-delete', id });
+            return;
+          }
+          onChange({ kind: 'place-upsert', place: toPlace(p.new as PlaceRow) });
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'place_votes' }, (p) => {
+          // 기본키가 (place_id, user_id)라 삭제에도 이 둘은 온다
+          if (p.eventType === 'DELETE') {
+            const old = p.old as Partial<VoteRow>;
+            if (old.place_id && old.user_id) {
+              onChange({ kind: 'vote-remove', placeId: old.place_id, userId: old.user_id });
+            }
+            return;
+          }
+          onChange({ kind: 'vote-add', vote: toVote(p.new as VoteRow) });
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'comments' }, (p) => {
+          if (p.eventType === 'DELETE') {
+            const id = (p.old as { id?: string }).id;
+            if (id) onChange({ kind: 'comment-delete', id });
+            return;
+          }
+          onChange({ kind: 'comment-add', comment: toComment(p.new as CommentRow) });
         })
         .on('postgres_changes', { event: '*', schema: 'public', table: 'trip_days' }, (p) => {
           // 기본키가 (trip_id, date)라 삭제에도 이 둘은 들어온다

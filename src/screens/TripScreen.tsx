@@ -30,6 +30,7 @@ import {
   UsersIcon,
   CalendarIcon,
   WalletIcon,
+  IdeaIcon,
 } from '@/components/icons';
 import { useDayLegs, type LegInfo } from '@/hooks/useDayLegs';
 import { useInviteShare } from '@/hooks/useInviteShare';
@@ -130,6 +131,14 @@ export function TripScreen() {
   const [optimizeOpen, setOptimizeOpen] = useState(false);
   const moveItem = useTripStore((s) => s.moveItem);
   const setDayOrder = useTripStore((s) => s.setDayOrder);
+  const ideaCount = useTripStore((s) => s.places.filter((p) => p.tripId === tripId).length);
+  const allComments = useTripStore((s) => s.comments);
+  /** 일정별 댓글 수 — 타임라인 카드에 💬 N */
+  const commentCount = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const c of allComments) m.set(c.itemId, (m.get(c.itemId) ?? 0) + 1);
+    return m;
+  }, [allComments]);
   const [dayEditOpen, setDayEditOpen] = useState(false);
   const [confirm, setConfirm] = useState<'leave' | 'delete' | null>(null);
   const me = useTripStore((s) => s.currentUserId);
@@ -353,6 +362,11 @@ export function TripScreen() {
                   )}
 
                   {item.description && <div className="tl-item__desc">{item.description}</div>}
+                  {(commentCount.get(item.id) ?? 0) > 0 && (
+                    <div className="tl-item__comments">
+                      <span aria-hidden>💬</span> {t.comments.count(commentCount.get(item.id)!)}
+                    </div>
+                  )}
                 </button>
               </div>
             </div>
@@ -393,6 +407,17 @@ export function TripScreen() {
         >
           <WalletIcon />
           {t.trip.menuLedger}
+        </button>
+        <button
+          className="sheet__item"
+          onClick={() => {
+            setMenuOpen(false);
+            navigate(`/trip/${trip.id}/ideas?date=${activeDate}`);
+          }}
+        >
+          <IdeaIcon />
+          {t.trip.menuIdeas}
+          {ideaCount > 0 && <span className="sheet__badge">{ideaCount}</span>}
         </button>
         {items.length > 1 && (
           <button

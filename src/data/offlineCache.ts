@@ -19,7 +19,7 @@ const SNAPSHOT_KEY = (userId: string) => `${PREFIX}trips.${userId}`;
 const ACCOUNT_KEY = `${PREFIX}account`;
 
 /** 모양이 바뀌면 올린다 — 옛 사본은 버리고 새로 받는다 */
-const VERSION = 2; // 2: 가계부(expenses) 추가
+const VERSION = 3; // 2: 가계부, 3: 후보 장소·표·댓글
 
 interface Stored<T> {
   v: number;
