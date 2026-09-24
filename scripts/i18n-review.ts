@@ -37,6 +37,7 @@ const SECTION: Record<keyof Messages, [ko: string, en: string, ja: string]> = {
   home: ['홈', 'Home', 'ホーム'],
   today: ['홈의 오늘 카드 (여행 중)', 'Today card', '今日のカード'],
   trip: ['일정 화면', 'Plan screen', '予定画面'],
+  optimize: ['동선 최적화', 'Optimize route', 'ルート最適化'],
   dayEdit: ['날짜 설정', 'Day settings', '日付の設定'],
   tripCreate: ['새 여행 만들기', 'New trip', '新しい旅行'],
   itemEdit: ['일정 추가·수정', 'Add / edit plan', '予定の追加・編集'],

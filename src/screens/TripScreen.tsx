@@ -8,6 +8,7 @@ import { ConfirmSheet } from '@/components/ConfirmSheet';
 import { DayEditSheet } from '@/components/DayEditSheet';
 import { EditedBy } from '@/components/EditedBy';
 import { MenuSheet } from '@/components/MenuSheet';
+import { OptimizeSheet } from '@/components/OptimizeSheet';
 import { TransportChip } from '@/components/TransportChip';
 import {
   AlertIcon,
@@ -22,6 +23,7 @@ import {
   PlaneIcon,
   PlusIcon,
   ReorderIcon,
+  RouteIcon,
   ShareIcon,
   TrainIcon,
   TrashIcon,
@@ -123,6 +125,7 @@ export function TripScreen() {
   const [menuOpen, setMenuOpen] = useState(false);
   /** 순서 바꾸기 모드. 켜면 손잡이가 나오고 카드를 눌러도 상세로 가지 않는다. */
   const [reorder, setReorder] = useState(false);
+  const [optimizeOpen, setOptimizeOpen] = useState(false);
   const moveItem = useTripStore((s) => s.moveItem);
   const setDayOrder = useTripStore((s) => s.setDayOrder);
   const [dayEditOpen, setDayEditOpen] = useState(false);
@@ -401,6 +404,19 @@ export function TripScreen() {
             {t.trip.menuReorder}
           </button>
         )}
+        {/* 옮길 수 있는 방문지가 둘 이상일 때만 의미가 있다 (첫 일정은 고정) */}
+        {items.filter((i, idx) => idx > 0 && i.kind === 'place' && i.coord).length > 1 && (
+          <button
+            className="sheet__item"
+            onClick={() => {
+              setMenuOpen(false);
+              setOptimizeOpen(true);
+            }}
+          >
+            <RouteIcon />
+            {t.trip.menuOptimize}
+          </button>
+        )}
         <button className="sheet__item" onClick={onShare}>
           <ShareIcon />
           {t.trip.menuShare}
@@ -493,6 +509,18 @@ export function TripScreen() {
           days={trip.days}
           date={activeDate}
           onClose={() => setDayEditOpen(false)}
+        />
+      )}
+
+      {optimizeOpen && (
+        <OptimizeSheet
+          items={items}
+          onClose={() => setOptimizeOpen(false)}
+          onApply={(order) => {
+            setDayOrder(trip.id, activeDate, order);
+            setOptimizeOpen(false);
+            platform.vibrate(8);
+          }}
         />
       )}
 

@@ -137,6 +137,7 @@ export const ja: Messages = {
     timeConflictShort: '前の予定より早い時刻',
     sortByTime: '時刻順に並べる',
     menuReorder: '並べ替え',
+    menuOptimize: 'ルート最適化',
     reorderDone: '完了',
     reorderHint: '右のハンドルをドラッグして並べ替えます。入力した時刻は変わりません。',
     reorderHandle: (title) => `${title}を移動`,
@@ -154,6 +155,18 @@ export const ja: Messages = {
     leaveBody: (name) =>
       `あなたのリストから**${name}**が消えます。予定はほかのメンバーにはそのまま残ります。`,
     leaveRejoin: 'また参加するには新しい招待リンクが必要です。',
+  },
+
+  optimize: {
+    title: 'ルート最適化',
+    distance: (before, after) => `移動距離 ${before} → ${after}`,
+    saving: (pct) => `${pct}%短くなります(直線距離)`,
+    noGain: '今の順番がすでに最短です。',
+    note: '最初の予定、電車・飛行機などの区間、位置情報のない予定は動かしません。入力した時刻は変わりません。',
+    timesOff: '⚠ 入力した時刻と順番が合わない予定が出ます。変更後に時刻を直してください。',
+    apply: 'この順番にする',
+    close: '閉じる',
+    moved: '移動',
   },
 
   dayEdit: {

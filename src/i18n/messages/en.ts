@@ -137,6 +137,7 @@ export const en: Messages = {
     timeConflictShort: 'Earlier than the plan before',
     sortByTime: 'Sort by time',
     menuReorder: 'Reorder',
+    menuOptimize: 'Optimize route',
     reorderDone: 'Done',
     reorderHint: "Drag the handle on the right to reorder. Times you've set won't change.",
     reorderHandle: (title) => `Move ${title}`,
@@ -158,6 +159,18 @@ export const en: Messages = {
     leaveBody: (name) =>
       `**${name}** will disappear from your list. The plan stays as is for everyone else.`,
     leaveRejoin: "You'll need a new invite link to come back.",
+  },
+
+  optimize: {
+    title: 'Optimize route',
+    distance: (before, after) => `Travel distance ${before} → ${after}`,
+    saving: (pct) => `${pct}% shorter (straight-line)`,
+    noGain: 'This order is already the shortest.',
+    note: "The first plan, trains/flights and plans without a location stay put. Times you've set won't change.",
+    timesOff: "⚠ Some plans will be out of order with the times you've set. Adjust the times after applying.",
+    apply: 'Use this order',
+    close: 'Close',
+    moved: 'moved',
   },
 
   dayEdit: {

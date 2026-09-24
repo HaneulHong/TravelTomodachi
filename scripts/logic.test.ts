@@ -27,6 +27,7 @@ import { memberLabel, type Item, type Member, type Trip, type TripDay } from '..
 import { colorOf, fullName, nicknameProblem } from '../src/auth/types';
 import { inviteCodeFromAppUrl, inviteCodeFromHash } from '../src/auth/pendingInvite';
 import { normalizeBaseUrl } from '../src/platform/baseUrl';
+import { optimizeDay, type RoutePoint } from '../src/domain/optimize';
 import { findToday, localNow, minutesUntil, nextItem } from '../src/domain/today';
 import { balances, convert, currencyDigits, settle, transfers } from '../src/domain/settle';
 import {
@@ -469,6 +470,41 @@ console.log('\n── 여행 중 오늘 ──');
   eq('다음 일정은 시각으로', nextItem([it('a', '09:00'), it('b', '18:00'), it('c', '12:00')], '10:00')?.id, 'c');
   eq('다 지났으면 없음', nextItem([it('a', '09:00')], '23:00'), null);
   eq('남은 분', minutesUntil('14:05', '15:30'), 85);
+}
+
+console.log('\n── 동선 최적화 ──');
+{
+  // 경도만 다른 일직선 위의 점들 (0.01도 ≈ 1.1km)
+  const at = (id: string, lng: number, kind: RoutePoint['kind'] = 'place'): RoutePoint => ({
+    id,
+    kind,
+    coord: { lat: 13.75, lng: 100.5 + lng },
+  });
+  const zigzag = [at('hotel', 0), at('far', 0.05), at('near', 0.01), at('mid', 0.03)];
+  const r = optimizeDay(zigzag);
+  eq('가까운 순서로', r.order.join(','), 'hotel,near,mid,far');
+  ok('거리가 줄어든다', r.after < r.before);
+
+  eq('이미 최단이면 그대로', optimizeDay([at('a', 0), at('b', 0.01), at('c', 0.02)]).order.join(','), 'a,b,c');
+  eq('첫 일정은 고정', optimizeDay([at('far', 0.05), at('a', 0), at('b', 0.01)]).order[0], 'far');
+
+  // 기차 구간은 제자리, 그 앞뒤 묶음끼리만 정렬
+  const withTrain = [
+    at('hotel', 0),
+    at('x2', 0.02),
+    at('x1', 0.01),
+    { id: 'train', kind: 'train', coord: { lat: 13.75, lng: 100.53 }, toCoord: { lat: 14.75, lng: 100.5 } } as RoutePoint,
+    { id: 'y2', kind: 'place', coord: { lat: 14.75, lng: 100.52 } } as RoutePoint,
+    { id: 'y1', kind: 'place', coord: { lat: 14.75, lng: 100.51 } } as RoutePoint,
+  ];
+  eq('구간 일정 기준으로 나눠 정렬', optimizeDay(withTrain).order.join(','), 'hotel,x1,x2,train,y1,y2');
+
+  const noCoord = [at('a', 0), at('c', 0.02), { id: 'lunch', kind: 'place' } as RoutePoint, at('b', 0.01)];
+  eq('좌표 없는 일정은 제자리', optimizeDay(noCoord).order[2], 'lunch');
+
+  // 9곳 이상은 근사(가까운 곳부터 + 2-opt) — 일직선이면 정답과 같아야 한다
+  const many = [at('s', 0), ...[9, 3, 7, 1, 5, 2, 8, 4, 6].map((k) => at(`p${k}`, k * 0.01))];
+  eq('많아도 풀린다', optimizeDay(many).order.join(','), 's,p1,p2,p3,p4,p5,p6,p7,p8,p9');
 }
 
 console.log('\n── 언어 ──');

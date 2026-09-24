@@ -264,3 +264,12 @@ export const WalletIcon = ({ size = 18, className }: IconProps) => (
     <circle cx="16" cy="13.5" r="1.2" fill="currentColor" stroke="none" />
   </svg>
 );
+
+/** 동선 최적화 — 점 셋을 잇는 굽은 길 */
+export const RouteIcon = ({ size = 18, className }: IconProps) => (
+  <svg {...base(size, className)}>
+    <circle cx="6" cy="18" r="2" />
+    <circle cx="18" cy="6" r="2" />
+    <path d="M8 18h6.5a3.5 3.5 0 000-7h-5a3.5 3.5 0 010-7H16" />
+  </svg>
+);

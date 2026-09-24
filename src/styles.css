@@ -2614,3 +2614,37 @@ body:has(.offline-bar) .main {
   color: var(--accent-text);
   border-color: transparent;
 }
+
+/* ── 동선 최적화 제안 ───────────────────────────────────────── */
+
+.optimize-list {
+  margin: 10px 0;
+  padding-left: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13.5px;
+}
+
+.optimize-list li {
+  padding-left: 2px;
+}
+
+.optimize-list__title {
+  margin-right: 6px;
+}
+
+.optimize-list__time {
+  margin-right: 6px;
+  color: var(--text-3);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.optimize-list__moved .optimize-list__title {
+  font-weight: 650;
+}
+
+.form__hint--warn {
+  color: var(--warn);
+}

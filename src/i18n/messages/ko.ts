@@ -147,6 +147,7 @@ export const ko = {
     timeConflictShort: '앞 일정보다 이른 시각',
     sortByTime: '시각순으로 정렬',
     menuReorder: '순서 바꾸기',
+    menuOptimize: '동선 최적화',
     reorderDone: '완료',
     reorderHint: '오른쪽 손잡이를 끌어 순서를 바꾸세요. 적어 둔 시각은 바뀌지 않습니다.',
     reorderHandle: (title: string) => `${title} 옮기기`,
@@ -165,6 +166,18 @@ export const ko = {
     leaveBody: (name: string) =>
       `내 목록에서 **${name}** 여행이 사라집니다. 일정은 남은 사람들에게 그대로 남습니다.`,
     leaveRejoin: '다시 들어오려면 초대 링크를 새로 받아야 합니다.',
+  },
+
+  optimize: {
+    title: '동선 최적화',
+    distance: (before: string, after: string) => `이동 거리 ${before} → ${after}`,
+    saving: (pct: number) => `${pct}% 짧아집니다 (직선거리 기준)`,
+    noGain: '지금 순서가 이미 가장 짧습니다.',
+    note: '첫 일정, 기차·항공 같은 구간, 좌표가 없는 일정은 옮기지 않습니다. 적어 둔 시각은 그대로입니다.',
+    timesOff: '⚠ 적어 둔 시각과 순서가 어긋나는 일정이 생깁니다. 바꾼 뒤 시각을 고쳐 주세요.',
+    apply: '이 순서로 바꾸기',
+    close: '닫기',
+    moved: '옮겨짐',
   },
 
   dayEdit: {
