@@ -255,3 +255,21 @@ export const GripIcon = ({ size = 18, className }: IconProps) => (
     <circle cx="15" cy="18" r="1.6" />
   </svg>
 );
+
+/** 가계부 — 지갑 */
+export const WalletIcon = ({ size = 18, className }: IconProps) => (
+  <svg {...base(size, className)}>
+    <path d="M4 7.5A2.5 2.5 0 016.5 5H18v3" />
+    <path d="M4 7.5V17a2 2 0 002 2h13a1 1 0 001-1v-9a1 1 0 00-1-1H6.5A2.5 2.5 0 014 7.5z" />
+    <circle cx="16" cy="13.5" r="1.2" fill="currentColor" stroke="none" />
+  </svg>
+);
+
+/** 동선 최적화 — 점 셋을 잇는 굽은 길 */
+export const RouteIcon = ({ size = 18, className }: IconProps) => (
+  <svg {...base(size, className)}>
+    <circle cx="6" cy="18" r="2" />
+    <circle cx="18" cy="6" r="2" />
+    <path d="M8 18h6.5a3.5 3.5 0 000-7h-5a3.5 3.5 0 010-7H16" />
+  </svg>
+);

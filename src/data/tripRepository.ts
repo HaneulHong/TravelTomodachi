@@ -11,7 +11,7 @@
  * 업데이트로 즉시 반영한다.
  */
 
-import type { ChecklistItem, Coord, Item, ItemKind, Trip, TripDay } from '@/domain/types';
+import type { ChecklistItem, Coord, Expense, Item, ItemKind, Trip, TripDay } from '@/domain/types';
 
 /** 여행을 만들 때 받는 값. id·초대코드·소유자는 서버가 정한다. */
 export interface TripDraft {
@@ -34,6 +34,7 @@ export interface ItemDraft {
   durationMin?: number;
   description?: string;
   carrierCode?: string;
+  bookingRef?: string;
 }
 
 /** 날짜에서 고칠 수 있는 것. 날짜 자체는 여행 기간이 정한다. */
@@ -43,6 +44,12 @@ export interface TripSnapshot {
   trips: Trip[];
   items: Item[];
   checklist: ChecklistItem[];
+  expenses: Expense[];
+  /**
+   * 가계부 테이블이 있는지. supabase/expenses.sql을 돌리기 전 DB면 false —
+   * 앱은 멀쩡히 돌고 가계부 화면만 "DB 업데이트가 필요합니다"라고 알린다.
+   */
+  expensesAvailable: boolean;
 }
 
 /**
@@ -57,6 +64,8 @@ export type RemoteChange =
   | { kind: 'item-delete'; id: string }
   | { kind: 'checklist-upsert'; entry: ChecklistItem }
   | { kind: 'checklist-delete'; id: string }
+  | { kind: 'expense-upsert'; expense: Expense }
+  | { kind: 'expense-delete'; id: string }
   | { kind: 'day-upsert'; tripId: string; day: TripDay }
   | { kind: 'day-delete'; tripId: string; date: string }
   | { kind: 'trip-update'; trip: Partial<Trip> & { id: string } }
@@ -106,6 +115,11 @@ export interface TripRepository {
   addChecklistItem(entry: ChecklistItem): Promise<void>;
   updateChecklistItem(itemId: string, checked: boolean): Promise<void>;
   removeChecklistItem(itemId: string): Promise<void>;
+
+  /** 가계부. id는 스토어가 만든다(항목과 같은 이유 — 낙관적 업데이트). */
+  addExpense(expense: Expense): Promise<void>;
+  updateExpense(id: string, patch: Partial<Omit<Expense, 'id' | 'tripId'>>): Promise<void>;
+  removeExpense(id: string): Promise<void>;
 
   /**
    * 다른 사람의 변경을 받는다. 돌려준 함수를 부르면 구독을 끊는다.

@@ -63,6 +63,7 @@ export const useAuthStore = create<AuthState>()((set) => ({
       trips: [],
       items: [],
       checklist: [],
+      expenses: [],
       loading: true,
       fromCache: false,
     });

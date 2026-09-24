@@ -23,10 +23,14 @@ import {
   formatRelative,
 } from '../src/domain/time';
 import { haversineMeters, formatDistance, normalizePoints } from '../src/domain/geo';
-import { memberLabel, type Member, type TripDay } from '../src/domain/types';
+import { memberLabel, type Item, type Member, type Trip, type TripDay } from '../src/domain/types';
 import { colorOf, fullName, nicknameProblem } from '../src/auth/types';
 import { inviteCodeFromAppUrl, inviteCodeFromHash } from '../src/auth/pendingInvite';
 import { normalizeBaseUrl } from '../src/platform/baseUrl';
+import { buildIcs } from '../src/domain/ics';
+import { optimizeDay, type RoutePoint } from '../src/domain/optimize';
+import { findToday, localNow, minutesUntil, nextItem } from '../src/domain/today';
+import { balances, convert, currencyDigits, settle, transfers } from '../src/domain/settle';
 import {
   dropIndex,
   moved,
@@ -398,6 +402,131 @@ console.log('\n── 순서 바꾸기 ──');
     'cbad',
   );
   eq('같은 시각이면 원래 순서', timeSortedOrder([it('a', '09:00'), it('b', '09:00')]).join(''), 'ab');
+}
+
+console.log('\n── 가계부 정산 ──');
+{
+  const e = (amount: number, currency: string, paidBy: string, splitAmong: string[]) => ({
+    amount,
+    currency,
+    paidBy,
+    splitAmong,
+  });
+  eq('원은 소수 없음', currencyDigits('KRW'), 0);
+  eq('달러는 센트', currencyDigits('USD'), 2);
+
+  // 셋이 3만원 저녁, A가 냄 → B·C가 A에게 1만원씩
+  const t1 = transfers(balances([e(30000, 'KRW', 'a', ['a', 'b', 'c'])], 'KRW'), 'KRW');
+  eq('1/N', t1.map((t) => `${t.from}>${t.to}:${t.amount}`).join(' '), 'b>a:10000 c>a:10000');
+
+  // 나누어떨어지지 않으면 합이 원금과 같게 (10000/3)
+  const b2 = balances([e(10000, 'KRW', 'a', ['a', 'b', 'c'])], 'KRW');
+  eq('나머지 1원까지 합이 0', [...b2.values()].reduce((x, y) => x + y, 0), 0);
+
+  // 서로 낸 게 있으면 상쇄 — A가 B 몫 1만, B가 A 몫 4천 → B가 A에게 6천
+  const t3 = transfers(
+    balances([e(20000, 'KRW', 'a', ['a', 'b']), e(8000, 'KRW', 'b', ['a', 'b'])], 'KRW'),
+    'KRW',
+  );
+  eq('상쇄', t3.map((t) => `${t.from}>${t.to}:${t.amount}`).join(' '), 'b>a:6000');
+
+  eq('다 같이 똑같이 냈으면 송금 없음', transfers(balances([e(100, 'USD', 'a', ['a'])], 'USD'), 'USD').length, 0);
+  eq('센트 단위', transfers(balances([e(10, 'USD', 'a', ['a', 'b', 'c'])], 'USD'), 'USD').map((t) => t.amount).join(','), '3.33,3.33');
+
+  const rates = { USD: 1, KRW: 1400, JPY: 150 };
+  eq('환율 변환', convert(1500, 'JPY', 'KRW', rates), 14000);
+  eq('모르는 통화는 null', convert(1, 'XXX', 'KRW', rates), null);
+
+  const mixed = [e(3000, 'JPY', 'a', ['a', 'b']), e(10000, 'KRW', 'b', ['a', 'b'])];
+  const s1 = settle(mixed, 'KRW', rates);
+  eq('환율 있으면 한 통화로', s1.unified && s1.groups.length === 1 && s1.groups[0]!.currency, 'KRW');
+  eq('엔 3000(=28000원)·원 10000 → a가 받을 돈 9000', s1.groups[0]!.transfers.map((t) => `${t.from}>${t.to}:${t.amount}`).join(' '), 'b>a:9000');
+  eq('부담액', s1.groups[0]!.shares.get('a'), 19000);
+  const s2 = settle(mixed, 'KRW', null);
+  eq('환율 없으면 통화별로', !s2.unified && s2.groups.map((g) => g.currency).sort().join(','), 'JPY,KRW');
+  eq('나눌 사람 없는 지출은 빠짐', settle([e(1000, 'KRW', 'a', [])], 'KRW', null).groups.length, 0);
+}
+
+console.log('\n── 여행 중 오늘 ──');
+{
+  // 2026-11-04 14:30 UTC = 서울 23:30, 방콕 21:30, 같은 날
+  const now = new Date('2026-11-04T14:30:00Z');
+  eq('서울 현지', JSON.stringify(localNow('Asia/Seoul', now)), '{"date":"2026-11-04","time":"23:30"}');
+  eq('방콕 현지', localNow('Asia/Bangkok', now).time, '21:30');
+  // 15:30 UTC = 서울은 다음 날 00:30, 방콕은 아직 22:30
+  const later = new Date('2026-11-04T15:30:00Z');
+  eq('서울은 이미 다음 날', localNow('Asia/Seoul', later).date, '2026-11-05');
+
+  const mkTrip = (days: TripDay[]) =>
+    ({ id: 't', name: 'x', startDate: days[0]!.date, endDate: days[days.length - 1]!.date, ownerId: 'a', inviteCode: 'X', coverEmoji: '🧳', members: [], days }) as Trip;
+  const trip = mkTrip([
+    { date: '2026-11-04', timezone: 'Asia/Bangkok', cityLabel: '방콕' },
+    { date: '2026-11-05', timezone: 'Asia/Bangkok', cityLabel: '방콕' },
+  ]);
+  // 기기가 서울이라 이미 11/5여도, 방콕 날짜로는 아직 11/4
+  eq('현지 날짜로 오늘을 고른다', findToday([trip], later)?.dayIndex, 0);
+  eq('여행 기간이 아니면 없음', findToday([trip], new Date('2026-12-01T00:00:00Z')), null);
+
+  const it = (id: string, localTime?: string) => ({ id, localTime }) as Item;
+  eq('다음 일정은 시각으로', nextItem([it('a', '09:00'), it('b', '18:00'), it('c', '12:00')], '10:00')?.id, 'c');
+  eq('다 지났으면 없음', nextItem([it('a', '09:00')], '23:00'), null);
+  eq('남은 분', minutesUntil('14:05', '15:30'), 85);
+}
+
+console.log('\n── 동선 최적화 ──');
+{
+  // 경도만 다른 일직선 위의 점들 (0.01도 ≈ 1.1km)
+  const at = (id: string, lng: number, kind: RoutePoint['kind'] = 'place'): RoutePoint => ({
+    id,
+    kind,
+    coord: { lat: 13.75, lng: 100.5 + lng },
+  });
+  const zigzag = [at('hotel', 0), at('far', 0.05), at('near', 0.01), at('mid', 0.03)];
+  const r = optimizeDay(zigzag);
+  eq('가까운 순서로', r.order.join(','), 'hotel,near,mid,far');
+  ok('거리가 줄어든다', r.after < r.before);
+
+  eq('이미 최단이면 그대로', optimizeDay([at('a', 0), at('b', 0.01), at('c', 0.02)]).order.join(','), 'a,b,c');
+  eq('첫 일정은 고정', optimizeDay([at('far', 0.05), at('a', 0), at('b', 0.01)]).order[0], 'far');
+
+  // 기차 구간은 제자리, 그 앞뒤 묶음끼리만 정렬
+  const withTrain = [
+    at('hotel', 0),
+    at('x2', 0.02),
+    at('x1', 0.01),
+    { id: 'train', kind: 'train', coord: { lat: 13.75, lng: 100.53 }, toCoord: { lat: 14.75, lng: 100.5 } } as RoutePoint,
+    { id: 'y2', kind: 'place', coord: { lat: 14.75, lng: 100.52 } } as RoutePoint,
+    { id: 'y1', kind: 'place', coord: { lat: 14.75, lng: 100.51 } } as RoutePoint,
+  ];
+  eq('구간 일정 기준으로 나눠 정렬', optimizeDay(withTrain).order.join(','), 'hotel,x1,x2,train,y1,y2');
+
+  const noCoord = [at('a', 0), at('c', 0.02), { id: 'lunch', kind: 'place' } as RoutePoint, at('b', 0.01)];
+  eq('좌표 없는 일정은 제자리', optimizeDay(noCoord).order[2], 'lunch');
+
+  // 9곳 이상은 근사(가까운 곳부터 + 2-opt) — 일직선이면 정답과 같아야 한다
+  const many = [at('s', 0), ...[9, 3, 7, 1, 5, 2, 8, 4, 6].map((k) => at(`p${k}`, k * 0.01))];
+  eq('많아도 풀린다', optimizeDay(many).order.join(','), 's,p1,p2,p3,p4,p5,p6,p7,p8,p9');
+}
+
+console.log('\n── 캘린더 내보내기 ──');
+{
+  const trip = {
+    id: 't', name: '방콕, 도쿄', startDate: '2026-11-04', endDate: '2026-11-04', ownerId: 'a',
+    inviteCode: 'X', coverEmoji: '🧳', members: [],
+    days: [{ date: '2026-11-04', timezone: 'Asia/Bangkok', cityLabel: '방콕' }],
+  } as Trip;
+  const items = [
+    { id: 'i1', tripId: 't', date: '2026-11-04', sortKey: 'a0', kind: 'place', title: '왕궁; 입장', localTime: '09:00', durationMin: 120, placeName: '왓 프라깨우', bookingRef: 'AB12', description: '긴바지\n챙길 것' },
+    { id: 'i2', tripId: 't', date: '2026-11-04', sortKey: 'a1', kind: 'place', title: '자유 시간' },
+  ] as Item[];
+  const ics = buildIcs(trip, items, { bookingLabel: '예약 번호' }, new Date('2026-10-01T00:00:00Z'));
+  ok('CRLF 줄바꿈', ics.includes('\r\nBEGIN:VEVENT\r\n'));
+  // 방콕 09:00 = UTC 02:00, 120분 뒤 04:00
+  ok('현지 시각을 UTC로', ics.includes('DTSTART:20261104T020000Z') && ics.includes('DTEND:20261104T040000Z'));
+  ok('시각 없으면 종일', ics.includes('DTSTART;VALUE=DATE:20261104') && ics.includes('DTEND;VALUE=DATE:20261105'));
+  ok('특수문자 이스케이프', ics.includes('SUMMARY:왕궁\\; 입장') && ics.includes('X-WR-CALNAME:방콕\\, 도쿄'));
+  ok('예약 번호·메모', ics.includes('예약 번호: AB12'));
+  ok('75바이트 넘는 줄 없음', ics.split('\r\n').every((l) => new TextEncoder().encode(l).length <= 75));
 }
 
 console.log('\n── 언어 ──');

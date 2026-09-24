@@ -8,8 +8,8 @@
  * 새로고침하면 처음 상태로 돌아간다. 그게 목의 성격이라 감추지 않는다.
  */
 
-import type { ChecklistItem, Item, Trip } from '@/domain/types';
-import { MOCK_CHECKLIST, MOCK_ITEMS, MOCK_TRIPS } from './mockTrips';
+import type { ChecklistItem, Expense, Item, Trip } from '@/domain/types';
+import { MOCK_CHECKLIST, MOCK_EXPENSES, MOCK_ITEMS, MOCK_TRIPS } from './mockTrips';
 import type { TripDraft, TripRepository, TripSnapshot } from './tripRepository';
 
 let idCounter = 0;
@@ -22,13 +22,14 @@ function nextId(prefix: string): string {
 let trips: Trip[] = [...MOCK_TRIPS];
 let items: Item[] = [...MOCK_ITEMS];
 let checklist: ChecklistItem[] = [...MOCK_CHECKLIST];
+let expenses: Expense[] = [...MOCK_EXPENSES];
 
 export const mockTripRepository: TripRepository = {
   id: 'mock-trips',
   persistent: false,
 
   async load(): Promise<TripSnapshot> {
-    return { trips, items, checklist };
+    return { trips, items, checklist, expenses, expensesAvailable: true };
   },
 
   async createTrip(draft: TripDraft): Promise<Trip> {
@@ -101,6 +102,18 @@ export const mockTripRepository: TripRepository = {
 
   async removeChecklistItem(itemId): Promise<void> {
     checklist = checklist.filter((c) => c.id !== itemId);
+  },
+
+  async addExpense(expense): Promise<void> {
+    expenses = [...expenses, expense];
+  },
+
+  async updateExpense(id, patch): Promise<void> {
+    expenses = expenses.map((e) => (e.id === id ? { ...e, ...patch } : e));
+  },
+
+  async removeExpense(id): Promise<void> {
+    expenses = expenses.filter((e) => e.id !== id);
   },
 
   // 혼자 쓰는 메모리 저장소라 다른 사람의 변경이 올 일이 없다

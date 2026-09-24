@@ -20,6 +20,7 @@ import { colorOf, initialOf } from '@/auth';
 import type {
   ChecklistItem,
   Coord,
+  Expense,
   Item,
   ItemKind,
   Member,
@@ -85,6 +86,22 @@ interface ItemRow {
   /** sharing.sql을 돌리기 전 DB에는 없다 */
   updated_by?: string | null;
   updated_at?: string | null;
+  /** expenses.sql을 돌리기 전 DB에는 없다 */
+  booking_ref?: string | null;
+}
+
+interface ExpenseRow {
+  id: string;
+  trip_id: string;
+  title: string;
+  /** numeric은 문자열로 올 수 있다 — Number()로 받는다 */
+  amount: number | string;
+  currency: string;
+  paid_by: string | null;
+  split_among: string[] | null;
+  spent_on: string | null;
+  created_at: string | null;
+  updated_by: string | null;
 }
 
 interface ChecklistRow {
@@ -130,6 +147,7 @@ function toItem(row: ItemRow): Item {
     durationMin: row.duration_min ?? undefined,
     description: row.description ?? undefined,
     carrierCode: row.carrier_code ?? undefined,
+    bookingRef: row.booking_ref ?? undefined,
     updatedBy: row.updated_by ?? undefined,
     updatedAt: row.updated_at ?? undefined,
     /*
@@ -161,6 +179,9 @@ function toItemRow(patch: Partial<Item>): Record<string, unknown> {
   if ('durationMin' in patch) row.duration_min = patch.durationMin ?? null;
   if ('description' in patch) row.description = patch.description ?? null;
   if ('carrierCode' in patch) row.carrier_code = patch.carrierCode ?? null;
+  // 칸이 없는 DB(expenses.sql 이전)에 보내면 저장 자체가 실패한다 — 호출부가 값이
+  // 있을 때만 넣는다(ItemEditScreen)
+  if ('bookingRef' in patch) row.booking_ref = patch.bookingRef ?? null;
 
   if ('coord' in patch) {
     row.lat = patch.coord?.lat ?? null;
@@ -183,6 +204,32 @@ function toItemRow(patch: Partial<Item>): Record<string, unknown> {
     row.leg_is_manual = Boolean(manual);
   }
 
+  return row;
+}
+
+function toExpense(row: ExpenseRow): Expense {
+  return {
+    id: row.id,
+    tripId: row.trip_id,
+    title: row.title,
+    amount: Number(row.amount),
+    currency: row.currency,
+    paidBy: row.paid_by ?? undefined,
+    splitAmong: row.split_among ?? [],
+    spentOn: row.spent_on ?? undefined,
+    createdAt: row.created_at ?? undefined,
+    updatedBy: row.updated_by ?? undefined,
+  };
+}
+
+function toExpenseRow(patch: Partial<Expense>): Record<string, unknown> {
+  const row: Record<string, unknown> = {};
+  if ('title' in patch) row.title = patch.title;
+  if ('amount' in patch) row.amount = patch.amount;
+  if ('currency' in patch) row.currency = patch.currency;
+  if ('paidBy' in patch) row.paid_by = patch.paidBy ?? null;
+  if ('splitAmong' in patch) row.split_among = patch.splitAmong;
+  if ('spentOn' in patch) row.spent_on = patch.spentOn ?? null;
   return row;
 }
 
@@ -244,15 +291,23 @@ export function createSupabaseTripRepository(): TripRepository {
 
       const trips = (tripRows ?? []) as TripRow[];
       const tripIds = trips.map((t) => t.id);
-      if (tripIds.length === 0) return { trips: [], items: [], checklist: [] };
+      if (tripIds.length === 0) {
+        return { trips: [], items: [], checklist: [], expenses: [], expensesAvailable: true };
+      }
 
       // 남은 것들은 서로 기다릴 이유가 없다
-      const [membersByTrip, daysRes, itemsRes, checklistRes] = await Promise.all([
+      const [membersByTrip, daysRes, itemsRes, checklistRes, expensesRes] = await Promise.all([
         loadMembers(tripIds),
         client.from('trip_days').select('*').in('trip_id', tripIds).order('date'),
         client.from('items').select('*').in('trip_id', tripIds).order('sort_key'),
         client.from('checklist').select('*').in('trip_id', tripIds),
+        client.from('expenses').select('*').in('trip_id', tripIds).order('created_at'),
       ]);
+      /*
+       * 가계부는 실패해도 나머지를 막지 않는다. expenses.sql을 돌리기 전 DB면
+       * 테이블이 없어서 여기서 실패하는데, 그렇다고 일정까지 못 보면 안 된다.
+       */
+      const expensesAvailable = !expensesRes.error;
 
       if (daysRes.error) throw new Error(`${getMessages().errors.readDays}: ${daysRes.error.message}`);
       if (itemsRes.error) throw new Error(`${getMessages().errors.readItems}: ${itemsRes.error.message}`);
@@ -284,6 +339,8 @@ export function createSupabaseTripRepository(): TripRepository {
           checked: c.checked,
           assigneeId: c.assignee_id ?? undefined,
         })),
+        expenses: ((expensesRes.data ?? []) as ExpenseRow[]).map(toExpense),
+        expensesAvailable,
       };
     },
 
@@ -389,6 +446,8 @@ export function createSupabaseTripRepository(): TripRepository {
         duration_min: item.durationMin ?? null,
         description: item.description ?? null,
         carrier_code: item.carrierCode ?? null,
+        // 칸이 없는 DB(expenses.sql 이전)에서도 일정 추가가 되도록 값이 있을 때만 보낸다
+        ...(item.bookingRef ? { booking_ref: item.bookingRef } : {}),
       });
       if (error) throw new Error(`${getMessages().errors.createItem}: ${error.message}`);
     },
@@ -440,6 +499,25 @@ export function createSupabaseTripRepository(): TripRepository {
       if (error) throw new Error(`${getMessages().errors.deleteChecklist}: ${error.message}`);
     },
 
+    async addExpense(expense: Expense): Promise<void> {
+      const { error } = await client
+        .from('expenses')
+        .insert({ id: expense.id, trip_id: expense.tripId, ...toExpenseRow(expense) });
+      if (error) throw new Error(`${getMessages().errors.addExpense}: ${error.message}`);
+    },
+
+    async updateExpense(id: string, patch: Partial<Expense>): Promise<void> {
+      const row = toExpenseRow(patch);
+      if (Object.keys(row).length === 0) return;
+      const { error } = await client.from('expenses').update(row).eq('id', id);
+      if (error) throw new Error(`${getMessages().errors.updateExpense}: ${error.message}`);
+    },
+
+    async removeExpense(id: string): Promise<void> {
+      const { error } = await client.from('expenses').delete().eq('id', id);
+      if (error) throw new Error(`${getMessages().errors.deleteExpense}: ${error.message}`);
+    },
+
     subscribe(onChange: (change: RemoteChange) => void): () => void {
       /*
        * 테이블별로 필터를 걸지 않는다. 받을 수 있는 행은 RLS가 이미 걸러준다
@@ -476,6 +554,15 @@ export function createSupabaseTripRepository(): TripRepository {
               assigneeId: row.assignee_id ?? undefined,
             },
           });
+        })
+        // 테이블이 아직 없는 DB(expenses.sql 이전)면 이 구독만 조용히 아무것도 안 받는다
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'expenses' }, (p) => {
+          if (p.eventType === 'DELETE') {
+            const id = (p.old as { id?: string }).id;
+            if (id) onChange({ kind: 'expense-delete', id });
+            return;
+          }
+          onChange({ kind: 'expense-upsert', expense: toExpense(p.new as ExpenseRow) });
         })
         .on('postgres_changes', { event: '*', schema: 'public', table: 'trip_days' }, (p) => {
           // 기본키가 (trip_id, date)라 삭제에도 이 둘은 들어온다

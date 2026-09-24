@@ -17,13 +17,14 @@
 -- 새어나가도 알 수 있는 게 없고, 받는 쪽은 자기가 가진 id일 때만 지운다.
 -- ─────────────────────────────────────────────────────────────────────
 
+-- expenses는 expenses.sql을 돌린 뒤에만 있다. 없으면 건너뛴다.
 do $$
 declare
   t text;
 begin
-  foreach t in array array['trips', 'trip_members', 'trip_days', 'items', 'checklist']
+  foreach t in array array['trips', 'trip_members', 'trip_days', 'items', 'checklist', 'expenses']
   loop
-    if not exists (
+    if to_regclass('public.' || t) is not null and not exists (
       select 1 from pg_publication_tables
       where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = t
     ) then

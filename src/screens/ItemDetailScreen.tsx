@@ -58,6 +58,7 @@ export function ItemDetailScreen() {
   ).get(itemId);
 
   const [draftMinutes, setDraftMinutes] = useState<number | null>(null);
+  const [copied, setCopied] = useState(false);
 
   if (!trip || !item) {
     return (
@@ -118,6 +119,28 @@ export function ItemDetailScreen() {
               )}
               {item.carrierCode && <span className="chip">{item.carrierCode}</span>}
             </div>
+            {/*
+              예약 번호는 체크인 카운터 앞에서 찾는다 — 눌러서 바로 복사되게.
+              클립보드를 못 쓰는 환경이면 글자를 길게 눌러 복사하면 된다(select-all).
+            */}
+            {item.bookingRef && (
+              <button
+                className="booking-ref"
+                onClick={() => {
+                  void navigator.clipboard
+                    ?.writeText(item.bookingRef!)
+                    .then(() => {
+                      setCopied(true);
+                      setTimeout(() => setCopied(false), 1800);
+                    })
+                    .catch(() => {});
+                }}
+              >
+                <span className="booking-ref__label">{t.itemEdit.bookingRef}</span>
+                <span className="booking-ref__value">{item.bookingRef}</span>
+                <span className="booking-ref__copy">{copied ? t.itemDetail.copied : t.itemDetail.copy}</span>
+              </button>
+            )}
             {trip && <EditedBy item={item} members={trip.members} variant="line" />}
           </section>
 

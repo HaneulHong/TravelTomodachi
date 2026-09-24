@@ -8,6 +8,7 @@ import { ConfirmSheet } from '@/components/ConfirmSheet';
 import { DayEditSheet } from '@/components/DayEditSheet';
 import { EditedBy } from '@/components/EditedBy';
 import { MenuSheet } from '@/components/MenuSheet';
+import { OptimizeSheet } from '@/components/OptimizeSheet';
 import { TransportChip } from '@/components/TransportChip';
 import {
   AlertIcon,
@@ -22,14 +23,18 @@ import {
   PlaneIcon,
   PlusIcon,
   ReorderIcon,
+  RouteIcon,
   ShareIcon,
   TrainIcon,
   TrashIcon,
   UsersIcon,
+  CalendarIcon,
+  WalletIcon,
 } from '@/components/icons';
 import { useDayLegs, type LegInfo } from '@/hooks/useDayLegs';
 import { useInviteShare } from '@/hooks/useInviteShare';
 import { useReorderDrag } from '@/hooks/useReorderDrag';
+import { buildIcs } from '@/domain/ics';
 import { timeConflicts, timeSortedOrder } from '@/domain/order';
 import { useSwipe } from '@/hooks/useSwipe';
 import {
@@ -44,6 +49,7 @@ import { isSegmentKind, type Item } from '@/domain/types';
 import { useLocale, useT } from '@/i18n';
 import { Rich } from '@/i18n/Rich';
 import { platform } from '@/platform';
+import { defaultDateFor } from '@/domain/today';
 import { useTripStore } from '@/store/tripStore';
 
 /** 구간 종류별 칩 색. 수단이 다르면 한눈에 갈려야 한다. */
@@ -121,6 +127,7 @@ export function TripScreen() {
   const [menuOpen, setMenuOpen] = useState(false);
   /** 순서 바꾸기 모드. 켜면 손잡이가 나오고 카드를 눌러도 상세로 가지 않는다. */
   const [reorder, setReorder] = useState(false);
+  const [optimizeOpen, setOptimizeOpen] = useState(false);
   const moveItem = useTripStore((s) => s.moveItem);
   const setDayOrder = useTripStore((s) => s.setDayOrder);
   const [dayEditOpen, setDayEditOpen] = useState(false);
@@ -135,7 +142,8 @@ export function TripScreen() {
   const trip = useTripStore((s) => s.getTrip(tripId));
   const allItems = useTripStore((s) => s.items);
 
-  const activeDate = search.get('date') ?? trip?.startDate ?? '';
+  // 날짜가 주소에 없으면 여행 중엔 오늘, 아니면 첫날
+  const activeDate = search.get('date') ?? (trip ? defaultDateFor(trip) : '');
   const dayIndex = trip?.days.findIndex((d) => d.date === activeDate) ?? -1;
   const day = dayIndex >= 0 ? trip?.days[dayIndex] : undefined;
   const prevDay = dayIndex > 0 ? trip?.days[dayIndex - 1] : undefined;
@@ -376,6 +384,16 @@ export function TripScreen() {
           <ListIcon />
           {t.trip.menuChecklist}
         </button>
+        <button
+          className="sheet__item"
+          onClick={() => {
+            setMenuOpen(false);
+            navigate(`/trip/${trip.id}/expenses?date=${activeDate}`);
+          }}
+        >
+          <WalletIcon />
+          {t.trip.menuLedger}
+        </button>
         {items.length > 1 && (
           <button
             className="sheet__item"
@@ -386,6 +404,47 @@ export function TripScreen() {
           >
             <ReorderIcon />
             {t.trip.menuReorder}
+          </button>
+        )}
+        {/* 옮길 수 있는 방문지가 둘 이상일 때만 의미가 있다 (첫 일정은 고정) */}
+        {items.filter((i, idx) => idx > 0 && i.kind === 'place' && i.coord).length > 1 && (
+          <button
+            className="sheet__item"
+            onClick={() => {
+              setMenuOpen(false);
+              setOptimizeOpen(true);
+            }}
+          >
+            <RouteIcon />
+            {t.trip.menuOptimize}
+          </button>
+        )}
+        {/* 파일 저장은 웹에서만(앱은 아직 플러그인이 없다) */}
+        {platform.saveFile && (
+          <button
+            className="sheet__item"
+            onClick={() => {
+              setMenuOpen(false);
+              const ics = buildIcs(
+                trip,
+                allItems.filter((i) => i.tripId === trip.id).sort((a, b) =>
+                  a.date === b.date ? (a.sortKey < b.sortKey ? -1 : 1) : a.date < b.date ? -1 : 1,
+                ),
+                { bookingLabel: t.itemEdit.bookingRef },
+              );
+              /*
+               * 파일 이름은 영문으로 — 한글 이름은 일부 브라우저가 버리고 'download'로
+               * 저장한다(크롬 헤드리스에서 확인). 여행 이름은 파일 안의 캘린더 이름으로 간다.
+               */
+              platform.saveFile!(
+                `traveltomodachi-${trip.startDate}.ics`,
+                ics,
+                'text/calendar;charset=utf-8',
+              );
+            }}
+          >
+            <CalendarIcon />
+            {t.trip.menuCalendar}
           </button>
         )}
         <button className="sheet__item" onClick={onShare}>
@@ -480,6 +539,18 @@ export function TripScreen() {
           days={trip.days}
           date={activeDate}
           onClose={() => setDayEditOpen(false)}
+        />
+      )}
+
+      {optimizeOpen && (
+        <OptimizeSheet
+          items={items}
+          onClose={() => setOptimizeOpen(false)}
+          onApply={(order) => {
+            setDayOrder(trip.id, activeDate, order);
+            setOptimizeOpen(false);
+            platform.vibrate(8);
+          }}
         />
       )}
 
