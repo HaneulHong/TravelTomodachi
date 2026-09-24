@@ -11,14 +11,24 @@
 
 체크하지 않은 것이 남은 일이다. 위에서부터.
 
+- [ ] **영어·일본어 지원 PR 머지** — DB 변경 없음. 머지하면 자동 배포
+  - [ ] 일본인 친구에게 일본어 문구 훑어봐 달라고 하기 (`src/i18n/messages/ja.ts` 한 파일)
+- [ ] **배포 사이트에서 지도가 안 뜸 (Google·카카오 둘 다)** — 집 PC에서 확인 예정
+  - 확인된 것: Cloudflare 변수 이름·값 정상, Google 키는 앱에 넣으면 지도가 정상으로 뜸
+    (이 환경에서 직접 확인), Map ID `TDMapsApi`를 넣어도 뜸
+  - 할 것: 배포 사이트 지도 화면에서 F12 → Console의 빨간 오류, Network에서
+    `maps.googleapis` 요청이 있는지. 없으면 Deployments → Retry deployment
+  - `VITE_GOOGLE_MAPS_MAP_ID`는 지도 이름(`TDMapsApi`)이 아니라 지도 관리의 16자리 ID로 바꾸기
+  - Google 키가 아무 사이트에서나 동작한다 → 애플리케이션 제한사항이 **웹사이트**로
+    선택돼 있는지 확인 (다른 사이트가 키를 가져다 쓰면 무료 한도가 빠진다)
 - [x] **`VITE_PUBLIC_BASE_URL`을 `https://traveltomodachi.pages.dev`로 고침** (2026-09-24 사용자가 수정)
   - [x] 배포본에서 확인 — 초대 링크가 제대로 생성되고, 친구들과 실제로 참가해 봄 (2026-09-24)
 - [ ] Pages 프로젝트 `tabitomo`(실제 주소 `tabitomo-….pages.dev`, 환경 변수 없음) 삭제
 - [ ] **배포 주소 등록 네 곳** ([DEPLOY.md](./DEPLOY.md) 2단계)
   - [x] Supabase: Site URL · Redirect URLs에 `https://traveltomodachi.pages.dev` — 배포 주소 로그인 확인됨
         (안 하면 로그인 후 `localhost:3000`으로 튕긴다 — 2026-09-24 실제로 겪음)
-  - [ ] Google Maps 키: 웹사이트 제한에 `https://traveltomodachi.pages.dev/*`
-  - [ ] 카카오: 사이트 도메인에 `https://traveltomodachi.pages.dev`
+  - [x] Google Maps 키: 웹사이트 제한에 `https://traveltomodachi.pages.dev/*` (사용자가 등록했다고 함)
+  - [x] 카카오: 사이트 도메인에 `https://traveltomodachi.pages.dev` (사용자가 등록했다고 함)
   - [ ] Google OAuth 동의 화면: **프로덕션으로 게시** (안 하면 친구가 로그인 못 함)
 - [x] **`supabase/profile-tag.sql` 실행** — 닉네임 번호(#1234). 머지 전후 상관없음(실행 전에도 앱은 번호 없이 동작)
 - [x] PR `feat/beta-polish` 머지 → 자동 배포 (PR #5)
@@ -26,6 +36,16 @@
 - [ ] 두 번째 계정으로: 「여행에서 나가기」, 「내보내기」 확인
 
 ## ✅ 된 것
+
+### 영어·일본어 지원 — 2026-09-24 (PR 대기)
+- 앱 문구 전체를 한국어·영어·일본어로. 일정 제목·메모처럼 사람이 쓴 내용은 번역하지 않는다
+- 기본은 기기 언어 자동 감지(한·영·일 외 언어는 영어). 프로필 → 언어에서 끄고 직접 고른다.
+  고른 언어는 그 기기에만 남는다 — 같은 여행에서도 사람마다 다른 언어로 본다
+- 날짜·요일·시간(`Tue, Nov 3` · `11月3日(火)` · `1h 35m`), 도시 이름, Google 지도 지명,
+  기본 닉네임(Traveler · 旅行者), 초대 메시지, 오류 문구(DB 오류 포함)
+- 문구는 `src/i18n/messages/{ko,en,ja}.ts`. 영어·일본어에 빠진 문구가 있으면 빌드가 실패한다
+- 일본어 줄바꿈을 문절 단위로 (한국어용 `keep-all`이 일본어에선 「、」만 따로 떨어뜨렸다)
+- 320·360px에서 한·영·일 전 화면 확인 (넘침 없음)
 
 ### v0.9.0 베타 — 2026-09-24 (PR #5, main에 머지됨)
 - 개발용 문구 숨김 — 키 설정 안내·서비스 패널은 개발 서버에서만. 배포에 백엔드 설정이
@@ -61,10 +81,14 @@
 - 배포 주소에서 지도 (주소 등록 후). 로그인·초대 링크(친구들과 참가)는 확인함
 - Android 앱 실행 (Android Studio 없음)
 - 앱에서 카카오맵이 뜨는지 (도메인 등록 방식 불확실 — 안 되면 간략 지도)
+- 일본어 문구를 원어민이 본 적 없음
+- 영어·일본어 화면을 실제 폰(iOS Safari 등)에서 본 적 없음 — 개발 환경 크롬으로만 확인
 
 ## 💡 다음 후보
 - 홈 화면 아이콘 이미지 (`public/icon-192.png`, `icon-512.png` 없음 — 홈 화면에 추가 시 깨짐)
-- 첫 로그인 때 닉네임 정하기 화면 (지금은 모두 '여행자'로 시작)
+- 첫 로그인 때 닉네임 정하기 화면 (지금은 모두 '여행자'로 시작 — 이제 언어에 따라 Traveler·旅行者)
+- DB 오류 문구(supabase/*.sql)를 코드로 바꾸기 — 지금은 앱이 한국어 원문을 보고 번역한다
+  (`translateServerError`). SQL 문구를 바꾸면 `ko.ts`의 serverErrors도 같이 바꿔야 한다
 - 도메인 구입 (링크를 많이 돌리기 전에)
 - Apple 로그인 ($99/년 — 앱 출시 때)
 
