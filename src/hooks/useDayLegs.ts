@@ -85,7 +85,8 @@ export function useDayLegs(items: Item[], timezone?: string): Map<string, LegInf
   const [legs, setLegs] = useState<Map<string, LegInfo>>(new Map());
   const requestId = useRef(0);
 
-  // 좌표 쌍이 바뀔 때만 다시 조회한다
+  // 좌표 쌍이나 출발 시각이 바뀔 때만 다시 조회한다.
+  // 시각을 빼면 일정 시간을 바꿔도 예전 시간대의 대중교통 결과가 그대로 남는다.
   const signature = useMemo(
     () =>
       items
@@ -93,7 +94,7 @@ export function useDayLegs(items: Item[], timezone?: string): Map<string, LegInf
           (i) =>
             `${i.id}:${i.coord ? `${i.coord.lat},${i.coord.lng}` : '-'}` +
             `>${i.toCoord ? `${i.toCoord.lat},${i.toCoord.lng}` : '-'}` +
-            `:${i.leg?.isManual ? 'm' : ''}`,
+            `:${i.leg?.isManual ? 'm' : ''}:${i.date}@${i.localTime ?? ''}+${i.durationMin ?? ''}`,
         )
         .join('|') + `#${timezone ?? ''}`,
     [items, timezone],
@@ -199,7 +200,7 @@ export function useDayLegs(items: Item[], timezone?: string): Map<string, LegInf
         return next;
       });
     })();
-    // signature가 좌표·수동여부 변화를 모두 담고 있다
+    // signature가 좌표·시각·수동여부 변화를 모두 담고 있다
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [signature]);
 

@@ -45,6 +45,8 @@ import { formatDateLabel, formatWeekday } from '../src/domain/time';
 import { ko } from '../src/i18n/messages/ko';
 import { en } from '../src/i18n/messages/en';
 import { ja } from '../src/i18n/messages/ja';
+import { parsePlan, type MotisLeg } from '../src/providers/route/transitousRouteProvider';
+import { decodePolyline } from '../src/providers/route/polyline';
 
 let passed = 0;
 let failed = 0;
@@ -541,6 +543,115 @@ console.log('\n── 후보 장소 순위 ──');
   eq('표 많은 순', ranked.map((r) => r.place.id).join(''), 'cba');
   eq('같은 사람 표는 한 번', ranked[0]!.voters.length, 2);
   eq('표가 같으면 먼저 올린 곳', rankPlaces([pl('y', '2026-01-02'), pl('x', '2026-01-01')], []).map((r) => r.place.id).join(''), 'xy');
+}
+
+console.log('\n── 대중교통 응답 해석 (Transitous) ──');
+{
+  // 정밀도 6 인코더 — 테스트용 (서버가 v2 이후 이렇게 보낸다)
+  const encode = (pts: { lat: number; lng: number }[], precision = 6): string => {
+    const f = 10 ** precision;
+    let out = '';
+    let pl = 0;
+    let pg = 0;
+    const put = (v: number) => {
+      let n = v < 0 ? -2 * v - 1 : 2 * v;
+      while (n >= 0x20) {
+        out += String.fromCharCode((0x20 | (n % 32)) + 63);
+        n = Math.floor(n / 32);
+      }
+      out += String.fromCharCode(n + 63);
+    };
+    for (const p of pts) {
+      const la = Math.round(p.lat * f);
+      const lg = Math.round(p.lng * f);
+      put(la - pl);
+      put(lg - pg);
+      pl = la;
+      pg = lg;
+    }
+    return out;
+  };
+
+  const myeongdong = { lat: 37.5609, lng: 126.9853 };
+  const gyeongbok = { lat: 37.5796, lng: 126.977 };
+  const q = { from: myeongdong, to: gyeongbok, mode: 'transit' as const, departAt: '2026-10-01T03:00:00Z' };
+  const walk = (a: typeof myeongdong, b: typeof myeongdong): MotisLeg => ({
+    mode: 'WALK',
+    distance: 300,
+    legGeometry: { points: encode([a, b]), precision: 6 },
+  });
+  const ride = (mode: string, names: Partial<MotisLeg>): MotisLeg => ({
+    mode,
+    ...names,
+    legGeometry: { points: encode([myeongdong, gyeongbok]), precision: 6 },
+  });
+
+  // 한국 경도(126)에서 정밀도 6 경로선이 제자리에 찍힌다
+  const round = decodePolyline(encode([myeongdong, gyeongbok]), 6);
+  ok('서울 좌표가 제자리 (정밀도 6)', Math.abs(round[1]!.lng - 126.977) < 1e-6 && Math.abs(round[1]!.lat - 37.5796) < 1e-6);
+
+  // 가장 일찍 도착하는 여정을 고른다 (첫 번째가 아니라)
+  const r = parsePlan(
+    {
+      itineraries: [
+        {
+          duration: 50 * 60,
+          startTime: '2026-10-01T03:00:00Z',
+          endTime: '2026-10-01T03:50:00Z',
+          transfers: 2,
+          legs: [walk(myeongdong, myeongdong), ride('BUS', { routeShortName: '7022' }), ride('SUBWAY', { displayName: '3호선' })],
+        },
+        {
+          duration: 20 * 60,
+          startTime: '2026-10-01T03:10:00Z',
+          endTime: '2026-10-01T03:30:00Z',
+          transfers: 0,
+          legs: [walk(myeongdong, myeongdong), ride('SUBWAY', { displayName: '4호선', routeShortName: '' }), walk(gyeongbok, gyeongbok)],
+        },
+      ],
+    },
+    q,
+  );
+  ok('대중교통 결과가 나온다', r.available);
+  if (r.available) {
+    eq('일찍 도착하는 쪽의 노선', r.lines?.join(','), '4호선');
+    // 03:00에 나서서 03:30 도착 — 10분 기다림도 이동 시간이다
+    eq('기다리는 시간까지 포함', r.minutes, 30);
+    ok('경로선이 서울에 있다', (r.polyline ?? []).every((p) => p.lng > 126 && p.lng < 128));
+  }
+
+  // 이름은 displayName → routeShortName → routeLongName → tripShortName
+  const named = parsePlan(
+    {
+      itineraries: [
+        {
+          duration: 600,
+          endTime: '2026-10-01T03:10:00Z',
+          legs: [
+            ride('BUS', { routeShortName: '472', routeLongName: '신내동-개포동' }),
+            ride('BUS', { routeShortName: '472' }),
+            ride('HIGHSPEED_RAIL', { tripShortName: 'KTX 012' }),
+          ],
+        },
+      ],
+    },
+    { ...q, departAt: undefined },
+  );
+  eq('노선 이름 순서·이어 타기 중복 제거', named.available ? named.lines?.join(',') : '', '472,KTX 012');
+  eq('출발 시각을 모르면 여정 시간', named.available ? named.minutes : 0, 10);
+
+  // 걷기·자전거만 있는 여정은 대중교통이 아니다
+  const walkOnly = parsePlan(
+    { itineraries: [{ duration: 900, legs: [walk(myeongdong, gyeongbok)] }, { duration: 500, legs: [{ mode: 'RENTAL' }] }] },
+    { ...q, to: { lat: 37.5626, lng: 126.9856 } },
+  );
+  eq('걷기만 → 가까우면 "노선 없음"', walkOnly.available ? '' : walkOnly.reason, 'no_transit_route');
+
+  // 가까운 거리에서 대중교통이 없다고 "이 지역 데이터 없음"을 띄우지 않는다
+  const near = parsePlan({ itineraries: [] }, { ...q, to: { lat: 37.5626, lng: 126.9856 } });
+  eq('200m — 데이터 없는 지역이 아니다', near.available ? '' : near.reason, 'no_transit_route');
+  const far = parsePlan({ itineraries: [] }, { ...q, from: { lat: 21.0285, lng: 105.8542 }, to: { lat: 21.0368, lng: 105.8342 } });
+  eq('하노이 2km+ — 데이터 없음', far.available ? '' : far.reason, 'no_transit_data');
 }
 
 console.log('\n── 언어 ──');
