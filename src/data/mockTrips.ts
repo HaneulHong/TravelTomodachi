@@ -13,7 +13,7 @@
  */
 
 import { firstKey, keyBetween } from '@/domain/fractionalIndex';
-import type { ChecklistItem, Item, Member, Trip } from '@/domain/types';
+import type { ChecklistItem, Expense, Item, Member, Trip } from '@/domain/types';
 
 const MEMBERS: Member[] = [
   { id: 'u-me', name: '나', initial: '나', color: '#4f46e5' },
@@ -530,4 +530,51 @@ export const MOCK_CHECKLIST: ChecklistItem[] = [
   { id: 'c-7', tripId: 't-sea', title: '현지 유심 또는 eSIM 3개국 커버 확인', checked: false, assigneeId: 'u-me' },
   { id: 'c-8', tripId: 't-jeju', title: '렌터카 예약', checked: false, assigneeId: 'u-me' },
   { id: 'c-9', tripId: 't-jeju', title: '노트북 충전기', checked: false },
+];
+
+/**
+ * 가계부 예시 — 통화가 섞인 경우(원·밧·엔)와 일부만 나눈 경우를 넣어 둔다.
+ * 정산 화면이 한 통화로 모으는지, 환율이 없을 때 통화별로 나누는지 확인하는 용도.
+ */
+export const MOCK_EXPENSES: Expense[] = [
+  {
+    id: 'e-1',
+    tripId: 't-sea',
+    title: '인천 → 방콕 항공권 4명',
+    amount: 1_560_000,
+    currency: 'KRW',
+    paidBy: 'u-me',
+    splitAmong: ['u-me', 'u-jun', 'u-sera', 'u-min'],
+    spentOn: '2026-11-03',
+  },
+  {
+    id: 'e-2',
+    tripId: 't-sea',
+    title: '팟타이 점심',
+    amount: 480,
+    currency: 'THB',
+    paidBy: 'u-jun',
+    splitAmong: ['u-me', 'u-jun', 'u-sera', 'u-min'],
+    spentOn: '2026-11-04',
+  },
+  {
+    id: 'e-3',
+    tripId: 't-sea',
+    title: '아이콘시암 기념품',
+    amount: 1_200,
+    currency: 'THB',
+    paidBy: 'u-sera',
+    splitAmong: ['u-sera', 'u-min'],
+    spentOn: '2026-11-04',
+  },
+  {
+    id: 'e-4',
+    tripId: 't-sea',
+    title: '도쿄 라멘',
+    amount: 4_800,
+    currency: 'JPY',
+    paidBy: 'u-min',
+    splitAmong: ['u-me', 'u-jun', 'u-sera', 'u-min'],
+    spentOn: '2026-11-07',
+  },
 ];

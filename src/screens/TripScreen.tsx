@@ -26,6 +26,7 @@ import {
   TrainIcon,
   TrashIcon,
   UsersIcon,
+  WalletIcon,
 } from '@/components/icons';
 import { useDayLegs, type LegInfo } from '@/hooks/useDayLegs';
 import { useInviteShare } from '@/hooks/useInviteShare';
@@ -375,6 +376,16 @@ export function TripScreen() {
         >
           <ListIcon />
           {t.trip.menuChecklist}
+        </button>
+        <button
+          className="sheet__item"
+          onClick={() => {
+            setMenuOpen(false);
+            navigate(`/trip/${trip.id}/expenses?date=${activeDate}`);
+          }}
+        >
+          <WalletIcon />
+          {t.trip.menuLedger}
         </button>
         {items.length > 1 && (
           <button

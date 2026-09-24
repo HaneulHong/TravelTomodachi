@@ -101,6 +101,8 @@ export interface Item {
   leg?: Leg;
   /** kind가 'place'가 아닐 때의 편명·노선명 등 */
   carrierCode?: string;
+  /** 항공권·숙소·투어의 예약(확인) 번호. expenses.sql 이전 DB에는 칸이 없다. */
+  bookingRef?: string;
   /**
    * 구간 항목의 도착 지점. 출발은 coord가 맡는다.
    *
@@ -128,6 +130,27 @@ export interface Trip {
   coverEmoji: string;
   members: Member[];
   days: TripDay[];
+}
+
+/**
+ * 가계부 한 줄 = 한 번 낸 돈. 정산은 저장하지 않고 domain/settle.ts가 계산한다.
+ */
+export interface Expense {
+  id: string;
+  tripId: string;
+  title: string;
+  /** 통화의 보통 단위(원·엔·달러). 0보다 크다. */
+  amount: number;
+  /** ISO 4217 (KRW, JPY …) */
+  currency: string;
+  /** 낸 사람. 계정이 지워졌으면 없다. */
+  paidBy?: string;
+  /** 나눠 낼 사람들(멤버 id). 나간 멤버도 남는다. */
+  splitAmong: string[];
+  /** 쓴 날 'YYYY-MM-DD' (여행 날짜). 없어도 된다. */
+  spentOn?: string;
+  createdAt?: string;
+  updatedBy?: string;
 }
 
 export interface ChecklistItem {

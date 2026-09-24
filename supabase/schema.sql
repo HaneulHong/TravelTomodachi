@@ -26,6 +26,7 @@
 -- `drop trigger if exists ... on public.trips` 로 시작하면 안 된다. IF EXISTS는
 -- **트리거**가 없을 때만 봐주고 **테이블**은 있어야 한다. 첫 실행처럼 테이블이
 -- 아직 없는 상황에서는 거기서 42P01로 멈춘다.
+drop table if exists public.expenses cascade;
 drop table if exists public.checklist cascade;
 drop table if exists public.items cascade;
 drop table if exists public.trip_days cascade;
@@ -120,6 +121,8 @@ create table public.items (
   duration_min integer check (duration_min is null or duration_min >= 0),
   description text,
   carrier_code text,
+  -- 항공권·숙소·투어의 예약(확인) 번호 (expenses.sql)
+  booking_ref text check (booking_ref is null or char_length(booking_ref) <= 60),
 
   -- 앞 항목에서 여기까지의 이동. 사용자가 직접 고친 값만 저장한다.
   -- 조회 결과는 캐시일 뿐이라 DB에 둘 이유가 없다.
@@ -144,6 +147,25 @@ create table public.checklist (
   assignee_id uuid references auth.users on delete set null,
   created_at timestamptz not null default now()
 );
+
+-- ── 가계부 (expenses.sql과 같다) ──────────────────────────────────
+-- 한 줄 = 한 번 낸 돈. 정산은 저장하지 않고 앱이 계산한다(src/domain/settle.ts).
+create table public.expenses (
+  id uuid primary key default gen_random_uuid(),
+  trip_id uuid not null references public.trips on delete cascade,
+  title text not null check (char_length(title) between 1 and 60),
+  amount numeric(14, 2) not null check (amount > 0),
+  currency text not null check (currency ~ '^[A-Z]{3}$'),
+  paid_by uuid references auth.users on delete set null,
+  -- 여행을 나간 사람도 남아야 정산이 맞아서 외래키로 묶지 않는다
+  split_among uuid[] not null default '{}',
+  spent_on date,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  updated_by uuid references auth.users on delete set null
+);
+
+create index expenses_trip_idx on public.expenses (trip_id, spent_on);
 
 -- ═══════════════════════════════════════════════════════════════════
 -- 멤버십 확인 — RLS 재귀를 끊는 지점
@@ -187,6 +209,7 @@ alter table public.trip_members enable row level security;
 alter table public.trip_days enable row level security;
 alter table public.items enable row level security;
 alter table public.checklist enable row level security;
+alter table public.expenses enable row level security;
 
 -- ── trips ─────────────────────────────────────────────────────────
 -- 비멤버는 여행의 존재조차 볼 수 없다. 초대 코드로 들어오는 길은
@@ -288,6 +311,20 @@ create policy "멤버가 체크리스트를 지운다"
   on public.checklist for delete to authenticated
   using (public.is_trip_member(trip_id));
 
+create policy "멤버가 가계부를 본다"
+  on public.expenses for select to authenticated
+  using (public.is_trip_member(trip_id));
+create policy "멤버가 가계부에 쓴다"
+  on public.expenses for insert to authenticated
+  with check (public.is_trip_member(trip_id));
+create policy "멤버가 가계부를 고친다"
+  on public.expenses for update to authenticated
+  using (public.is_trip_member(trip_id))
+  with check (public.is_trip_member(trip_id));
+create policy "멤버가 가계부를 지운다"
+  on public.expenses for delete to authenticated
+  using (public.is_trip_member(trip_id));
+
 -- ═══════════════════════════════════════════════════════════════════
 -- 트리거
 -- ═══════════════════════════════════════════════════════════════════
@@ -330,6 +367,10 @@ $$;
 
 create trigger on_item_stamped
   before insert or update on public.items
+  for each row execute procedure public.stamp_item_editor();
+
+create trigger on_expense_stamped
+  before insert or update on public.expenses
   for each row execute procedure public.stamp_item_editor();
 
 -- ═══════════════════════════════════════════════════════════════════

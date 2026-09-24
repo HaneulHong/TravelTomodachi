@@ -255,3 +255,12 @@ export const GripIcon = ({ size = 18, className }: IconProps) => (
     <circle cx="15" cy="18" r="1.6" />
   </svg>
 );
+
+/** 가계부 — 지갑 */
+export const WalletIcon = ({ size = 18, className }: IconProps) => (
+  <svg {...base(size, className)}>
+    <path d="M4 7.5A2.5 2.5 0 016.5 5H18v3" />
+    <path d="M4 7.5V17a2 2 0 002 2h13a1 1 0 001-1v-9a1 1 0 00-1-1H6.5A2.5 2.5 0 014 7.5z" />
+    <circle cx="16" cy="13.5" r="1.2" fill="currentColor" stroke="none" />
+  </svg>
+);

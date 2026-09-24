@@ -27,6 +27,7 @@ import { memberLabel, type Member, type TripDay } from '../src/domain/types';
 import { colorOf, fullName, nicknameProblem } from '../src/auth/types';
 import { inviteCodeFromAppUrl, inviteCodeFromHash } from '../src/auth/pendingInvite';
 import { normalizeBaseUrl } from '../src/platform/baseUrl';
+import { balances, convert, currencyDigits, settle, transfers } from '../src/domain/settle';
 import {
   dropIndex,
   moved,
@@ -398,6 +399,49 @@ console.log('\n── 순서 바꾸기 ──');
     'cbad',
   );
   eq('같은 시각이면 원래 순서', timeSortedOrder([it('a', '09:00'), it('b', '09:00')]).join(''), 'ab');
+}
+
+console.log('\n── 가계부 정산 ──');
+{
+  const e = (amount: number, currency: string, paidBy: string, splitAmong: string[]) => ({
+    amount,
+    currency,
+    paidBy,
+    splitAmong,
+  });
+  eq('원은 소수 없음', currencyDigits('KRW'), 0);
+  eq('달러는 센트', currencyDigits('USD'), 2);
+
+  // 셋이 3만원 저녁, A가 냄 → B·C가 A에게 1만원씩
+  const t1 = transfers(balances([e(30000, 'KRW', 'a', ['a', 'b', 'c'])], 'KRW'), 'KRW');
+  eq('1/N', t1.map((t) => `${t.from}>${t.to}:${t.amount}`).join(' '), 'b>a:10000 c>a:10000');
+
+  // 나누어떨어지지 않으면 합이 원금과 같게 (10000/3)
+  const b2 = balances([e(10000, 'KRW', 'a', ['a', 'b', 'c'])], 'KRW');
+  eq('나머지 1원까지 합이 0', [...b2.values()].reduce((x, y) => x + y, 0), 0);
+
+  // 서로 낸 게 있으면 상쇄 — A가 B 몫 1만, B가 A 몫 4천 → B가 A에게 6천
+  const t3 = transfers(
+    balances([e(20000, 'KRW', 'a', ['a', 'b']), e(8000, 'KRW', 'b', ['a', 'b'])], 'KRW'),
+    'KRW',
+  );
+  eq('상쇄', t3.map((t) => `${t.from}>${t.to}:${t.amount}`).join(' '), 'b>a:6000');
+
+  eq('다 같이 똑같이 냈으면 송금 없음', transfers(balances([e(100, 'USD', 'a', ['a'])], 'USD'), 'USD').length, 0);
+  eq('센트 단위', transfers(balances([e(10, 'USD', 'a', ['a', 'b', 'c'])], 'USD'), 'USD').map((t) => t.amount).join(','), '3.33,3.33');
+
+  const rates = { USD: 1, KRW: 1400, JPY: 150 };
+  eq('환율 변환', convert(1500, 'JPY', 'KRW', rates), 14000);
+  eq('모르는 통화는 null', convert(1, 'XXX', 'KRW', rates), null);
+
+  const mixed = [e(3000, 'JPY', 'a', ['a', 'b']), e(10000, 'KRW', 'b', ['a', 'b'])];
+  const s1 = settle(mixed, 'KRW', rates);
+  eq('환율 있으면 한 통화로', s1.unified && s1.groups.length === 1 && s1.groups[0]!.currency, 'KRW');
+  eq('엔 3000(=28000원)·원 10000 → a가 받을 돈 9000', s1.groups[0]!.transfers.map((t) => `${t.from}>${t.to}:${t.amount}`).join(' '), 'b>a:9000');
+  eq('부담액', s1.groups[0]!.shares.get('a'), 19000);
+  const s2 = settle(mixed, 'KRW', null);
+  eq('환율 없으면 통화별로', !s2.unified && s2.groups.map((g) => g.currency).sort().join(','), 'JPY,KRW');
+  eq('나눌 사람 없는 지출은 빠짐', settle([e(1000, 'KRW', 'a', [])], 'KRW', null).groups.length, 0);
 }
 
 console.log('\n── 언어 ──');

@@ -13,6 +13,7 @@
 
 import { useT } from '@/i18n';
 import { platform } from '@/platform';
+import { RATES_ATTRIBUTION } from '@/providers/rates';
 
 interface Credit {
   /** 어디에 쓰이는지 — 사용자가 "그래서 뭐가 이걸 쓰는데?"를 알 수 있게 */
@@ -28,6 +29,12 @@ export function DataCredits() {
       use: t.credits.searchUse,
       name: t.credits.osm,
       url: 'https://www.openstreetmap.org/copyright',
+    },
+    {
+      // 무료 환율 API의 사용 조건이 출처 표시다 (providers/rates.ts)
+      use: t.credits.ratesUse,
+      name: RATES_ATTRIBUTION.name,
+      url: RATES_ATTRIBUTION.url,
     },
     {
       use: t.credits.transitUse,

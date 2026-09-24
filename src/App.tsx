@@ -20,6 +20,7 @@ import { ItemEditScreen } from '@/screens/ItemEditScreen';
 import { MapScreen } from '@/screens/MapScreen';
 import { MembersScreen } from '@/screens/MembersScreen';
 import { ChecklistScreen } from '@/screens/ChecklistScreen';
+import { ExpensesScreen } from '@/screens/ExpensesScreen';
 import { InviteScreen } from '@/screens/InviteScreen';
 import { NicknameSetupScreen } from '@/screens/NicknameSetupScreen';
 import { OfflineBar } from '@/components/OfflineBar';
@@ -188,6 +189,7 @@ export function App() {
         <Route path="/trip/:tripId/item/:itemId" element={<ItemDetailScreen />} />
         <Route path="/trip/:tripId/map" element={<MapScreen />} />
         <Route path="/trip/:tripId/checklist" element={<ChecklistScreen />} />
+        <Route path="/trip/:tripId/expenses" element={<ExpensesScreen />} />
         <Route path="/trip/:tripId/members" element={<MembersScreen />} />
         <Route path="/profile" element={<ProfileScreen />} />
         <Route path="/invite" element={<InviteRoute />} />

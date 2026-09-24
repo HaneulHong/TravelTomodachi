@@ -21,7 +21,15 @@ import { getTripRepository, type DayPatch, type RemoteChange } from '@/data';
 import { isNetworkError, loadSnapshot, saveSnapshot } from '@/data/offlineCache';
 import { bySortKey, keyBetween, keyForMove } from '@/domain/fractionalIndex';
 import { moved, predecessorsChanged } from '@/domain/order';
-import type { ChecklistItem, Item, Leg, TransportMode, Trip, TripDay } from '@/domain/types';
+import type {
+  ChecklistItem,
+  Expense,
+  Item,
+  Leg,
+  TransportMode,
+  Trip,
+  TripDay,
+} from '@/domain/types';
 import { getMessages } from '@/i18n/store';
 
 const repository = getTripRepository();
@@ -31,6 +39,7 @@ interface Rollback {
   items?: Item[];
   checklist?: ChecklistItem[];
   trips?: Trip[];
+  expenses?: Expense[];
 }
 
 interface TripState {
@@ -38,6 +47,9 @@ interface TripState {
   trips: Trip[];
   items: Item[];
   checklist: ChecklistItem[];
+  expenses: Expense[];
+  /** 가계부 테이블이 있는지 (TripSnapshot.expensesAvailable) */
+  expensesAvailable: boolean;
 
   /** 첫 로드가 끝났는지. 끝나기 전에 "여행이 없습니다"를 띄우면 안 된다. */
   loading: boolean;
@@ -108,6 +120,10 @@ interface TripState {
   toggleChecklistItem(itemId: string): void;
   addChecklistItem(tripId: string, title: string): void;
   removeChecklistItem(itemId: string): void;
+
+  addExpense(draft: Omit<Expense, 'id' | 'createdAt' | 'updatedBy'>): void;
+  updateExpense(id: string, patch: Partial<Omit<Expense, 'id' | 'tripId'>>): void;
+  removeExpense(id: string): void;
 }
 
 /**
@@ -177,6 +193,7 @@ export const useTripStore = create<TripState>()((set, get) => {
       trips: state.trips.filter((t) => t.id !== tripId),
       items: state.items.filter((i) => i.tripId !== tripId),
       checklist: state.checklist.filter((c) => c.tripId !== tripId),
+      expenses: state.expenses.filter((e) => e.tripId !== tripId),
     };
   }
 
@@ -214,6 +231,14 @@ export const useTripStore = create<TripState>()((set, get) => {
 
       case 'checklist-delete':
         set((state) => ({ checklist: state.checklist.filter((c) => c.id !== change.id) }));
+        return;
+
+      case 'expense-upsert':
+        set((state) => ({ expenses: upsertById(state.expenses, change.expense) }));
+        return;
+
+      case 'expense-delete':
+        set((state) => ({ expenses: state.expenses.filter((e) => e.id !== change.id) }));
         return;
 
       case 'day-upsert':
@@ -273,6 +298,8 @@ export const useTripStore = create<TripState>()((set, get) => {
     trips: [],
     items: [],
     checklist: [],
+    expenses: [],
+    expensesAvailable: true,
     loading: true,
     error: null,
     fromCache: false,
@@ -529,6 +556,34 @@ export const useTripStore = create<TripState>()((set, get) => {
       set((state) => ({ checklist: state.checklist.filter((c) => c.id !== itemId) }));
       rollbackOn(repository.removeChecklistItem(itemId), previous);
     },
+
+    addExpense: (draft) => {
+      const expense: Expense = {
+        ...draft,
+        id: newId(),
+        createdAt: new Date().toISOString(),
+        updatedBy: get().currentUserId || undefined,
+      };
+      const previous = { expenses: get().expenses };
+      set((state) => ({ expenses: [...state.expenses, expense] }));
+      rollbackOn(repository.addExpense(expense), previous);
+    },
+
+    updateExpense: (id, patch) => {
+      const previous = { expenses: get().expenses };
+      set((state) => ({
+        expenses: state.expenses.map((e) =>
+          e.id === id ? { ...e, ...patch, updatedBy: get().currentUserId || e.updatedBy } : e,
+        ),
+      }));
+      rollbackOn(repository.updateExpense(id, patch), previous);
+    },
+
+    removeExpense: (id) => {
+      const previous = { expenses: get().expenses };
+      set((state) => ({ expenses: state.expenses.filter((e) => e.id !== id) }));
+      rollbackOn(repository.removeExpense(id), previous);
+    },
   };
 });
 
@@ -540,12 +595,20 @@ export const useTripStore = create<TripState>()((set, get) => {
 let saveTimer: ReturnType<typeof setTimeout> | undefined;
 useTripStore.subscribe((state, prev) => {
   if (!state.currentUserId || state.loading) return;
-  if (state.trips === prev.trips && state.items === prev.items && state.checklist === prev.checklist) {
+  if (
+    state.trips === prev.trips &&
+    state.items === prev.items &&
+    state.checklist === prev.checklist &&
+    state.expenses === prev.expenses
+  ) {
     return;
   }
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => {
-    const { currentUserId, trips, items, checklist } = useTripStore.getState();
-    if (currentUserId) saveSnapshot(currentUserId, { trips, items, checklist });
+    const { currentUserId, trips, items, checklist, expenses, expensesAvailable } =
+      useTripStore.getState();
+    if (currentUserId) {
+      saveSnapshot(currentUserId, { trips, items, checklist, expenses, expensesAvailable });
+    }
   }, 400);
 });
