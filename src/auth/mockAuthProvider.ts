@@ -79,7 +79,8 @@ export const mockAuthProvider: AuthProvider = {
 
   async signIn(method: SignInMethod): Promise<Account> {
     await delay(FAKE_DELAY_MS);
-    const nickname = '나';
+    // 진짜 로그인처럼 기본 닉네임으로 시작한다 — 첫 로그인 닉네임 화면을 개발 중에도 거친다
+    const nickname = getMessages().profile.defaultNickname;
     // 실제로는 제공자가 주는 안정적인 사용자 id가 들어간다
     const id = `dev-${Date.now().toString(36)}`;
     session = {

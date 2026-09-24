@@ -8,10 +8,17 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
     />
-    <meta name="theme-color" content="#4f46e5" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#0f1115" media="(prefers-color-scheme: dark)" />
+    <!-- 머리글 배경(--surface)과 같게 — 주소창·상태 표시줄이 화면과 이어진다 -->
+    <meta name="theme-color" content="#fdfaf3" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#1e1b16" media="(prefers-color-scheme: dark)" />
     <meta name="description" content="친구들과 함께 만드는 여행 일정" />
     <link rel="manifest" href="./manifest.webmanifest" />
+    <!-- 아이콘은 assets/icon.svg 하나에서 만든다 (scripts/make-icons.mjs) -->
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="./icon-192.png" type="image/png" sizes="192x192" />
+    <!-- iOS '홈 화면에 추가'는 manifest 아이콘이 아니라 이걸 쓴다 -->
+    <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="Tomodachi" />
     <title>TravelTomodachi</title>
   </head>
   <body>

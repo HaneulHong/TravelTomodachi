@@ -27,7 +27,13 @@ import { memberLabel, type Member, type TripDay } from '../src/domain/types';
 import { colorOf, fullName, nicknameProblem } from '../src/auth/types';
 import { inviteCodeFromAppUrl, inviteCodeFromHash } from '../src/auth/pendingInvite';
 import { normalizeBaseUrl } from '../src/platform/baseUrl';
-import { dropIndex, moved, predecessorsChanged } from '../src/domain/order';
+import {
+  dropIndex,
+  moved,
+  predecessorsChanged,
+  timeConflicts,
+  timeSortedOrder,
+} from '../src/domain/order';
 import { detectLocale, isLocalePreference } from '../src/i18n/locales';
 import { isDefaultZoneLabel, zoneLabel, zoneOptions } from '../src/domain/timezones';
 import { formatDateLabel, formatWeekday } from '../src/domain/time';
@@ -377,6 +383,21 @@ console.log('\n── 순서 바꾸기 ──');
   eq('맨 아래 넘어서', dropIndex(centers, 0, 999), 3);
   eq('위로 끌기', dropIndex(centers, 3, 120), 1);
   eq('맨 위 넘어서', dropIndex(centers, 2, -50), 0);
+
+  const flags = (ts: (string | undefined)[]) => timeConflicts(ts).map((f) => (f ? 'x' : '.')).join('');
+  eq('순서대로면 없음', flags(['09:00', '12:00', '18:00']), '...');
+  eq('앞보다 이르면 표시', flags(['12:00', '09:00', '18:00']), '.x.');
+  eq('시각 없는 일정은 건너뜀', flags(['12:00', undefined, '09:00']), '..x');
+  eq('가장 늦은 시각과 비교', flags(['18:00', '09:00', '12:00']), '.xx');
+  eq('같은 시각은 괜찮다', flags(['09:00', '09:00']), '..');
+
+  const it = (id: string, localTime?: string) => ({ id, localTime });
+  eq(
+    '시각순 정렬, 시각 없는 일정은 제자리',
+    timeSortedOrder([it('a', '12:00'), it('b'), it('c', '09:00'), it('d', '18:00')]).join(''),
+    'cbad',
+  );
+  eq('같은 시각이면 원래 순서', timeSortedOrder([it('a', '09:00'), it('b', '09:00')]).join(''), 'ab');
 }
 
 console.log('\n── 언어 ──');

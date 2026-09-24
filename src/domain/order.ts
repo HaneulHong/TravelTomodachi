@@ -44,3 +44,36 @@ export function moved<T>(list: readonly T[], from: number, to: number): T[] {
   out.splice(to, 0, picked);
   return out;
 }
+
+/**
+ * 앞 일정보다 이른 시각인지. 순서를 바꾸거나 다른 날에서 옮겨 오면 생긴다.
+ *
+ * 시각이 없는 일정은 건너뛰고, 앞쪽에서 가장 늦은 시각과 비교한다. 자정을 넘기는
+ * 일정(22:00 다음 01:30)도 걸리므로 화면은 고치라고 강요하지 않고 알려만 준다.
+ * 시각은 'HH:MM'이라 문자열 비교로 충분하다.
+ */
+export function timeConflicts(times: readonly (string | undefined)[]): boolean[] {
+  let latest: string | undefined;
+  return times.map((t) => {
+    if (!t) return false;
+    const conflict = latest !== undefined && t < latest;
+    if (latest === undefined || t > latest) latest = t;
+    return conflict;
+  });
+}
+
+/**
+ * 시각순으로 정렬한 순서(id 목록).
+ * 시각이 없는 일정은 제자리에 두고, 시각이 있는 일정끼리만 그 자리들 안에서 정렬한다.
+ * 같은 시각이면 원래 순서를 지킨다.
+ */
+export function timeSortedOrder(items: readonly { id: string; localTime?: string }[]): string[] {
+  const timed = items
+    .map((item, i) => ({ item, i }))
+    .filter(({ item }) => item.localTime)
+    .sort((a, b) =>
+      a.item.localTime! < b.item.localTime! ? -1 : a.item.localTime! > b.item.localTime! ? 1 : a.i - b.i,
+    );
+  let next = 0;
+  return items.map((item) => (item.localTime ? timed[next++]!.item.id : item.id));
+}

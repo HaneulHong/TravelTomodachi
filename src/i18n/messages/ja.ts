@@ -111,6 +111,10 @@ export const ja: Messages = {
     emptyDay: 'この日はまだ予定がありません。',
     addItem: '予定を追加',
     menuChecklist: 'チェックリスト',
+    timeConflict:
+      '前の予定より早い時刻があります。日付をまたぐ予定でなければ、順番を確認してください。',
+    timeConflictShort: '前の予定より早い時刻',
+    sortByTime: '時刻順に並べる',
     menuReorder: '並べ替え',
     reorderDone: '完了',
     reorderHint: '右のハンドルをドラッグして並べ替えます。入力した時刻は変わりません。',
@@ -308,6 +312,21 @@ export const ja: Messages = {
     languageAuto: '端末の言語に合わせる',
     languageAutoHint: (name) => `現在の端末の言語: ${name}`,
     languageManualHint: '選んだ言語はこの端末でだけ使われます。',
+  },
+
+  nicknameSetup: {
+    title: '何と呼べばいいですか？',
+    sub: '同じ旅行の友だちにこの名前で表示されます。',
+    placeholder: '例: そら',
+    hint: 'ほかの人と同じでも大丈夫です。プロフィールでいつでも変更できます。',
+    invited: 'ニックネームを決めると、招待された旅行にすぐ入れます。',
+    start: 'はじめる',
+    later: 'あとで決める',
+  },
+
+  offline: {
+    offline: 'オフライン — 最後に読み込んだ予定です。変更は保存されない場合があります。',
+    serverDown: 'サーバーに接続できないため、最後に読み込んだ予定を表示しています。',
   },
 
   nickname: {

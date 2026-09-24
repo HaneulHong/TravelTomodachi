@@ -111,6 +111,10 @@ export const en: Messages = {
     emptyDay: 'Nothing planned for this day yet.',
     addItem: 'Add to plan',
     menuChecklist: 'Checklist',
+    timeConflict:
+      "Some times are earlier than the plan before them. Unless it's past midnight, check the order.",
+    timeConflictShort: 'Earlier than the plan before',
+    sortByTime: 'Sort by time',
     menuReorder: 'Reorder',
     reorderDone: 'Done',
     reorderHint: "Drag the handle on the right to reorder. Times you've set won't change.",
@@ -312,6 +316,21 @@ export const en: Messages = {
     languageAuto: 'Use device language',
     languageAutoHint: (name) => `Device language: ${name}`,
     languageManualHint: 'Only this device uses the language you pick.',
+  },
+
+  nicknameSetup: {
+    title: 'What should we call you?',
+    sub: 'Friends on the same trip will see this name.',
+    placeholder: 'e.g. Sky',
+    hint: "It's fine if someone else uses it. You can change it anytime in your profile.",
+    invited: "Once you pick a nickname, you'll go straight to the trip you were invited to.",
+    start: 'Get started',
+    later: 'Decide later',
+  },
+
+  offline: {
+    offline: "Offline — showing the plan you last loaded. Changes may not be saved.",
+    serverDown: "Couldn't reach the server, so this is the plan you last loaded.",
   },
 
   nickname: {

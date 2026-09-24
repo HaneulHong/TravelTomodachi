@@ -121,6 +121,10 @@ export const ko = {
     emptyDay: '이 날은 아직 비어 있습니다.',
     addItem: '일정 추가',
     menuChecklist: '체크리스트',
+    timeConflict:
+      '앞 일정보다 이른 시각이 있습니다. 자정을 넘기는 일정이 아니라면 순서를 확인해 보세요.',
+    timeConflictShort: '앞 일정보다 이른 시각',
+    sortByTime: '시각순으로 정렬',
     menuReorder: '순서 바꾸기',
     reorderDone: '완료',
     reorderHint: '오른쪽 손잡이를 끌어 순서를 바꾸세요. 적어 둔 시각은 바뀌지 않습니다.',
@@ -328,6 +332,21 @@ export const ko = {
     languageAuto: '기기 언어 따르기',
     languageAutoHint: (name: string) => `지금 기기 언어: ${name}`,
     languageManualHint: '이 기기에서만 고른 언어로 보입니다.',
+  },
+
+  nicknameSetup: {
+    title: '뭐라고 불러 드릴까요?',
+    sub: '같은 여행 친구들에게 이 이름으로 보입니다.',
+    placeholder: '예: 하늘',
+    hint: '다른 사람과 같아도 됩니다. 프로필에서 언제든 바꿀 수 있습니다.',
+    invited: '닉네임을 정하면 초대받은 여행으로 바로 들어갑니다.',
+    start: '시작하기',
+    later: '나중에 정하기',
+  },
+
+  offline: {
+    offline: '오프라인 — 마지막으로 불러온 일정입니다. 고친 내용은 저장되지 않을 수 있습니다.',
+    serverDown: '서버에 연결하지 못해 마지막으로 불러온 일정을 보여 드립니다.',
   },
 
   nickname: {
