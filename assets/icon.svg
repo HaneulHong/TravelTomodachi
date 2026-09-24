@@ -1,0 +1,20 @@
+<!--
+  앱 아이콘 원본. 여기서 모든 크기를 만든다: node scripts/make-icons.mjs
+  (배경만 칠해진 정사각형 — 모서리는 OS가 깎는다. 웹 'any' 아이콘은 스크립트가 둥글린다.)
+  색: 배경 --accent #b2563a, 그림 --accent-text #fffaf4 (styles.css와 같게)
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#b2563a"/>
+  <g id="glyph" transform="translate(0 -18)">
+    <!-- 손잡이 -->
+    <rect x="202" y="140" width="108" height="78" rx="28" fill="none" stroke="#fffaf4" stroke-width="24"/>
+    <!-- 몸통 -->
+    <rect x="128" y="196" width="256" height="184" rx="40" fill="#fffaf4"/>
+    <!-- 벨트 두 줄 -->
+    <rect x="186" y="196" width="18" height="184" fill="#b2563a" opacity="0.9"/>
+    <rect x="308" y="196" width="18" height="184" fill="#b2563a" opacity="0.9"/>
+    <!-- 바퀴 -->
+    <circle cx="180" cy="400" r="16" fill="#fffaf4"/>
+    <circle cx="332" cy="400" r="16" fill="#fffaf4"/>
+  </g>
+</svg>
