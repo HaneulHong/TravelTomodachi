@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "tsx scripts/logic.test.ts",
+    "i18n:review": "tsx scripts/i18n-review.ts",
     "typecheck:logic": "tsc -p tsconfig.logic.json --noEmit",
     "app:sync": "npm run build && cap sync",
     "app:ios": "npm run build && cap sync ios && cap open ios",
