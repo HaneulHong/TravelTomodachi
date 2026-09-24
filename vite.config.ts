@@ -1,6 +1,11 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+
+const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')) as {
+  version: string;
+};
 
 export default defineConfig({
   // ── Capacitor 전환 제약 #2 ──────────────────────────────────────────
@@ -9,6 +14,11 @@ export default defineConfig({
   base: './',
 
   plugins: [react()],
+
+  // 화면에 보이는 버전. package.json 한 곳에서만 올린다.
+  define: {
+    __APP_VERSION__: JSON.stringify(pkg.version),
+  },
 
   resolve: {
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },

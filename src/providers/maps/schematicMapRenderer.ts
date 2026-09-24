@@ -35,7 +35,7 @@ export function createSchematicMapRenderer(intended: MapRenderer): MapRenderer {
   return {
     id: `schematic:${intended.id}`,
     label: intended.label,
-    attribution: '개략도',
+    attribution: '간략 지도',
     configured: false,
     setupHint: intended.setupHint,
 

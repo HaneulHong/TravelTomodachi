@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AppHeader } from '@/components/AppHeader';
+import { SHOW_DEV_HINTS } from '@/config';
 import { EditedBy } from '@/components/EditedBy';
 import { MODE_ICON } from '@/components/TransportChip';
 import { AlertIcon, PencilIcon, PinIcon } from '@/components/icons';
@@ -307,21 +308,23 @@ export function ItemDetailScreen() {
           )}
 
           {/* 지역 분기가 제대로 도는지 눈으로 확인하는 패널.
-              실제 배포에서는 지워도 되지만, 개발 중에는 이게 있어야
-              한국/해외에서 다른 서비스가 붙는지 바로 보인다. */}
-          <section className="card field">
-            <div className="field__label">이 구간에 쓰인 서비스</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap' }}>
-                <span className="chip chip--accent">{REGION_LABEL[region]}</span>
-                <span className="chip">{provider.label}</span>
+              개발 중에는 이게 있어야 한국/해외에서 다른 서비스가 붙는지
+              바로 보인다. 사용자에게는 의미 없는 정보라 배포에서는 숨긴다. */}
+          {SHOW_DEV_HINTS && (
+            <section className="card field">
+              <div className="field__label">이 구간에 쓰인 서비스</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap' }}>
+                  <span className="chip chip--accent">{REGION_LABEL[region]}</span>
+                  <span className="chip">{provider.label}</span>
+                </div>
+                <div style={{ fontSize: 12, color: 'var(--text-3)' }}>
+                  지도: {renderer.label}
+                  {renderer.configured ? '' : ` (${renderer.setupHint} 미설정 — 개략도로 표시)`}
+                </div>
               </div>
-              <div style={{ fontSize: 12, color: 'var(--text-3)' }}>
-                지도: {renderer.label}
-                {renderer.configured ? '' : ` (${renderer.setupHint} 미설정 — 개략도로 표시)`}
-              </div>
-            </div>
-          </section>
+            </section>
+          )}
         </div>
       </main>
 

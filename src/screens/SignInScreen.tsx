@@ -7,6 +7,7 @@
 
 import { hasBackend, type SignInMethod } from '@/auth';
 import { AppleIcon, GoogleIcon } from '@/components/icons';
+import { VERSION_LABEL } from '@/config';
 import { useAuthStore } from '@/store/authStore';
 
 const METHOD_LABEL: Record<SignInMethod, string> = {
@@ -68,6 +69,7 @@ export function SignInScreen({ methods, invited = false }: Props) {
         {/*
           이게 진짜 로그인이 아니라는 걸 숨기지 않는다. 진짜처럼 보이면
           친구를 초대했는데 아무 일도 안 일어나는 이유를 못 찾게 된다.
+          (개발 서버에서만 온다 — 배포 빌드는 백엔드가 없으면 UnavailableScreen)
         */}
         {!hasBackend && (
           <p className="signin__note">
@@ -79,6 +81,8 @@ export function SignInScreen({ methods, invited = false }: Props) {
         <p className="signin__privacy">
           닉네임 외에는 아무것도 저장하지 않습니다. 이메일과 실명은 받지 않습니다.
         </p>
+
+        <p className="signin__version">{VERSION_LABEL}</p>
       </main>
     </div>
   );
