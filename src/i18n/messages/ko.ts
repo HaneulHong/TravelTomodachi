@@ -121,6 +121,10 @@ export const ko = {
     emptyDay: '이 날은 아직 비어 있습니다.',
     addItem: '일정 추가',
     menuChecklist: '체크리스트',
+    timeConflict:
+      '앞 일정보다 이른 시각이 있습니다. 자정을 넘기는 일정이 아니라면 순서를 확인해 보세요.',
+    timeConflictShort: '앞 일정보다 이른 시각',
+    sortByTime: '시각순으로 정렬',
     menuReorder: '순서 바꾸기',
     reorderDone: '완료',
     reorderHint: '오른쪽 손잡이를 끌어 순서를 바꾸세요. 적어 둔 시각은 바뀌지 않습니다.',

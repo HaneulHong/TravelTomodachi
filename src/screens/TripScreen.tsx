@@ -30,6 +30,7 @@ import {
 import { useDayLegs, type LegInfo } from '@/hooks/useDayLegs';
 import { useInviteShare } from '@/hooks/useInviteShare';
 import { useReorderDrag } from '@/hooks/useReorderDrag';
+import { timeConflicts, timeSortedOrder } from '@/domain/order';
 import { useSwipe } from '@/hooks/useSwipe';
 import {
   formatDateLabel,
@@ -121,6 +122,7 @@ export function TripScreen() {
   /** 순서 바꾸기 모드. 켜면 손잡이가 나오고 카드를 눌러도 상세로 가지 않는다. */
   const [reorder, setReorder] = useState(false);
   const moveItem = useTripStore((s) => s.moveItem);
+  const setDayOrder = useTripStore((s) => s.setDayOrder);
   const [dayEditOpen, setDayEditOpen] = useState(false);
   const [confirm, setConfirm] = useState<'leave' | 'delete' | null>(null);
   const me = useTripStore((s) => s.currentUserId);
@@ -147,6 +149,9 @@ export function TripScreen() {
   );
 
   const legs = useDayLegs(items, day?.timezone);
+  /** 앞 일정보다 이른 시각인 일정. 순서를 바꾸거나 다른 날에서 옮겨 오면 생긴다. */
+  const conflicts = useMemo(() => timeConflicts(items.map((i) => i.localTime)), [items]);
+  const hasConflict = conflicts.some(Boolean);
 
   function goToDay(offset: number) {
     if (!trip || dayIndex < 0) return;
@@ -279,12 +284,38 @@ export function TripScreen() {
               </div>
             ))}
 
+          {/*
+            시각과 순서가 어긋난 날. 자정을 넘기는 일정일 수도 있어 고치라고 강요하지
+            않는다 — 알려주고, 원하면 한 번에 정렬하게 한다.
+          */}
+          {!reorder && hasConflict && (
+            <div className="banner timeline__notice">
+              <AlertIcon className="banner__icon" />
+              <div>
+                {t.trip.timeConflict}
+                <button
+                  className="banner__action"
+                  onClick={() => {
+                    setDayOrder(trip.id, activeDate, timeSortedOrder(items));
+                    platform.vibrate(8);
+                  }}
+                >
+                  {t.trip.sortByTime}
+                </button>
+              </div>
+            </div>
+          )}
+
           {!reorder && items.map((item, i) => (
             <div key={item.id}>
               {i > 0 && <LegRow info={legs.get(item.id)} />}
 
               <div className="tl-row">
-                <div className="tl-time">
+                <div
+                  className={`tl-time${conflicts[i] ? ' tl-time--conflict' : ''}`}
+                  title={conflicts[i] ? t.trip.timeConflictShort : undefined}
+                >
+                  {conflicts[i] && <AlertIcon size={11} className="tl-time__warn" />}
                   {item.localTime ?? '—'}
                   {item.durationMin !== undefined && (
                     <span className="tl-time__dur">{formatMinutes(item.durationMin, locale)}</span>

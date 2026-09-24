@@ -75,6 +75,8 @@ interface TripState {
   moveItem(tripId: string, date: string, from: number, to: number): void;
   /** 다른 날로 옮긴다. 그 날의 맨 뒤에 붙는다. 벽시계 시간은 그대로. */
   moveItemToDate(itemId: string, date: string): void;
+  /** 그 날의 순서를 통째로 정한다(시각순 정렬). ids는 그 날의 항목 전부. */
+  setDayOrder(tripId: string, date: string, ids: string[]): void;
   addItem(tripId: string, date: string, draft: Partial<Item>): string;
   removeItem(itemId: string): void;
 
@@ -370,6 +372,20 @@ export const useTripStore = create<TripState>()((set, get) => {
         itemId,
       ]);
       applyReorder({ [itemId]: { date, sortKey: keyBetween(last, null) } }, stale);
+    },
+
+    setDayOrder: (tripId, date, ids) => {
+      const before = get().getDayItems(tripId, date).map((i) => i.id);
+      if (before.length !== ids.length || before.every((id, i) => id === ids[i])) return;
+
+      // 키를 처음부터 새로 매긴다 — 하루 치라 몇 개 안 되고, 키도 짧아진다
+      const moves: Record<string, Pick<Item, 'sortKey'>> = {};
+      let key: string | null = null;
+      for (const id of ids) {
+        key = keyBetween(key, null);
+        moves[id] = { sortKey: key };
+      }
+      applyReorder(moves, staleLegs(predecessorsChanged(before, ids)));
     },
 
     addItem: (tripId, date, draft) => {

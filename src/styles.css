@@ -2228,3 +2228,29 @@ select.form__input {
 .tl-grip:focus-visible {
   outline: 2px solid var(--accent);
 }
+
+/* ── 시각과 순서가 어긋난 일정 ───────────────────────────────── */
+
+.timeline__notice {
+  margin-bottom: 12px;
+}
+
+/* 안내 문장 아래에 붙는 글자 버튼 */
+.banner__action {
+  display: block;
+  margin-top: 6px;
+  font-weight: 700;
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.tl-time--conflict {
+  color: var(--warn);
+}
+
+.tl-time__warn {
+  display: inline-block;
+  vertical-align: -1px;
+  margin-right: 2px;
+}

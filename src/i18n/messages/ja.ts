@@ -111,6 +111,10 @@ export const ja: Messages = {
     emptyDay: 'この日はまだ予定がありません。',
     addItem: '予定を追加',
     menuChecklist: 'チェックリスト',
+    timeConflict:
+      '前の予定より早い時刻があります。日付をまたぐ予定でなければ、順番を確認してください。',
+    timeConflictShort: '前の予定より早い時刻',
+    sortByTime: '時刻順に並べる',
     menuReorder: '並べ替え',
     reorderDone: '完了',
     reorderHint: '右のハンドルをドラッグして並べ替えます。入力した時刻は変わりません。',

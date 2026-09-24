@@ -111,6 +111,10 @@ export const en: Messages = {
     emptyDay: 'Nothing planned for this day yet.',
     addItem: 'Add to plan',
     menuChecklist: 'Checklist',
+    timeConflict:
+      "Some times are earlier than the plan before them. Unless it's past midnight, check the order.",
+    timeConflictShort: 'Earlier than the plan before',
+    sortByTime: 'Sort by time',
     menuReorder: 'Reorder',
     reorderDone: 'Done',
     reorderHint: "Drag the handle on the right to reorder. Times you've set won't change.",
