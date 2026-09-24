@@ -2,6 +2,8 @@
 
 친구들과 함께 만드는 여행 일정. 전 세계 대상.
 
+**서비스**: https://tabitomo.pages.dev · **v0.9.0 베타** · 진행 현황은 [docs/STATUS.md](./docs/STATUS.md)
+
 설계 결정과 그 이유는 [ARCHITECTURE.md](./ARCHITECTURE.md)에 정리돼 있습니다.
 코드를 고치기 전에 그쪽을 먼저 읽는 게 빠릅니다.
 
