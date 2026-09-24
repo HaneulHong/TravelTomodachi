@@ -14,7 +14,14 @@
  * 이 파일이 통째로 사라져도 화면 코드는 그대로다.
  */
 
-import { colorOf, initialOf, type Account, type AuthProvider, type SignInMethod } from './types';
+import {
+  colorOf,
+  initialOf,
+  nicknameProblem,
+  type Account,
+  type AuthProvider,
+  type SignInMethod,
+} from './types';
 
 const STORAGE_KEY = 'tt.dev-session';
 
@@ -34,8 +41,9 @@ function read(): Account | null {
     return {
       id: parsed.id,
       nickname: parsed.nickname,
+      tag: parsed.tag ?? '0001',
       initial: parsed.initial ?? initialOf(parsed.nickname),
-      color: parsed.color ?? colorOf(parsed.nickname),
+      color: parsed.color ?? colorOf(parsed.id),
       via: parsed.via ?? 'dev',
     };
   } catch {
@@ -70,12 +78,14 @@ export const mockAuthProvider: AuthProvider = {
   async signIn(method: SignInMethod): Promise<Account> {
     await delay(FAKE_DELAY_MS);
     const nickname = '나';
+    // 실제로는 제공자가 주는 안정적인 사용자 id가 들어간다
+    const id = `dev-${Date.now().toString(36)}`;
     session = {
-      // 실제로는 제공자가 주는 안정적인 사용자 id가 들어간다
-      id: `dev-${Date.now().toString(36)}`,
+      id,
       nickname,
+      tag: '0001',
       initial: initialOf(nickname),
-      color: colorOf(nickname),
+      color: colorOf(id),
       via: method,
     };
     write(session);
@@ -89,14 +99,14 @@ export const mockAuthProvider: AuthProvider = {
 
   async updateNickname(nickname: string): Promise<Account> {
     if (!session) throw new Error('로그인 상태가 아닙니다');
+    const problem = nicknameProblem(nickname);
+    if (problem) throw new Error(problem);
     const trimmed = nickname.trim();
-    if (trimmed.length === 0) throw new Error('닉네임을 입력해 주세요');
 
     session = {
       ...session,
       nickname: trimmed,
       initial: initialOf(trimmed),
-      color: colorOf(trimmed),
     };
     write(session);
     return session;

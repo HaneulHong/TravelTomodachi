@@ -14,7 +14,20 @@
 
 import { platform } from '@/platform';
 import { getSupabase } from '@/supabase/client';
-import { colorOf, initialOf, type Account, type AuthProvider, type SignInMethod } from './types';
+import {
+  colorOf,
+  initialOf,
+  nicknameProblem,
+  type Account,
+  type AuthProvider,
+  type SignInMethod,
+} from './types';
+
+interface ProfileRow {
+  nickname: string;
+  /** profile-tag.sql 이전 DB에는 없다 */
+  tag?: string | null;
+}
 
 /** 프로필이 아직 없을 때 쓰는 이름. 사용자가 프로필 화면에서 바꾼다. */
 const DEFAULT_NICKNAME = '여행자';
@@ -22,36 +35,46 @@ const DEFAULT_NICKNAME = '여행자';
 export function createSupabaseAuthProvider(): AuthProvider {
   const client = getSupabase();
 
+  /** profiles 행 → 화면이 쓰는 Account */
+  function fromRow(userId: string, row: ProfileRow, via: SignInMethod): Account {
+    return {
+      id: userId,
+      nickname: row.nickname,
+      tag: row.tag ?? '',
+      initial: initialOf(row.nickname),
+      color: colorOf(userId),
+      via,
+    };
+  }
+
   /** auth 사용자 + profiles 행 → 화면이 쓰는 Account */
   async function toAccount(userId: string, via: SignInMethod): Promise<Account> {
+    /*
+     * 칸을 골라 부르지 않고 '*'로 읽는다. tag 칸은 profile-tag.sql을 돌린 뒤에야
+     * 생기는데, 없는 칸을 이름으로 부르면 로그인 자체가 실패한다.
+     */
     const { data, error } = await client
       .from('profiles')
-      .select('nickname')
+      .select('*')
       .eq('id', userId)
       .maybeSingle();
 
     if (error) throw new Error(`프로필을 읽지 못했습니다: ${error.message}`);
+    if (data) return fromRow(userId, data as ProfileRow, via);
 
     /*
      * 보통은 가입 트리거가 행을 미리 만들어 둔다. 없을 수도 있다고 보는 이유는
      * 트리거를 만들기 전에 가입한 계정이 남아 있을 수 있어서다. 그때 로그인이
      * 통째로 막히는 것보다, 기본 닉네임으로 채워 넣고 진행하는 게 낫다.
+     * 번호(tag)는 DB 트리거가 붙여서 돌려준다.
      */
-    const nickname = data?.nickname ?? DEFAULT_NICKNAME;
-    if (!data) {
-      const { error: insertError } = await client
-        .from('profiles')
-        .insert({ id: userId, nickname });
-      if (insertError) throw new Error(`프로필을 만들지 못했습니다: ${insertError.message}`);
-    }
-
-    return {
-      id: userId,
-      nickname,
-      initial: initialOf(nickname),
-      color: colorOf(nickname),
-      via,
-    };
+    const { data: created, error: insertError } = await client
+      .from('profiles')
+      .insert({ id: userId, nickname: DEFAULT_NICKNAME })
+      .select('*')
+      .single();
+    if (insertError) throw new Error(`프로필을 만들지 못했습니다: ${insertError.message}`);
+    return fromRow(userId, created as ProfileRow, via);
   }
 
   /**
@@ -134,27 +157,24 @@ export function createSupabaseAuthProvider(): AuthProvider {
     },
 
     async updateNickname(nickname: string): Promise<Account> {
+      const problem = nicknameProblem(nickname);
+      if (problem) throw new Error(problem);
       const trimmed = nickname.trim();
-      if (trimmed.length === 0) throw new Error('닉네임을 입력해 주세요');
 
       const { data: sessionData } = await client.auth.getSession();
       const user = sessionData.session?.user;
       if (!user) throw new Error('로그인 상태가 아닙니다');
 
-      const { error } = await client
+      // 새 닉네임에서 번호가 겹치면 트리거가 번호를 새로 고른다. 결과를 돌려받는다.
+      const { data, error } = await client
         .from('profiles')
         .update({ nickname: trimmed })
-        .eq('id', user.id);
+        .eq('id', user.id)
+        .select('*')
+        .single();
 
       if (error) throw new Error(`닉네임을 바꾸지 못했습니다: ${error.message}`);
-
-      return {
-        id: user.id,
-        nickname: trimmed,
-        initial: initialOf(trimmed),
-        color: colorOf(trimmed),
-        via: viaOf(user.app_metadata?.provider),
-      };
+      return fromRow(user.id, data as ProfileRow, viaOf(user.app_metadata?.provider));
     },
   };
 }

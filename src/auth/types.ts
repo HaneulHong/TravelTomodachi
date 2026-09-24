@@ -21,8 +21,13 @@ export type SignInMethod = 'google' | 'apple' | 'dev';
 
 export interface Account {
   id: string;
-  /** 화면에 보이는 이름. 사용자가 직접 정한다. */
+  /** 화면에 보이는 이름. 사용자가 직접 정한다. 다른 사람과 겹칠 수 있다. */
   nickname: string;
+  /**
+   * 같은 닉네임끼리 구분하는 4자리 번호(여행자#0421). DB 트리거가 정한다.
+   * supabase/profile-tag.sql을 돌리기 전 DB에는 없어서 빈 문자열일 수 있다.
+   */
+  tag: string;
   /** 아바타 한 글자 — 닉네임에서 만든다 */
   initial: string;
   /** 아바타 색. 사람마다 달라야 목록에서 구분된다. */
@@ -54,15 +59,33 @@ export function initialOf(nickname: string): string {
 }
 
 /**
- * 닉네임에서 색을 정한다.
+ * 아바타 색. **사용자 id**로 정한다.
  *
  * 무작위로 고르면 로그인할 때마다 색이 바뀌어서, 목록에서 "아까 그 사람"을
- * 알아볼 수 없다. 같은 이름이면 항상 같은 색이 나와야 한다.
+ * 알아볼 수 없다. 닉네임으로 정하면 같은 닉네임끼리 색까지 같아져 구분이
+ * 안 된다. id는 바뀌지 않고 사람마다 다르다.
  */
 const AVATAR_COLORS = ['#b2563a', '#3f7a52', '#3a5fa0', '#94671a', '#8a4b7d', '#2f7d7a'];
 
-export function colorOf(nickname: string): string {
+export function colorOf(key: string): string {
   let hash = 0;
-  for (const ch of nickname) hash = (hash + ch.codePointAt(0)!) % 997;
+  for (const ch of key) hash = (hash * 31 + ch.codePointAt(0)!) % 100_003;
   return AVATAR_COLORS[hash % AVATAR_COLORS.length]!;
+}
+
+/** "여행자#0421". 번호가 아직 없으면 이름만. */
+export function fullName(nickname: string, tag: string | undefined): string {
+  return tag ? `${nickname}#${tag}` : nickname;
+}
+
+export const NICKNAME_MAX = 20;
+
+/** 닉네임으로 쓸 수 없으면 그 이유, 괜찮으면 null. DB 제약과 같은 규칙이다. */
+export function nicknameProblem(nickname: string): string | null {
+  const trimmed = nickname.trim();
+  if (trimmed.length === 0) return '닉네임을 입력해 주세요';
+  if ([...trimmed].length > NICKNAME_MAX) return `닉네임은 ${NICKNAME_MAX}자까지입니다`;
+  // 번호 표시(#0421)와 헷갈린다
+  if (trimmed.includes('#')) return "닉네임에는 '#'을 쓸 수 없습니다";
+  return null;
 }

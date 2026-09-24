@@ -23,7 +23,8 @@ import {
   formatRelative,
 } from '../src/domain/time';
 import { haversineMeters, formatDistance, normalizePoints } from '../src/domain/geo';
-import type { TripDay } from '../src/domain/types';
+import { memberLabel, type Member, type TripDay } from '../src/domain/types';
+import { colorOf, fullName, nicknameProblem } from '../src/auth/types';
 import { inviteCodeFromAppUrl, inviteCodeFromHash } from '../src/auth/pendingInvite';
 
 let passed = 0;
@@ -311,6 +312,34 @@ console.log('\n── 초대 링크 파싱 ──');
   eq('코드 없는 링크', inviteCodeFromAppUrl(`${S}://invite/`, S), null);
   eq('웹 해시', inviteCodeFromHash('#/invite/ABCD1234'), 'ABCD1234');
   eq('웹 해시 — 초대 아님', inviteCodeFromHash('#/trip/1'), null);
+}
+
+console.log('\n── 닉네임 번호 ──');
+{
+  const m = (id: string, name: string, tag?: string): Member => ({
+    id,
+    name,
+    tag,
+    initial: name[0] ?? '?',
+    color: '#000',
+  });
+  const a = m('a', '여행자', '0421');
+  const b = m('b', '여행자', '7730');
+  const c = m('c', '하늘', '0001');
+  eq('겹칠 때만 번호', memberLabel(a, [a, b, c]), '여행자#0421');
+  eq('안 겹치면 이름만', memberLabel(c, [a, b, c]), '하늘');
+  eq('번호가 없으면(도입 전) 이름만', memberLabel(m('d', '여행자'), [a, m('d', '여행자')]), '여행자');
+  eq('전체 이름', fullName('여행자', '0421'), '여행자#0421');
+  eq('번호 없으면 이름만', fullName('여행자', ''), '여행자');
+
+  eq('빈 닉네임', nicknameProblem('   '), '닉네임을 입력해 주세요');
+  ok("'#' 금지", nicknameProblem('여행#1') !== null);
+  ok('20자 넘으면 안 됨', nicknameProblem('가'.repeat(21)) !== null);
+  eq('20자는 됨', nicknameProblem('가'.repeat(20)), null);
+  eq('이모지 20개는 됨 (코드 포인트로 센다)', nicknameProblem('🧳'.repeat(20)), null);
+  eq('보통 닉네임', nicknameProblem('하늘'), null);
+
+  ok('색은 id로 — 같은 입력이면 같은 색', colorOf('user-1') === colorOf('user-1'));
 }
 
 console.log(`\n${failed === 0 ? '✓ 전부 통과' : '✗ 실패 있음'} — ${passed} passed, ${failed} failed\n`);

@@ -9,7 +9,7 @@
  */
 
 import { formatRelative } from '@/domain/time';
-import type { Item, Member } from '@/domain/types';
+import { memberLabel, type Item, type Member } from '@/domain/types';
 import { useTripStore } from '@/store/tripStore';
 
 interface Props {
@@ -30,6 +30,7 @@ export function EditedBy({ item, members, variant }: Props) {
     ...LEFT_MEMBER,
   };
   const isMe = member.id === me;
+  const name = memberLabel(member, members);
   const when = item.updatedAt ? formatRelative(item.updatedAt) : '';
 
   if (variant === 'avatar') {
@@ -38,7 +39,7 @@ export function EditedBy({ item, members, variant }: Props) {
       <span
         className="avatar avatar--sm edited__avatar"
         style={{ background: member.color }}
-        title={`${isMe ? '내가' : `${member.name}님이`} 고침${when ? ` · ${when}` : ''}`}
+        title={`${isMe ? '내가' : `${name}님이`} 고침${when ? ` · ${when}` : ''}`}
       >
         {member.initial}
       </span>
@@ -51,7 +52,7 @@ export function EditedBy({ item, members, variant }: Props) {
         {member.initial}
       </span>
       <span>
-        {isMe ? '내가' : `${member.name}님이`} 마지막으로 고침
+        {isMe ? '내가' : `${name}님이`} 마지막으로 고침
         {when && <span className="edited__when"> · {when}</span>}
       </span>
     </div>

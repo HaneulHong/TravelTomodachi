@@ -97,6 +97,8 @@ interface ChecklistRow {
 interface ProfileRow {
   id: string;
   nickname: string;
+  /** profile-tag.sql 이전 DB에는 없다 */
+  tag?: string | null;
 }
 
 // ── 변환 ───────────────────────────────────────────────────────────
@@ -204,19 +206,25 @@ export function createSupabaseTripRepository(): TripRepository {
      * profiles.id도 auth.users를 가리켜서, 둘 사이에 직접 외래키가 없다.
      * PostgREST는 외래키가 있어야 중첩 조회를 해주므로 한 번 더 부른다.
      */
-    const nicknames = new Map<string, string>();
+    const profilesById = new Map<string, ProfileRow>();
     if (userIds.length > 0) {
-      const { data: profiles } = await client
-        .from('profiles')
-        .select('id,nickname')
-        .in('id', userIds);
-      for (const p of (profiles ?? []) as ProfileRow[]) nicknames.set(p.id, p.nickname);
+      // '*'로 읽는다 — tag 칸이 없는 DB(태그 도입 전)에서도 실패하지 않게
+      const { data: profiles } = await client.from('profiles').select('*').in('id', userIds);
+      for (const p of (profiles ?? []) as ProfileRow[]) profilesById.set(p.id, p);
     }
 
     for (const m of members) {
-      const name = nicknames.get(m.user_id) ?? '여행자';
+      const profile = profilesById.get(m.user_id);
+      const name = profile?.nickname ?? '여행자';
       const list = byTrip.get(m.trip_id) ?? [];
-      list.push({ id: m.user_id, name, initial: initialOf(name), color: colorOf(name) });
+      list.push({
+        id: m.user_id,
+        name,
+        tag: profile?.tag ?? undefined,
+        initial: initialOf(name),
+        // 색은 사람(id)으로 — 같은 닉네임끼리도 달라야 구분된다
+        color: colorOf(m.user_id),
+      });
       byTrip.set(m.trip_id, list);
     }
     return byTrip;
