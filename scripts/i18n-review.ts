@@ -50,6 +50,7 @@ const SECTION: Record<keyof Messages, [ko: string, en: string, ja: string]> = {
   share: ['초대 메시지 (친구에게 보내는 글)', 'Invite message', '招待メッセージ'],
   profile: ['프로필', 'Profile', 'プロフィール'],
   nicknameSetup: ['첫 로그인 닉네임 정하기', 'Pick a nickname', 'ニックネーム設定'],
+  offline: ['오프라인 알림', 'Offline notice', 'オフラインのお知らせ'],
   nickname: ['닉네임 오류', 'Nickname errors', 'ニックネームのエラー'],
   errors: ['오류 메시지', 'Error messages', 'エラーメッセージ'],
   serverErrors: ['서버 오류 메시지', 'Server errors', 'サーバーエラー'],

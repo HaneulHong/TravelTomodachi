@@ -8,7 +8,9 @@
 
 import { create } from 'zustand';
 import { getAuthProvider, type Account, type SignInMethod } from '@/auth';
+import { clearOfflineCache, saveAccount } from '@/data/offlineCache';
 import { getMessages } from '@/i18n/store';
+import { useTripStore } from './tripStore';
 
 interface AuthState {
   /** 세션 복구가 끝나기 전. 이때 로그인 화면을 띄우면 이미 로그인한 사람에게도 깜빡인다. */
@@ -51,6 +53,19 @@ export const useAuthStore = create<AuthState>()((set) => ({
 
   signOut: async () => {
     await auth.signOut();
+    /*
+     * 이 기기에 남은 여행을 치운다 — 메모리와 오프라인 사본 모두. 같은 기기로
+     * 다른 사람이 로그인했을 때 앞사람 여행이 잠깐이라도 보이면 안 된다.
+     */
+    clearOfflineCache();
+    useTripStore.setState({
+      currentUserId: '',
+      trips: [],
+      items: [],
+      checklist: [],
+      loading: true,
+      fromCache: false,
+    });
     set({ account: null, error: null });
   },
 
@@ -64,3 +79,8 @@ export const useAuthStore = create<AuthState>()((set) => ({
     }
   },
 }));
+
+// 오프라인에서도 로그인 상태로 켜지도록 계정 사본을 남긴다 (supabaseAuthProvider.restore)
+useAuthStore.subscribe((state, prev) => {
+  if (state.account && state.account !== prev.account) saveAccount(state.account);
+});

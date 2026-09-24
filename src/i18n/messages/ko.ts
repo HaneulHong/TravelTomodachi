@@ -344,6 +344,11 @@ export const ko = {
     later: '나중에 정하기',
   },
 
+  offline: {
+    offline: '오프라인 — 마지막으로 불러온 일정입니다. 고친 내용은 저장되지 않을 수 있습니다.',
+    serverDown: '서버에 연결하지 못해 마지막으로 불러온 일정을 보여 드립니다.',
+  },
+
   nickname: {
     empty: '닉네임을 입력해 주세요',
     tooLong: (max: number) => `닉네임은 ${max}자까지입니다`,

@@ -328,6 +328,11 @@ export const en: Messages = {
     later: 'Decide later',
   },
 
+  offline: {
+    offline: "Offline — showing the plan you last loaded. Changes may not be saved.",
+    serverDown: "Couldn't reach the server, so this is the plan you last loaded.",
+  },
+
   nickname: {
     empty: 'Please enter a nickname',
     tooLong: (max) => `Nicknames can be up to ${max} characters`,

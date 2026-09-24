@@ -22,6 +22,7 @@ import { MembersScreen } from '@/screens/MembersScreen';
 import { ChecklistScreen } from '@/screens/ChecklistScreen';
 import { InviteScreen } from '@/screens/InviteScreen';
 import { NicknameSetupScreen } from '@/screens/NicknameSetupScreen';
+import { OfflineBar } from '@/components/OfflineBar';
 import { ProfileScreen } from '@/screens/ProfileScreen';
 import { SignInScreen } from '@/screens/SignInScreen';
 import { UnavailableScreen } from '@/screens/UnavailableScreen';
@@ -91,6 +92,17 @@ export function App() {
 
   useEffect(() => {
     if (account) void loadTrips(account.id);
+  }, [account, loadTrips]);
+
+  /*
+   * 연결이 돌아오면 새로 읽는다. 오프라인 동안은 사본을 보여줬으니(OfflineBar),
+   * 친구들이 그사이 고친 것을 받아 와야 한다.
+   */
+  useEffect(() => {
+    if (!account) return;
+    const reload = () => void loadTrips(account.id);
+    window.addEventListener('online', reload);
+    return () => window.removeEventListener('online', reload);
   }, [account, loadTrips]);
 
   /*
@@ -164,6 +176,7 @@ export function App() {
 
   return (
     <HashRouter>
+      <OfflineBar />
       <Routes>
         <Route path="/" element={<HomeScreen />} />
         {/* 'new'가 :tripId로 잡히지 않도록 먼저 선언한다 */}

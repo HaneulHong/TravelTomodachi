@@ -2266,3 +2266,50 @@ select.form__input {
   width: 100%;
   text-align: left;
 }
+
+/* ── 오프라인 알림 ───────────────────────────────────────────── */
+
+/*
+ * 아래쪽에 떠 있는 알약. 맨 위에 두면 노치 여백이 머리글과 두 번 잡히고,
+ * 머리글에 붙이면 화면마다 손대야 한다. 탭이 있으면 탭 위, 없으면 화면 아래.
+ */
+.offline-bar {
+  position: fixed;
+  z-index: 40;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(env(safe-area-inset-bottom) + 12px);
+  width: max-content;
+  max-width: calc(100% - 32px);
+  padding: 7px 13px;
+  border-radius: 12px;
+  background: var(--text);
+  color: var(--bg);
+  font-size: 12.5px;
+  line-height: 1.4;
+  text-align: center;
+  box-shadow: var(--shadow);
+  opacity: 0.94;
+  /* .app 밖에 떠서 .app의 줄바꿈 규칙을 못 받는다 — 같은 규칙을 다시 준다 */
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.offline-bar:lang(ja) {
+  word-break: normal;
+  word-break: auto-phrase;
+  line-break: strict;
+}
+
+body:has(.tabs) .offline-bar {
+  bottom: calc(var(--tabs-h) + env(safe-area-inset-bottom) + 10px);
+}
+
+/* 알림이 떠 있는 동안 토스트는 그 위로, 마지막 내용은 가려지지 않게 */
+body:has(.offline-bar) .toast {
+  bottom: calc(var(--tabs-h) + env(safe-area-inset-bottom) + 70px);
+}
+
+body:has(.offline-bar) .main {
+  padding-bottom: calc(var(--tabs-h) + env(safe-area-inset-bottom) + 64px);
+}

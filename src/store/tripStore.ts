@@ -18,6 +18,7 @@
 
 import { create } from 'zustand';
 import { getTripRepository, type DayPatch, type RemoteChange } from '@/data';
+import { isNetworkError, loadSnapshot, saveSnapshot } from '@/data/offlineCache';
 import { bySortKey, keyBetween, keyForMove } from '@/domain/fractionalIndex';
 import { moved, predecessorsChanged } from '@/domain/order';
 import type { ChecklistItem, Item, Leg, TransportMode, Trip, TripDay } from '@/domain/types';
@@ -42,6 +43,11 @@ interface TripState {
   loading: boolean;
   /** 저장에 실패한 이유. 화면이 띄우고 사용자가 닫는다. */
   error: string | null;
+  /**
+   * 서버에서 못 받아 기기에 남은 사본을 보여주는 중인지 (data/offlineCache.ts).
+   * 켜져 있으면 화면이 "마지막으로 불러온 일정"이라고 알린다.
+   */
+  fromCache: boolean;
 
   load(userId: string): Promise<void>;
   clearError(): void;
@@ -269,13 +275,24 @@ export const useTripStore = create<TripState>()((set, get) => {
     checklist: [],
     loading: true,
     error: null,
+    fromCache: false,
 
     load: async (userId) => {
-      set({ loading: true, currentUserId: userId });
+      /*
+       * 사본이 있으면 먼저 보여준다 — 여행지에서 데이터가 느리거나 끊겨도
+       * 오늘 일정은 바로 열린다. 서버 것이 오면 그걸로 바꾼다.
+       */
+      const cached = loadSnapshot(userId);
+      set({ currentUserId: userId, loading: !cached, ...(cached ?? {}) });
       try {
         const snapshot = await repository.load();
-        set({ ...snapshot, loading: false, error: null });
+        set({ ...snapshot, loading: false, error: null, fromCache: false });
+        saveSnapshot(userId, snapshot);
       } catch (err: unknown) {
+        if (cached && isNetworkError(err)) {
+          set({ loading: false, fromCache: true });
+          return;
+        }
         set({
           loading: false,
           error: err instanceof Error ? err.message : getMessages().errors.readTrips,
@@ -513,4 +530,22 @@ export const useTripStore = create<TripState>()((set, get) => {
       rollbackOn(repository.removeChecklistItem(itemId), previous);
     },
   };
+});
+
+/*
+ * 바뀔 때마다 오프라인 사본을 고친다 — 내 편집, 친구의 실시간 변경 모두.
+ * 여행지에서 끊기기 직전까지의 상태가 남아야 한다. 연달아 바뀌는 경우가 많아
+ * (끌기, 실시간 이벤트 여러 개) 잠깐 모았다가 한 번에 쓴다.
+ */
+let saveTimer: ReturnType<typeof setTimeout> | undefined;
+useTripStore.subscribe((state, prev) => {
+  if (!state.currentUserId || state.loading) return;
+  if (state.trips === prev.trips && state.items === prev.items && state.checklist === prev.checklist) {
+    return;
+  }
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    const { currentUserId, trips, items, checklist } = useTripStore.getState();
+    if (currentUserId) saveSnapshot(currentUserId, { trips, items, checklist });
+  }, 400);
 });

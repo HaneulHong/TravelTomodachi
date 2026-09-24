@@ -324,6 +324,11 @@ export const ja: Messages = {
     later: 'あとで決める',
   },
 
+  offline: {
+    offline: 'オフライン — 最後に読み込んだ予定です。変更は保存されない場合があります。',
+    serverDown: 'サーバーに接続できないため、最後に読み込んだ予定を表示しています。',
+  },
+
   nickname: {
     empty: 'ニックネームを入力してください',
     tooLong: (max) => `ニックネームは${max}文字までです`,

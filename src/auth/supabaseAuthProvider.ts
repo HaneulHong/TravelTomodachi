@@ -12,6 +12,7 @@
  *  우리 코드가 읽지 않는다.)
  */
 
+import { isNetworkError, loadAccount } from '@/data/offlineCache';
 import { getMessages, translateServerError } from '@/i18n/store';
 import { platform } from '@/platform';
 import { getSupabase } from '@/supabase/client';
@@ -123,9 +124,24 @@ export function createSupabaseAuthProvider(): AuthProvider {
 
     async restore(): Promise<Account | null> {
       const { data, error } = await client.auth.getSession();
-      if (error || !data.session) return null;
+      /*
+       * 오프라인이면 두 곳에서 막힌다. 토큰이 만료돼 갱신하려는데 서버가 없거나,
+       * 세션은 있는데 프로필을 못 읽거나. 어느 쪽이든 로그인 화면으로 튕기면
+       * 여행지에서 일정을 못 본다 — 마지막으로 로그인한 계정 사본으로 버틴다.
+       * (서버가 "로그인 안 됨"이라고 분명히 답한 경우는 사본을 쓰지 않는다.)
+       */
+      if (error || !data.session) {
+        return error && isNetworkError(error) ? loadAccount<Account>() : null;
+      }
       const user = data.session.user;
-      return toAccount(user.id, viaOf(user.app_metadata?.provider));
+      try {
+        // 사본은 authStore가 계정이 바뀔 때마다 남긴다
+        return await toAccount(user.id, viaOf(user.app_metadata?.provider));
+      } catch (err: unknown) {
+        const cached = isNetworkError(err) ? loadAccount<Account>(user.id) : null;
+        if (cached) return cached;
+        throw err;
+      }
     },
 
     async signIn(method: SignInMethod): Promise<Account> {
