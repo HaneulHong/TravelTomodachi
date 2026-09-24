@@ -47,6 +47,8 @@ const SECTION: Record<keyof Messages, [ko: string, en: string, ja: string]> = {
   place: ['장소 검색', 'Place search', '場所検索'],
   credits: ['데이터 출처', 'Data sources', 'データの出典'],
   ledger: ['가계부', 'Expenses', '家計簿'],
+  ideas: ['후보 장소 (투표)', 'Place ideas', '行きたい場所'],
+  comments: ['일정 댓글', 'Comments', 'コメント'],
   checklist: ['체크리스트', 'Checklist', 'チェックリスト'],
   members: ['멤버·초대', 'Members', 'メンバー'],
   invite: ['초대 참가', 'Join a trip', '招待に参加'],

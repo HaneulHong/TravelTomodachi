@@ -13,7 +13,16 @@
  */
 
 import { firstKey, keyBetween } from '@/domain/fractionalIndex';
-import type { ChecklistItem, Expense, Item, Member, Trip } from '@/domain/types';
+import type {
+  ChecklistItem,
+  Comment,
+  Expense,
+  Item,
+  Member,
+  Place,
+  PlaceVote,
+  Trip,
+} from '@/domain/types';
 
 const MEMBERS: Member[] = [
   { id: 'u-me', name: '나', initial: '나', color: '#4f46e5' },
@@ -576,5 +585,53 @@ export const MOCK_EXPENSES: Expense[] = [
     paidBy: 'u-min',
     splitAmong: ['u-me', 'u-jun', 'u-sera', 'u-min'],
     spentOn: '2026-11-07',
+  },
+];
+
+/** 후보 장소 예시 — 표가 갈린 경우, 좌표 없는 경우 */
+export const MOCK_PLACES: Place[] = [
+  {
+    id: 'p-1',
+    tripId: 't-sea',
+    name: '짜오프라야 디너 크루즈',
+    placeName: 'Asiatique The Riverfront',
+    coord: { lat: 13.7045, lng: 100.5031 },
+    note: '1인 1,200밧 정도, 전날 예약',
+    createdBy: 'u-sera',
+  },
+  {
+    id: 'p-2',
+    tripId: 't-sea',
+    name: '루프톱 바',
+    placeName: 'Sky Bar',
+    coord: { lat: 13.7217, lng: 100.5169 },
+    createdBy: 'u-jun',
+  },
+  { id: 'p-3', tripId: 't-sea', name: '타이 마사지 2시간', note: '호텔 근처 아무 데나', createdBy: 'u-min' },
+];
+
+export const MOCK_VOTES: PlaceVote[] = [
+  { placeId: 'p-1', tripId: 't-sea', userId: 'u-sera' },
+  { placeId: 'p-1', tripId: 't-sea', userId: 'u-min' },
+  { placeId: 'p-1', tripId: 't-sea', userId: 'u-me' },
+  { placeId: 'p-2', tripId: 't-sea', userId: 'u-jun' },
+];
+
+export const MOCK_COMMENTS: Comment[] = [
+  {
+    id: 'm-1',
+    tripId: 't-sea',
+    itemId: 'i-4',
+    authorId: 'u-sera',
+    body: '반바지면 입구에서 막혀요! 긴바지 꼭',
+    createdAt: '2026-10-20T09:12:00Z',
+  },
+  {
+    id: 'm-2',
+    tripId: 't-sea',
+    itemId: 'i-4',
+    authorId: 'u-jun',
+    body: '입장권은 현장 구매로 충분',
+    createdAt: '2026-10-21T13:40:00Z',
   },
 ];

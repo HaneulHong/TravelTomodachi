@@ -11,7 +11,18 @@
  * 업데이트로 즉시 반영한다.
  */
 
-import type { ChecklistItem, Coord, Expense, Item, ItemKind, Trip, TripDay } from '@/domain/types';
+import type {
+  ChecklistItem,
+  Comment,
+  Coord,
+  Expense,
+  Item,
+  ItemKind,
+  Place,
+  PlaceVote,
+  Trip,
+  TripDay,
+} from '@/domain/types';
 
 /** 여행을 만들 때 받는 값. id·초대코드·소유자는 서버가 정한다. */
 export interface TripDraft {
@@ -50,6 +61,14 @@ export interface TripSnapshot {
    * 앱은 멀쩡히 돌고 가계부 화면만 "DB 업데이트가 필요합니다"라고 알린다.
    */
   expensesAvailable: boolean;
+  places: Place[];
+  votes: PlaceVote[];
+  comments: Comment[];
+  /**
+   * 후보 장소·댓글 테이블이 있는지. supabase/collab.sql을 돌리기 전 DB면 false —
+   * 후보 장소 화면만 안내하고 댓글 칸은 숨긴다.
+   */
+  collabAvailable: boolean;
 }
 
 /**
@@ -66,6 +85,12 @@ export type RemoteChange =
   | { kind: 'checklist-delete'; id: string }
   | { kind: 'expense-upsert'; expense: Expense }
   | { kind: 'expense-delete'; id: string }
+  | { kind: 'place-upsert'; place: Place }
+  | { kind: 'place-delete'; id: string }
+  | { kind: 'vote-add'; vote: PlaceVote }
+  | { kind: 'vote-remove'; placeId: string; userId: string }
+  | { kind: 'comment-add'; comment: Comment }
+  | { kind: 'comment-delete'; id: string }
   | { kind: 'day-upsert'; tripId: string; day: TripDay }
   | { kind: 'day-delete'; tripId: string; date: string }
   | { kind: 'trip-update'; trip: Partial<Trip> & { id: string } }
@@ -120,6 +145,16 @@ export interface TripRepository {
   addExpense(expense: Expense): Promise<void>;
   updateExpense(id: string, patch: Partial<Omit<Expense, 'id' | 'tripId'>>): Promise<void>;
   removeExpense(id: string): Promise<void>;
+
+  /** 후보 장소. id는 스토어가 만든다. */
+  addPlace(place: Place): Promise<void>;
+  removePlace(id: string): Promise<void>;
+  /** 내 표를 넣거나 뺀다 */
+  setVote(vote: PlaceVote, on: boolean): Promise<void>;
+
+  /** 일정 댓글. 글쓴이는 서버가 로그인한 사람으로 정한다. */
+  addComment(comment: Comment): Promise<void>;
+  removeComment(id: string): Promise<void>;
 
   /**
    * 다른 사람의 변경을 받는다. 돌려준 함수를 부르면 구독을 끊는다.

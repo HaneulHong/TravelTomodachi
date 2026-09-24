@@ -23,9 +23,12 @@ import { bySortKey, keyBetween, keyForMove } from '@/domain/fractionalIndex';
 import { moved, predecessorsChanged } from '@/domain/order';
 import type {
   ChecklistItem,
+  Comment,
   Expense,
   Item,
   Leg,
+  Place,
+  PlaceVote,
   TransportMode,
   Trip,
   TripDay,
@@ -40,6 +43,9 @@ interface Rollback {
   checklist?: ChecklistItem[];
   trips?: Trip[];
   expenses?: Expense[];
+  places?: Place[];
+  votes?: PlaceVote[];
+  comments?: Comment[];
 }
 
 interface TripState {
@@ -50,6 +56,11 @@ interface TripState {
   expenses: Expense[];
   /** 가계부 테이블이 있는지 (TripSnapshot.expensesAvailable) */
   expensesAvailable: boolean;
+  places: Place[];
+  votes: PlaceVote[];
+  comments: Comment[];
+  /** 후보 장소·댓글 테이블이 있는지 (TripSnapshot.collabAvailable) */
+  collabAvailable: boolean;
 
   /** 첫 로드가 끝났는지. 끝나기 전에 "여행이 없습니다"를 띄우면 안 된다. */
   loading: boolean;
@@ -124,6 +135,16 @@ interface TripState {
   addExpense(draft: Omit<Expense, 'id' | 'createdAt' | 'updatedBy'>): void;
   updateExpense(id: string, patch: Partial<Omit<Expense, 'id' | 'tripId'>>): void;
   removeExpense(id: string): void;
+
+  addPlace(draft: Omit<Place, 'id' | 'createdBy' | 'createdAt'>): void;
+  removePlace(id: string): void;
+  /** 내 표를 넣었다 뺐다 */
+  toggleVote(placeId: string): void;
+  /** 후보를 그 날 일정 맨 뒤에 넣고 후보 목록에서 지운다. 새 일정 id를 돌려준다. */
+  placeToItem(placeId: string, date: string): string | null;
+
+  addComment(itemId: string, body: string): void;
+  removeComment(id: string): void;
 }
 
 /**
@@ -194,6 +215,9 @@ export const useTripStore = create<TripState>()((set, get) => {
       items: state.items.filter((i) => i.tripId !== tripId),
       checklist: state.checklist.filter((c) => c.tripId !== tripId),
       expenses: state.expenses.filter((e) => e.tripId !== tripId),
+      places: state.places.filter((p) => p.tripId !== tripId),
+      votes: state.votes.filter((v) => v.tripId !== tripId),
+      comments: state.comments.filter((c) => c.tripId !== tripId),
     };
   }
 
@@ -239,6 +263,44 @@ export const useTripStore = create<TripState>()((set, get) => {
 
       case 'expense-delete':
         set((state) => ({ expenses: state.expenses.filter((e) => e.id !== change.id) }));
+        return;
+
+      case 'place-upsert':
+        set((state) => ({ places: upsertById(state.places, change.place) }));
+        return;
+
+      case 'place-delete':
+        set((state) => ({
+          places: state.places.filter((p) => p.id !== change.id),
+          votes: state.votes.filter((v) => v.placeId !== change.id),
+        }));
+        return;
+
+      case 'vote-add': {
+        const { placeId, userId } = change.vote;
+        set((state) =>
+          // 내 표는 먼저 그려 두었으니 같은 표가 두 번 들어가지 않게
+          state.votes.some((v) => v.placeId === placeId && v.userId === userId)
+            ? {}
+            : { votes: [...state.votes, change.vote] },
+        );
+        return;
+      }
+
+      case 'vote-remove':
+        set((state) => ({
+          votes: state.votes.filter(
+            (v) => !(v.placeId === change.placeId && v.userId === change.userId),
+          ),
+        }));
+        return;
+
+      case 'comment-add':
+        set((state) => ({ comments: upsertById(state.comments, change.comment) }));
+        return;
+
+      case 'comment-delete':
+        set((state) => ({ comments: state.comments.filter((c) => c.id !== change.id) }));
         return;
 
       case 'day-upsert':
@@ -300,6 +362,10 @@ export const useTripStore = create<TripState>()((set, get) => {
     checklist: [],
     expenses: [],
     expensesAvailable: true,
+    places: [],
+    votes: [],
+    comments: [],
+    collabAvailable: true,
     loading: true,
     error: null,
     fromCache: false,
@@ -462,8 +528,12 @@ export const useTripStore = create<TripState>()((set, get) => {
     },
 
     removeItem: (itemId) => {
-      const previous = { items: get().items };
-      set((state) => ({ items: state.items.filter((i) => i.id !== itemId) }));
+      const previous = { items: get().items, comments: get().comments };
+      // 댓글은 DB가 함께 지운다(외래키 cascade) — 화면도 맞춘다
+      set((state) => ({
+        items: state.items.filter((i) => i.id !== itemId),
+        comments: state.comments.filter((c) => c.itemId !== itemId),
+      }));
       rollbackOn(repository.removeItem(itemId), previous);
     },
 
@@ -585,6 +655,82 @@ export const useTripStore = create<TripState>()((set, get) => {
       set((state) => ({ expenses: state.expenses.filter((e) => e.id !== id) }));
       rollbackOn(repository.removeExpense(id), previous);
     },
+
+    addPlace: (draft) => {
+      const me = get().currentUserId || undefined;
+      const place: Place = { ...draft, id: newId(), createdBy: me, createdAt: new Date().toISOString() };
+      const previous = { places: get().places, votes: get().votes };
+      // 올린 사람은 당연히 가고 싶다 — 내 표를 하나 넣어 둔다
+      const vote: PlaceVote | null = me ? { placeId: place.id, tripId: place.tripId, userId: me } : null;
+      set((state) => ({
+        places: [...state.places, place],
+        votes: vote ? [...state.votes, vote] : state.votes,
+      }));
+      rollbackOn(
+        repository.addPlace(place).then(() => (vote ? repository.setVote(vote, true) : undefined)),
+        previous,
+      );
+    },
+
+    removePlace: (id) => {
+      const previous = { places: get().places, votes: get().votes };
+      set((state) => ({
+        places: state.places.filter((p) => p.id !== id),
+        votes: state.votes.filter((v) => v.placeId !== id),
+      }));
+      rollbackOn(repository.removePlace(id), previous);
+    },
+
+    toggleVote: (placeId) => {
+      const me = get().currentUserId;
+      const place = get().places.find((p) => p.id === placeId);
+      if (!me || !place) return;
+      const vote: PlaceVote = { placeId, tripId: place.tripId, userId: me };
+      const on = !get().votes.some((v) => v.placeId === placeId && v.userId === me);
+      const previous = { votes: get().votes };
+      set((state) => ({
+        votes: on
+          ? [...state.votes, vote]
+          : state.votes.filter((v) => !(v.placeId === placeId && v.userId === me)),
+      }));
+      rollbackOn(repository.setVote(vote, on), previous);
+    },
+
+    placeToItem: (placeId, date) => {
+      const place = get().places.find((p) => p.id === placeId);
+      if (!place) return null;
+      const id = get().addItem(place.tripId, date, {
+        kind: 'place',
+        title: place.name,
+        placeName: place.placeName,
+        coord: place.coord,
+        description: place.note,
+      });
+      get().removePlace(placeId);
+      return id;
+    },
+
+    addComment: (itemId, body) => {
+      const item = get().getItem(itemId);
+      if (!item) return;
+      const comment: Comment = {
+        id: newId(),
+        tripId: item.tripId,
+        itemId,
+        authorId: get().currentUserId || undefined,
+        body,
+        createdAt: new Date().toISOString(),
+      };
+      const previous = { comments: get().comments };
+      set((state) => ({ comments: [...state.comments, comment] }));
+      rollbackOn(repository.addComment(comment), previous);
+    },
+
+    removeComment: (id) => {
+      const previous = { comments: get().comments };
+      set((state) => ({ comments: state.comments.filter((c) => c.id !== id) }));
+      rollbackOn(repository.removeComment(id), previous);
+    },
   };
 });
 
@@ -600,16 +746,28 @@ useTripStore.subscribe((state, prev) => {
     state.trips === prev.trips &&
     state.items === prev.items &&
     state.checklist === prev.checklist &&
-    state.expenses === prev.expenses
+    state.expenses === prev.expenses &&
+    state.places === prev.places &&
+    state.votes === prev.votes &&
+    state.comments === prev.comments
   ) {
     return;
   }
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => {
-    const { currentUserId, trips, items, checklist, expenses, expensesAvailable } =
-      useTripStore.getState();
-    if (currentUserId) {
-      saveSnapshot(currentUserId, { trips, items, checklist, expenses, expensesAvailable });
+    const s = useTripStore.getState();
+    if (s.currentUserId) {
+      saveSnapshot(s.currentUserId, {
+        trips: s.trips,
+        items: s.items,
+        checklist: s.checklist,
+        expenses: s.expenses,
+        expensesAvailable: s.expensesAvailable,
+        places: s.places,
+        votes: s.votes,
+        comments: s.comments,
+        collabAvailable: s.collabAvailable,
+      });
     }
   }, 400);
 });

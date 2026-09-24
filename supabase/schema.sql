@@ -26,6 +26,9 @@
 -- `drop trigger if exists ... on public.trips` 로 시작하면 안 된다. IF EXISTS는
 -- **트리거**가 없을 때만 봐주고 **테이블**은 있어야 한다. 첫 실행처럼 테이블이
 -- 아직 없는 상황에서는 거기서 42P01로 멈춘다.
+drop table if exists public.comments cascade;
+drop table if exists public.place_votes cascade;
+drop table if exists public.places cascade;
 drop table if exists public.expenses cascade;
 drop table if exists public.checklist cascade;
 drop table if exists public.items cascade;
@@ -133,7 +136,9 @@ create table public.items (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   -- 마지막으로 고친 사람. 트리거가 auth.uid()로 채운다 (앱이 보낸 값은 안 믿는다)
-  updated_by uuid references auth.users on delete set null
+  updated_by uuid references auth.users on delete set null,
+  -- 댓글이 (item_id, trip_id) 짝으로 가리킨다 (collab.sql)
+  unique (id, trip_id)
 );
 
 create index items_trip_date_idx on public.items (trip_id, date, sort_key);
@@ -166,6 +171,41 @@ create table public.expenses (
 );
 
 create index expenses_trip_idx on public.expenses (trip_id, spent_on);
+
+-- ── 후보 장소 · 표 · 댓글 (collab.sql과 같다) ─────────────────────
+create table public.places (
+  id uuid primary key default gen_random_uuid(),
+  trip_id uuid not null references public.trips on delete cascade,
+  name text not null check (char_length(name) between 1 and 120),
+  place_name text,
+  lat double precision,
+  lng double precision,
+  note text check (note is null or char_length(note) <= 500),
+  created_by uuid references auth.users on delete set null default auth.uid(),
+  created_at timestamptz not null default now(),
+  unique (id, trip_id)
+);
+create index places_trip_idx on public.places (trip_id);
+
+create table public.place_votes (
+  place_id uuid not null,
+  trip_id uuid not null,
+  user_id uuid not null references auth.users on delete cascade default auth.uid(),
+  created_at timestamptz not null default now(),
+  primary key (place_id, user_id),
+  foreign key (place_id, trip_id) references public.places (id, trip_id) on delete cascade
+);
+
+create table public.comments (
+  id uuid primary key default gen_random_uuid(),
+  trip_id uuid not null,
+  item_id uuid not null,
+  author_id uuid references auth.users on delete set null default auth.uid(),
+  body text not null check (char_length(body) between 1 and 500),
+  created_at timestamptz not null default now(),
+  foreign key (item_id, trip_id) references public.items (id, trip_id) on delete cascade
+);
+create index comments_item_idx on public.comments (item_id, created_at);
 
 -- ═══════════════════════════════════════════════════════════════════
 -- 멤버십 확인 — RLS 재귀를 끊는 지점
@@ -210,6 +250,9 @@ alter table public.trip_days enable row level security;
 alter table public.items enable row level security;
 alter table public.checklist enable row level security;
 alter table public.expenses enable row level security;
+alter table public.places enable row level security;
+alter table public.place_votes enable row level security;
+alter table public.comments enable row level security;
 
 -- ── trips ─────────────────────────────────────────────────────────
 -- 비멤버는 여행의 존재조차 볼 수 없다. 초대 코드로 들어오는 길은
@@ -324,6 +367,40 @@ create policy "멤버가 가계부를 고친다"
 create policy "멤버가 가계부를 지운다"
   on public.expenses for delete to authenticated
   using (public.is_trip_member(trip_id));
+
+create policy "멤버가 후보 장소를 본다"
+  on public.places for select to authenticated
+  using (public.is_trip_member(trip_id));
+create policy "멤버가 후보 장소를 올린다"
+  on public.places for insert to authenticated
+  with check (public.is_trip_member(trip_id));
+create policy "멤버가 후보 장소를 고친다"
+  on public.places for update to authenticated
+  using (public.is_trip_member(trip_id))
+  with check (public.is_trip_member(trip_id));
+create policy "멤버가 후보 장소를 지운다"
+  on public.places for delete to authenticated
+  using (public.is_trip_member(trip_id));
+
+create policy "멤버가 표를 본다"
+  on public.place_votes for select to authenticated
+  using (public.is_trip_member(trip_id));
+create policy "자기 표를 넣는다"
+  on public.place_votes for insert to authenticated
+  with check (public.is_trip_member(trip_id) and user_id = auth.uid());
+create policy "자기 표를 뺀다"
+  on public.place_votes for delete to authenticated
+  using (user_id = auth.uid());
+
+create policy "멤버가 댓글을 본다"
+  on public.comments for select to authenticated
+  using (public.is_trip_member(trip_id));
+create policy "멤버가 자기 이름으로 댓글을 단다"
+  on public.comments for insert to authenticated
+  with check (public.is_trip_member(trip_id) and author_id = auth.uid());
+create policy "자기 댓글을 지운다"
+  on public.comments for delete to authenticated
+  using (author_id = auth.uid());
 
 -- ═══════════════════════════════════════════════════════════════════
 -- 트리거

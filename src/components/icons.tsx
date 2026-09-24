@@ -273,3 +273,11 @@ export const RouteIcon = ({ size = 18, className }: IconProps) => (
     <path d="M8 18h6.5a3.5 3.5 0 000-7h-5a3.5 3.5 0 010-7H16" />
   </svg>
 );
+
+/** 후보 장소 — 전구 */
+export const IdeaIcon = ({ size = 18, className }: IconProps) => (
+  <svg {...base(size, className)}>
+    <path d="M9 18h6M10 21h4" />
+    <path d="M12 3a6 6 0 00-3.6 10.8c.6.5 1 1.2 1 2V16h5.2v-.2c0-.8.4-1.5 1-2A6 6 0 0012 3z" />
+  </svg>
+);

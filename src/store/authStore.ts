@@ -64,6 +64,9 @@ export const useAuthStore = create<AuthState>()((set) => ({
       items: [],
       checklist: [],
       expenses: [],
+      places: [],
+      votes: [],
+      comments: [],
       loading: true,
       fromCache: false,
     });

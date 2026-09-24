@@ -142,6 +142,7 @@ export const ja: Messages = {
     reorderHint: '右のハンドルをドラッグして並べ替えます。入力した時刻は変わりません。',
     reorderHandle: (title) => `${title}を移動`,
     menuLedger: '家計簿',
+    menuIdeas: '行きたい場所',
     menuCalendar: 'カレンダーに書き出す',
     menuShare: '友だちに共有',
     menuMembers: 'メンバー · 招待コード',
@@ -318,6 +319,36 @@ export const ja: Messages = {
     receives: '受け取る人',
   },
 
+  ideas: {
+    title: '行きたい場所',
+    needsDb: '行きたい場所はまだ使えません。しばらくしてからもう一度開いてください。',
+    empty: '行きたい場所を追加して投票しましょう。票の多い場所から予定に入れれば大丈夫です。',
+    add: '候補を追加',
+    addTitle: '行きたい場所を追加',
+    where: 'どこ',
+    wherePlaceholder: '場所を検索 (例: 聖水洞カフェ通り)',
+    note: 'ひとこと',
+    notePlaceholder: '行きたい理由、値段、予約が必要か…',
+    addedBy: (name) => `${name}さんが追加`,
+    vote: '行きたい',
+    voted: '投票済み',
+    votes: (n) => `${n}票`,
+    toPlan: '予定に入れる',
+    toPlanTitle: 'どの日に入れますか？',
+    toPlanHint: 'その日の予定の最後に入り、候補リストからは外れます。',
+    removeTitle: (name) => `「${name}」を候補から削除しますか？`,
+    removeBody: '投票も一緒に削除されます。',
+  },
+
+  comments: {
+    title: 'コメント',
+    placeholder: 'コメントする',
+    send: '送信',
+    empty: 'まだコメントがありません。',
+    delete: '削除',
+    count: (n) => `コメント ${n}件`,
+  },
+
   checklist: {
     title: 'チェックリスト',
     empty: 'まだ項目がありません。',
@@ -440,6 +471,11 @@ export const ja: Messages = {
     addExpense: '支出を追加できませんでした',
     updateExpense: '支出を更新できませんでした',
     deleteExpense: '支出を削除できませんでした',
+    addPlace: '候補を追加できませんでした',
+    removePlace: '候補を削除できませんでした',
+    vote: '投票できませんでした',
+    addComment: 'コメントを投稿できませんでした',
+    deleteComment: 'コメントを削除できませんでした',
   },
 
   serverErrors: {

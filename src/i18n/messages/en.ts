@@ -142,6 +142,7 @@ export const en: Messages = {
     reorderHint: "Drag the handle on the right to reorder. Times you've set won't change.",
     reorderHandle: (title) => `Move ${title}`,
     menuLedger: 'Expenses',
+    menuIdeas: 'Ideas',
     menuCalendar: 'Export to calendar',
     menuShare: 'Share with friends',
     menuMembers: 'Members · invite code',
@@ -321,6 +322,36 @@ export const en: Messages = {
     receives: 'To',
   },
 
+  ideas: {
+    title: 'Ideas',
+    needsDb: "Ideas aren't available yet. Please try again later.",
+    empty: 'Add places you want to go and vote. Put the most-voted ones into the plan.',
+    add: 'Add an idea',
+    addTitle: 'Add a place idea',
+    where: 'Where',
+    wherePlaceholder: 'Search places (e.g. Seongsu cafe street)',
+    note: 'Note',
+    notePlaceholder: 'Why go, price, need to book…',
+    addedBy: (name) => `Added by ${name}`,
+    vote: 'I want to go',
+    voted: 'Voted',
+    votes: (n) => (n === 1 ? '1 vote' : `${n} votes`),
+    toPlan: 'Add to plan',
+    toPlanTitle: 'Which day?',
+    toPlanHint: 'It goes to the end of that day and leaves the ideas list.',
+    removeTitle: (name) => `Remove "${name}"?`,
+    removeBody: 'Its votes will be removed too.',
+  },
+
+  comments: {
+    title: 'Comments',
+    placeholder: 'Add a comment',
+    send: 'Send',
+    empty: 'No comments yet.',
+    delete: 'Delete',
+    count: (n) => (n === 1 ? '1 comment' : `${n} comments`),
+  },
+
   checklist: {
     title: 'Checklist',
     empty: 'No items yet.',
@@ -444,6 +475,11 @@ export const en: Messages = {
     addExpense: "Couldn't add the expense",
     updateExpense: "Couldn't update the expense",
     deleteExpense: "Couldn't delete the expense",
+    addPlace: "Couldn't add the idea",
+    removePlace: "Couldn't remove the idea",
+    vote: "Couldn't vote",
+    addComment: "Couldn't post the comment",
+    deleteComment: "Couldn't delete the comment",
   },
 
   serverErrors: {
