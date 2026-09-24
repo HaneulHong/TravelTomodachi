@@ -142,6 +142,7 @@ export const ja: Messages = {
     reorderHint: '右のハンドルをドラッグして並べ替えます。入力した時刻は変わりません。',
     reorderHandle: (title) => `${title}を移動`,
     menuLedger: '家計簿',
+    menuCalendar: 'カレンダーに書き出す',
     menuShare: '友だちに共有',
     menuMembers: 'メンバー · 招待コード',
     menuDelete: '旅行を削除',
@@ -214,6 +215,8 @@ export const ja: Messages = {
     time: '時刻',
     stay: '滞在時間',
     minutesSuffix: '分',
+    bookingRef: '予約番号',
+    bookingRefPlaceholder: '航空券・宿・ツアーの予約番号',
     memo: 'メモ',
     memoPlaceholder: '予約番号、持ち物、注意点…',
     defaultTitle: '新しい予定',
@@ -242,6 +245,8 @@ export const ja: Messages = {
     coordNote: '座標だけで探したルートです。',
     carrierDiffers: (code) => `入力した「${code}」とは異なる場合があります。`,
     edit: '編集',
+    copy: 'コピー',
+    copied: 'コピーしました',
   },
 
   edited: {

@@ -27,6 +27,7 @@ import { memberLabel, type Item, type Member, type Trip, type TripDay } from '..
 import { colorOf, fullName, nicknameProblem } from '../src/auth/types';
 import { inviteCodeFromAppUrl, inviteCodeFromHash } from '../src/auth/pendingInvite';
 import { normalizeBaseUrl } from '../src/platform/baseUrl';
+import { buildIcs } from '../src/domain/ics';
 import { optimizeDay, type RoutePoint } from '../src/domain/optimize';
 import { findToday, localNow, minutesUntil, nextItem } from '../src/domain/today';
 import { balances, convert, currencyDigits, settle, transfers } from '../src/domain/settle';
@@ -505,6 +506,27 @@ console.log('\n── 동선 최적화 ──');
   // 9곳 이상은 근사(가까운 곳부터 + 2-opt) — 일직선이면 정답과 같아야 한다
   const many = [at('s', 0), ...[9, 3, 7, 1, 5, 2, 8, 4, 6].map((k) => at(`p${k}`, k * 0.01))];
   eq('많아도 풀린다', optimizeDay(many).order.join(','), 's,p1,p2,p3,p4,p5,p6,p7,p8,p9');
+}
+
+console.log('\n── 캘린더 내보내기 ──');
+{
+  const trip = {
+    id: 't', name: '방콕, 도쿄', startDate: '2026-11-04', endDate: '2026-11-04', ownerId: 'a',
+    inviteCode: 'X', coverEmoji: '🧳', members: [],
+    days: [{ date: '2026-11-04', timezone: 'Asia/Bangkok', cityLabel: '방콕' }],
+  } as Trip;
+  const items = [
+    { id: 'i1', tripId: 't', date: '2026-11-04', sortKey: 'a0', kind: 'place', title: '왕궁; 입장', localTime: '09:00', durationMin: 120, placeName: '왓 프라깨우', bookingRef: 'AB12', description: '긴바지\n챙길 것' },
+    { id: 'i2', tripId: 't', date: '2026-11-04', sortKey: 'a1', kind: 'place', title: '자유 시간' },
+  ] as Item[];
+  const ics = buildIcs(trip, items, { bookingLabel: '예약 번호' }, new Date('2026-10-01T00:00:00Z'));
+  ok('CRLF 줄바꿈', ics.includes('\r\nBEGIN:VEVENT\r\n'));
+  // 방콕 09:00 = UTC 02:00, 120분 뒤 04:00
+  ok('현지 시각을 UTC로', ics.includes('DTSTART:20261104T020000Z') && ics.includes('DTEND:20261104T040000Z'));
+  ok('시각 없으면 종일', ics.includes('DTSTART;VALUE=DATE:20261104') && ics.includes('DTEND;VALUE=DATE:20261105'));
+  ok('특수문자 이스케이프', ics.includes('SUMMARY:왕궁\\; 입장') && ics.includes('X-WR-CALNAME:방콕\\, 도쿄'));
+  ok('예약 번호·메모', ics.includes('예약 번호: AB12'));
+  ok('75바이트 넘는 줄 없음', ics.split('\r\n').every((l) => new TextEncoder().encode(l).length <= 75));
 }
 
 console.log('\n── 언어 ──');

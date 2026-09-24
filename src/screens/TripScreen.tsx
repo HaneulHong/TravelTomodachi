@@ -28,11 +28,13 @@ import {
   TrainIcon,
   TrashIcon,
   UsersIcon,
+  CalendarIcon,
   WalletIcon,
 } from '@/components/icons';
 import { useDayLegs, type LegInfo } from '@/hooks/useDayLegs';
 import { useInviteShare } from '@/hooks/useInviteShare';
 import { useReorderDrag } from '@/hooks/useReorderDrag';
+import { buildIcs } from '@/domain/ics';
 import { timeConflicts, timeSortedOrder } from '@/domain/order';
 import { useSwipe } from '@/hooks/useSwipe';
 import {
@@ -415,6 +417,34 @@ export function TripScreen() {
           >
             <RouteIcon />
             {t.trip.menuOptimize}
+          </button>
+        )}
+        {/* 파일 저장은 웹에서만(앱은 아직 플러그인이 없다) */}
+        {platform.saveFile && (
+          <button
+            className="sheet__item"
+            onClick={() => {
+              setMenuOpen(false);
+              const ics = buildIcs(
+                trip,
+                allItems.filter((i) => i.tripId === trip.id).sort((a, b) =>
+                  a.date === b.date ? (a.sortKey < b.sortKey ? -1 : 1) : a.date < b.date ? -1 : 1,
+                ),
+                { bookingLabel: t.itemEdit.bookingRef },
+              );
+              /*
+               * 파일 이름은 영문으로 — 한글 이름은 일부 브라우저가 버리고 'download'로
+               * 저장한다(크롬 헤드리스에서 확인). 여행 이름은 파일 안의 캘린더 이름으로 간다.
+               */
+              platform.saveFile!(
+                `traveltomodachi-${trip.startDate}.ics`,
+                ics,
+                'text/calendar;charset=utf-8',
+              );
+            }}
+          >
+            <CalendarIcon />
+            {t.trip.menuCalendar}
           </button>
         )}
         <button className="sheet__item" onClick={onShare}>

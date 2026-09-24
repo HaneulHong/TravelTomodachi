@@ -51,4 +51,10 @@ export interface Platform {
    * 열렸을 때. 이미 떠 있는 앱과 새로 켜진 앱 둘 다 부른다. 해제 함수를 돌려준다.
    */
   onDeepLink?(handler: (url: string) => void): () => void;
+
+  /**
+   * 파일로 내려받기(캘린더 .ics 등). 웹 전용 — 앱은 파일 저장 플러그인이 없어서
+   * 아직 없다. 없으면 화면이 그 메뉴를 숨긴다.
+   */
+  saveFile?(filename: string, content: string, mimeType: string): void;
 }

@@ -451,6 +451,7 @@ export const useTripStore = create<TripState>()((set, get) => {
         durationMin: draft.durationMin,
         description: draft.description,
         carrierCode: draft.carrierCode,
+        bookingRef: draft.bookingRef,
         ...editedNow(),
       };
 

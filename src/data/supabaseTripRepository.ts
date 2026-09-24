@@ -446,6 +446,8 @@ export function createSupabaseTripRepository(): TripRepository {
         duration_min: item.durationMin ?? null,
         description: item.description ?? null,
         carrier_code: item.carrierCode ?? null,
+        // 칸이 없는 DB(expenses.sql 이전)에서도 일정 추가가 되도록 값이 있을 때만 보낸다
+        ...(item.bookingRef ? { booking_ref: item.bookingRef } : {}),
       });
       if (error) throw new Error(`${getMessages().errors.createItem}: ${error.message}`);
     },

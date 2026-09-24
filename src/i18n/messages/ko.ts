@@ -152,6 +152,7 @@ export const ko = {
     reorderHint: '오른쪽 손잡이를 끌어 순서를 바꾸세요. 적어 둔 시각은 바뀌지 않습니다.',
     reorderHandle: (title: string) => `${title} 옮기기`,
     menuLedger: '가계부',
+    menuCalendar: '캘린더로 내보내기',
     menuShare: '친구에게 공유',
     menuMembers: '멤버 · 초대 코드',
     menuDelete: '여행 삭제',
@@ -225,6 +226,8 @@ export const ko = {
     time: '시각',
     stay: '머무는 시간',
     minutesSuffix: '분',
+    bookingRef: '예약 번호',
+    bookingRefPlaceholder: '항공권·숙소·투어 예약 번호',
     memo: '메모',
     memoPlaceholder: '예약 번호, 준비물, 주의할 점…',
     defaultTitle: '새 일정',
@@ -253,6 +256,8 @@ export const ko = {
     coordNote: '좌표만 보고 찾은 경로입니다.',
     carrierDiffers: (code: string) => ` 적어두신 "${code}"와 다를 수 있습니다.`,
     edit: '수정',
+    copy: '복사',
+    copied: '복사했습니다',
   },
 
   edited: {

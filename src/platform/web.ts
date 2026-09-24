@@ -37,6 +37,18 @@ export const webPlatform: Platform = {
       : PUBLIC_BASE_URL,
   publicBaseUrl: PUBLIC_BASE_URL,
 
+  saveFile(filename: string, content: string, mimeType: string): void {
+    const url = URL.createObjectURL(new Blob([content], { type: mimeType }));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    // 바로 풀면 일부 브라우저가 받기 전에 끊는다
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  },
+
   openExternal(url: string): void {
     window.open(url, '_blank', 'noopener,noreferrer');
   },

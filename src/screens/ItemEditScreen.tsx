@@ -49,6 +49,7 @@ export function ItemEditScreen() {
   const [toPlaceName, setToPlaceName] = useState(existing?.toPlaceName ?? '');
   const [toCoord, setToCoord] = useState<Coord | undefined>(existing?.toCoord);
   const [description, setDescription] = useState(existing?.description ?? '');
+  const [bookingRef, setBookingRef] = useState(existing?.bookingRef ?? '');
 
   if (!trip) {
     return (
@@ -91,6 +92,13 @@ export function ItemEditScreen() {
       carrierCode: isSegmentKind(kind) ? carrierCode.trim() || undefined : undefined,
       toPlaceName: isSegmentKind(kind) ? toPlaceName.trim() || undefined : undefined,
       toCoord: isSegmentKind(kind) ? toCoord : undefined,
+      /*
+       * 예약 번호는 적었거나 원래 있던 때만 보낸다. expenses.sql을 돌리기 전 DB에는
+       * 칸이 없어서, 늘 보내면 그 DB에서는 일정 저장 자체가 실패한다.
+       */
+      ...(bookingRef.trim() || existing?.bookingRef
+        ? { bookingRef: bookingRef.trim() || undefined }
+        : {}),
     };
 
     if (isEdit && itemId) {
@@ -238,6 +246,20 @@ export function ItemEditScreen() {
               />
             </label>
           )}
+
+          <label className="form__row">
+            <span className="form__label">{t.itemEdit.bookingRef}</span>
+            <input
+              className="form__input"
+              value={bookingRef}
+              onChange={(e) => setBookingRef(e.target.value)}
+              placeholder={t.itemEdit.bookingRefPlaceholder}
+              maxLength={60}
+              autoCapitalize="characters"
+              autoCorrect="off"
+              spellCheck={false}
+            />
+          </label>
 
           <label className="form__row">
             <span className="form__label">{t.itemEdit.memo}</span>

@@ -142,6 +142,7 @@ export const en: Messages = {
     reorderHint: "Drag the handle on the right to reorder. Times you've set won't change.",
     reorderHandle: (title) => `Move ${title}`,
     menuLedger: 'Expenses',
+    menuCalendar: 'Export to calendar',
     menuShare: 'Share with friends',
     menuMembers: 'Members · invite code',
     menuDelete: 'Delete trip',
@@ -218,6 +219,8 @@ export const en: Messages = {
     time: 'Time',
     stay: 'Duration',
     minutesSuffix: 'min',
+    bookingRef: 'Booking number',
+    bookingRefPlaceholder: 'Flight, hotel or tour confirmation',
     memo: 'Notes',
     memoPlaceholder: 'Booking number, things to bring, tips…',
     defaultTitle: 'New plan',
@@ -246,6 +249,8 @@ export const en: Messages = {
     coordNote: 'Found from coordinates only.',
     carrierDiffers: (code) => ` It may differ from "${code}" you entered.`,
     edit: 'Edit',
+    copy: 'Copy',
+    copied: 'Copied',
   },
 
   edited: {

@@ -34,6 +34,7 @@ export interface ItemDraft {
   durationMin?: number;
   description?: string;
   carrierCode?: string;
+  bookingRef?: string;
 }
 
 /** 날짜에서 고칠 수 있는 것. 날짜 자체는 여행 기간이 정한다. */
