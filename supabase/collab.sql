@@ -70,6 +70,28 @@ create policy "멤버가 후보 장소를 지운다"
   on public.places for delete to authenticated
   using (public.is_trip_member(trip_id));
 
+-- 후보 장소의 "올린 사람"은 DB가 정한다 — 넣을 때 로그인한 사람, 고칠 때 그대로.
+-- 기본값(auth.uid())만 두면 앱이 다른 사람 id를 보내 사칭할 수 있었다(security-hardening.sql).
+create or replace function public.stamp_place_creator()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if tg_op = 'INSERT' then
+    new.created_by := coalesce(auth.uid(), new.created_by);
+  else
+    new.created_by := old.created_by;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists on_place_stamped on public.places;
+create trigger on_place_stamped
+  before insert or update on public.places
+  for each row execute procedure public.stamp_place_creator();
+
 -- ── 표 ────────────────────────────────────────────────────────────
 -- 한 사람이 한 장소에 한 표(기본키). 자기 표만 넣고 뺄 수 있다.
 create table if not exists public.place_votes (
