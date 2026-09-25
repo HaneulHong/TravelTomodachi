@@ -12,6 +12,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { PinIcon } from '@/components/icons';
+import { LIMITS } from '@/domain/limits';
 import type { Coord } from '@/domain/types';
 import { getMessages, useT } from '@/i18n';
 import { getPlaceProvider, type Place } from '@/providers';
@@ -28,6 +29,8 @@ interface Props {
   /** 장소를 새로 골랐을 때. 제목 자동 채우기처럼 화면마다 다른 처리를 맡긴다. */
   onPicked?(place: Place): void;
   autoFocus?: boolean;
+  /** 글자 수 상한 (DB와 같게 — domain/limits.ts). 검색 결과를 골라도 이만큼만 넣는다. */
+  maxLength?: number;
 }
 
 export function PlaceField({
@@ -38,6 +41,7 @@ export function PlaceField({
   onChange,
   onPicked,
   autoFocus,
+  maxLength = LIMITS.placeName,
 }: Props) {
   const t = useT();
   const [results, setResults] = useState<Place[]>([]);
@@ -96,7 +100,9 @@ export function PlaceField({
     return () => clearTimeout(timer);
   }, [name, places, coord]);
 
-  function pick(place: Place): void {
+  function pick(chosen: Place): void {
+    // 검색 결과 이름이 상한보다 길면 잘라 넣는다 — 안 그러면 저장할 때 DB가 거부한다
+    const place = { ...chosen, name: [...chosen.name].slice(0, maxLength).join('') };
     pickedNameRef.current = place.name;
     onChange(place.name, place.coord);
     onPicked?.(place);
@@ -153,6 +159,7 @@ export function PlaceField({
           <input
             className="form__input"
             value={name}
+            maxLength={maxLength}
             onChange={(e) => {
               // 이름을 손대는 순간 앞서 고른 좌표는 더 이상 이 이름의 좌표가
               // 아니다. 다시 고를 때까지 비워둔다.

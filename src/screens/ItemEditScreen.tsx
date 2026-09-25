@@ -10,6 +10,7 @@ import { useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { AppHeader } from '@/components/AppHeader';
 import { PlaceField } from '@/components/PlaceField';
+import { LIMITS } from '@/domain/limits';
 import { isSegmentKind, type Coord, type ItemKind } from '@/domain/types';
 import { formatDateLabel } from '@/domain/time';
 import { useLocale, useT } from '@/i18n';
@@ -151,6 +152,7 @@ export function ItemEditScreen() {
             <input
               className="form__input"
               value={title}
+              maxLength={LIMITS.itemTitle}
               onChange={(e) => setTitle(e.target.value)}
               placeholder={t.itemEdit.titlePlaceholder}
               autoFocus={!isEdit}
@@ -241,6 +243,7 @@ export function ItemEditScreen() {
               <input
                 className="form__input"
                 value={carrierCode}
+                maxLength={LIMITS.carrierCode}
                 onChange={(e) => setCarrierCode(e.target.value)}
                 placeholder={t.carrierPlaceholder[kind]}
               />
@@ -254,7 +257,7 @@ export function ItemEditScreen() {
               value={bookingRef}
               onChange={(e) => setBookingRef(e.target.value)}
               placeholder={t.itemEdit.bookingRefPlaceholder}
-              maxLength={60}
+              maxLength={LIMITS.bookingRef}
               autoCapitalize="characters"
               autoCorrect="off"
               spellCheck={false}
@@ -266,6 +269,7 @@ export function ItemEditScreen() {
             <textarea
               className="form__input form__textarea"
               value={description}
+              maxLength={LIMITS.itemMemo}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
               placeholder={t.itemEdit.memoPlaceholder}

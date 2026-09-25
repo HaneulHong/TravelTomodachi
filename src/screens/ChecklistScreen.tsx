@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { AppHeader } from '@/components/AppHeader';
 import { CheckIcon, PlusIcon } from '@/components/icons';
+import { LIMITS } from '@/domain/limits';
 import { platform } from '@/platform';
 import { useT } from '@/i18n';
 import { useTripStore } from '@/store/tripStore';
@@ -94,6 +95,7 @@ export function ChecklistScreen() {
             <input
               className="checkadd__input"
               value={draft}
+              maxLength={LIMITS.checklistTitle}
               placeholder={t.checklist.addPlaceholder}
               onChange={(e) => setDraft(e.target.value)}
               onKeyDown={(e) => {
