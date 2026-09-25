@@ -34,6 +34,9 @@
 - 스키마를 바꿀 때는 **덧붙이는 SQL 파일**(멱등, 데이터 보존)을 새로 만들고, schema.sql에도
   같은 내용을 반영해 새 DB와 맞춘다. 사용자가 SQL Editor에서 실행한다.
 - 실행 순서와 파일 목록: [docs/AUTH_SETUP.md](docs/AUTH_SETUP.md) 4단계
+- **SQL을 고치면 `npm run test:rls`** (로컬 일회용 DB에 사용자 A·B·C로 권한 시나리오). 새 테이블이면
+  `scripts/security/rls.test.sql`에 "남이 못 보고 못 쓰는지"를 더한다. 새 SQL 파일은 `run-rls-test.sh`의 FILES에.
+  운영을 밖에서 점검: `npm run test:live`. 결과는 [docs/SECURITY.md](docs/SECURITY.md)
 - 앱은 SQL 실행 전 DB에서도 깨지지 않게 짠다 (예: 없는 칸을 이름으로 부르지 말고 `select('*')`).
 - 멤버십 확인은 security definer 함수로 (RLS 재귀 방지). 칸 단위 권한은 grant로.
 
