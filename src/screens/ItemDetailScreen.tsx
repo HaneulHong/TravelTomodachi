@@ -29,6 +29,7 @@ export function ItemDetailScreen() {
   const trip = useTripStore((s) => s.getTrip(tripId));
   const allItems = useTripStore((s) => s.items);
   const setLegManually = useTripStore((s) => s.setLegManually);
+  const setLegMode = useTripStore((s) => s.setLegMode);
   const clearManualLeg = useTripStore((s) => s.clearManualLeg);
   const collabAvailable = useTripStore((s) => s.collabAvailable);
   const t = useT();
@@ -81,21 +82,28 @@ export function ItemDetailScreen() {
   const legCoords = [prev?.coord, item.coord].filter((c): c is Coord => Boolean(c));
   const renderer = getMapRenderer(resolveMapRegion(legCoords));
 
-  const activeMode = item.leg?.mode ?? legInfo?.recommended;
+  const activeMode = legInfo?.mode ?? item.leg?.mode;
   // 대중교통으로 가는 경우에만 탈 노선을 보여준다 — 도보를 골랐는데 노선이 뜨면 헷갈린다
   const transitResult = legInfo?.results.transit;
   const transitLines =
     activeMode === 'transit' && transitResult?.available ? transitResult.lines : undefined;
-  const shownMinutes =
-    draftMinutes ??
-    item.leg?.minutes ??
-    (activeMode && legInfo?.results[activeMode]?.available
-      ? (legInfo.results[activeMode] as { minutes: number }).minutes
-      : 0);
+  const shownMinutes = draftMinutes ?? legInfo?.minutes ?? item.leg?.minutes ?? 0;
 
+  /** −/+로 고친 시간 — 이제부터는 조회로 덮어쓰지 않는다 */
   function commitMinutes(mode: TransportMode, minutes: number) {
     setLegManually(item!.id, mode, minutes);
     setDraftMinutes(null);
+  }
+
+  /**
+   * 수단 고르기. 조회된 시간이 있으면 수단만 정하고 시간은 조회를 따라간다.
+   * 조회가 안 된 수단이면 지금 보이는 시간에서 직접 맞추도록 입력 상태로.
+   */
+  function pickMode(mode: TransportMode) {
+    const result = legInfo?.results[mode];
+    setDraftMinutes(null);
+    if (result?.available) setLegMode(item!.id, mode, result.minutes);
+    else commitMinutes(mode, shownMinutes || 15);
   }
 
   return (
@@ -177,12 +185,8 @@ export function ItemDetailScreen() {
                         className={`mode${active ? ' mode--active' : ''}${
                           unavailable ? ' mode--off' : ''
                         }`}
-                        onClick={() => {
-                          const mins = result?.available
-                            ? result.minutes
-                            : (item.leg?.minutes ?? 15);
-                          commitMinutes(mode, mins);
-                        }}
+                        aria-pressed={active}
+                        onClick={() => pickMode(mode)}
                       >
                         <div className="mode__name">
                           <Icon /> {t.transport[mode]}
@@ -263,14 +267,17 @@ export function ItemDetailScreen() {
                   </button>
                 )}
 
-                {item.leg?.isManual && draftMinutes === null && (
+                {/* 수단만 고른 경우도 되돌릴 수 있게 — 자동 추천으로 */}
+                {item.leg && draftMinutes === null && (
                   <>
-                    <div
-                      className="field__value field__value--muted"
-                      style={{ marginTop: 10, fontSize: 12.5 }}
-                    >
-                      {t.itemDetail.manualNote}
-                    </div>
+                    {item.leg.isManual && (
+                      <div
+                        className="field__value field__value--muted"
+                        style={{ marginTop: 10, fontSize: 12.5 }}
+                      >
+                        {t.itemDetail.manualNote}
+                      </div>
+                    )}
                     <button
                       className="btn btn--ghost"
                       style={{ marginTop: 6 }}

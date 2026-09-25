@@ -67,6 +67,7 @@ export const en: Messages = {
     transitNoRoute: 'No line',
     crossBorder: 'International · enter manually',
     crossBorderShort: 'International',
+    needsPlace: 'Add a place to calculate',
     unknownTap: 'No route info · tap to enter',
     unknown: 'No route info',
     manual: 'manual',

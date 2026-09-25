@@ -78,6 +78,7 @@ export const ko = {
     crossBorder: '국제 구간 · 직접 입력',
     crossBorderShort: '국제 구간',
     unknownTap: '이동 정보 없음 · 탭해서 입력',
+    needsPlace: '장소를 넣으면 자동 계산',
     unknown: '이동 정보 없음',
     manual: '직접 입력',
   },

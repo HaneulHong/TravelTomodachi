@@ -47,6 +47,7 @@ import { en } from '../src/i18n/messages/en';
 import { ja } from '../src/i18n/messages/ja';
 import { parsePlan, type MotisLeg } from '../src/providers/route/transitousRouteProvider';
 import { decodePolyline } from '../src/providers/route/polyline';
+import { effectiveLeg, recommendMode } from '../src/domain/legChoice';
 
 let passed = 0;
 let failed = 0;
@@ -545,6 +546,28 @@ console.log('\n── 후보 장소 순위 ──');
   eq('표가 같으면 먼저 올린 곳', rankPlaces([pl('y', '2026-01-02'), pl('x', '2026-01-01')], []).map((r) => r.place.id).join(''), 'xy');
 }
 
+console.log('\n── 이동 수단 고르기 ──');
+{
+  // 명동 → 경복궁 실제 사례: 도보 36, 대중교통 25, 차량 11
+  const seoul = { walk: 36, transit: 25, car: 11 };
+  eq('차가 가장 빨라도 도보·대중교통 중에서 추천', recommendMode(seoul), 'transit');
+  eq('가까우면 도보', recommendMode({ walk: 18, transit: 15, car: 5 }), 'walk');
+  eq('대중교통 없고 도보가 너무 길면 차량', recommendMode({ walk: 400, car: 60 }), 'car');
+  eq('아무것도 없으면 추천 없음', recommendMode({ walk: 400 }), undefined);
+
+  const auto = effectiveLeg(undefined, seoul);
+  eq('아무것도 안 고름 → 추천 수단의 조회 시간', `${auto.mode}/${auto.minutes}/${auto.manual}`, 'transit/25/false');
+
+  // 수단만 고른 경우 — 고를 때 값(11)이 아니라 지금 조회 시간을 따라간다
+  const picked = effectiveLeg({ mode: 'walk', minutes: 11, isManual: false }, seoul);
+  eq('수단만 고름 → 그 수단의 조회 시간', `${picked.mode}/${picked.minutes}/${picked.manual}`, 'walk/36/false');
+  const pickedOffline = effectiveLeg({ mode: 'transit', minutes: 25, isManual: false }, {});
+  eq('조회가 안 되면 고를 때의 시간', pickedOffline.minutes, 25);
+
+  const manual = effectiveLeg({ mode: 'car', minutes: 40, isManual: true }, seoul);
+  eq('직접 고친 시간은 조회로 덮지 않음', `${manual.mode}/${manual.minutes}/${manual.manual}`, 'car/40/true');
+}
+
 console.log('\n── 대중교통 응답 해석 (Transitous) ──');
 {
   // 정밀도 6 인코더 — 테스트용 (서버가 v2 이후 이렇게 보낸다)
@@ -646,6 +669,33 @@ console.log('\n── 대중교통 응답 해석 (Transitous) ──');
     { ...q, to: { lat: 37.5626, lng: 126.9856 } },
   );
   eq('걷기만 → 가까우면 "노선 없음"', walkOnly.available ? '' : walkOnly.reason, 'no_transit_route');
+
+  // 탄 구간의 선이 정류장 사이 직선보다 터무니없이 길면 쓰지 않는다 (명동 → 경복궁 80km 사례)
+  const far1 = { lat: 37.9, lng: 127.3 };
+  const detour = parsePlan(
+    {
+      itineraries: [
+        {
+          duration: 1500,
+          endTime: '2026-10-01T03:25:00Z',
+          legs: [
+            {
+              mode: 'SUBWAY',
+              displayName: '3호선',
+              from: { lat: myeongdong.lat, lon: myeongdong.lng },
+              to: { lat: gyeongbok.lat, lon: gyeongbok.lng },
+              legGeometry: { points: encode([myeongdong, far1, gyeongbok]), precision: 6 },
+            },
+          ],
+        },
+      ],
+    },
+    q,
+  );
+  if (detour.available) {
+    ok('터무니없는 우회선은 직선으로', detour.distanceM < 3000, `${detour.distanceM}m`);
+    eq('정류장 두 점만 남김', detour.polyline?.length, 2);
+  } else ok('우회선 여정도 결과는 나온다', false);
 
   // 가까운 거리에서 대중교통이 없다고 "이 지역 데이터 없음"을 띄우지 않는다
   const near = parsePlan({ itineraries: [] }, { ...q, to: { lat: 37.5626, lng: 126.9856 } });

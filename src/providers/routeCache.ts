@@ -55,6 +55,27 @@ function cacheKey(from: Coord, to: Coord, mode: TransportMode, departAt?: string
   return `${r(from.lat)},${r(from.lng)}|${r(to.lat)},${r(to.lng)}|${mode}|${departAt ?? ''}`;
 }
 
+/** 같은 구간을 동시에 두 번 묻지 않게 — 일정 화면과 상세 화면이 겹쳐 물을 때 */
+const inflight = new Map<string, Promise<RouteResult>>();
+
+/**
+ * 조회 실패 뒤 한 번 더 묻기까지 기다리는 시간(ms).
+ *
+ * 공개 서버는 잠깐 몰리면 막았다가 곧 풀어 준다. 실패를 그대로 두면 그 구간이
+ * '이동 정보 없음 · 탭해서 입력'이 되어, 사용자가 멀쩡한 구간에 직접 시간을
+ * 적게 된다. 한 번만 다시 묻는다 — 계속 두드리면 더 오래 막힌다.
+ */
+const RETRY_DELAY_MS = 1500;
+
+async function ask(from: Coord, to: Coord, mode: TransportMode, departAt?: string) {
+  const release = await acquireSlot();
+  try {
+    return await getRouteProviderFor(from).route({ from, to, mode, departAt });
+  } finally {
+    release();
+  }
+}
+
 export async function fetchRoute(
   from: Coord,
   to: Coord,
@@ -64,16 +85,26 @@ export async function fetchRoute(
   const key = cacheKey(from, to, mode, departAt);
   const hit = cache.get(key);
   if (hit) return hit;
+  const running = inflight.get(key);
+  if (running) return running;
 
-  const release = await acquireSlot();
-  try {
-    const provider = getRouteProviderFor(from);
-    const result = await provider.route({ from, to, mode, departAt });
+  const job = (async () => {
+    let result = await ask(from, to, mode, departAt);
+    // 도보·차량(Valhalla)은 프로바이더가 이미 한 번 다시 묻는다. 대중교통만 여기서.
+    if (mode === 'transit' && !result.available && result.reason === 'lookup_failed') {
+      // 기다리는 동안 자리를 쥐고 있지 않는다 — 다른 구간 조회는 계속 나간다
+      await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
+      result = await ask(from, to, mode, departAt);
+    }
     // 조회 실패(네트워크·스로틀링)는 담아 두지 않는다. 담아 두면 한 번 막힌
     // 구간이 앱을 새로 열 때까지 계속 '정보 없음'으로 남는다.
     if (result.available || result.reason !== 'lookup_failed') cache.set(key, result);
     return result;
+  })();
+  inflight.set(key, job);
+  try {
+    return await job;
   } finally {
-    release();
+    inflight.delete(key);
   }
 }
