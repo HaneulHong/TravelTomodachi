@@ -254,6 +254,7 @@ create trigger on_auth_user_created
 | [`supabase/realtime.sql`](../supabase/realtime.sql) | 실시간 동기화 켜기 |
 | [`supabase/sharing.sql`](../supabase/sharing.sql) | 누가 고쳤는지, 권한 구멍 막기, 초대 코드 바꾸기 (새 DB면 schema.sql에 이미 있음 — 돌려도 무해) |
 | [`supabase/profile-tag.sql`](../supabase/profile-tag.sql) | 닉네임 번호(#1234) |
+| [`supabase/account-delete.sql`](../supabase/account-delete.sql) | 회원 탈퇴 함수 + "누가 고쳤는지" 트리거가 탈퇴를 막지 않게 (새 DB면 schema.sql에 이미 있음) |
 | [`supabase/security-hardening.sql`](../supabase/security-hardening.sql) | 보안 보강 — 프로필은 같은 여행 멤버만, 멤버 직접 추가 금지, 후보 장소 사칭 금지 (새 DB면 schema.sql에 이미 있음) |
 
 > 위 프로필 SQL의 읽기 정책("로그인한 누구나")은 schema.sql·security-hardening.sql이
