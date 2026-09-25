@@ -16,6 +16,19 @@
       "port": 5173,
       "autoPort": false,
       "url": "http://localhost:5173"
+    },
+    {
+      "name": "prod-preview",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "vite",
+        "preview",
+        "--port",
+        "5173",
+        "--strictPort"
+      ],
+      "port": 5173,
+      "autoPort": false
     }
   ]
 }
