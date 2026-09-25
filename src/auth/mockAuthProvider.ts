@@ -100,6 +100,12 @@ export const mockAuthProvider: AuthProvider = {
     write(null);
   },
 
+  // 개발용: 이 브라우저의 세션을 지우는 것으로 탈퇴를 흉내 낸다
+  async deleteAccount(): Promise<void> {
+    session = null;
+    write(null);
+  },
+
   async updateNickname(nickname: string): Promise<Account> {
     if (!session) throw new Error('로그인 상태가 아닙니다');
     const problem = nicknameProblem(nickname);

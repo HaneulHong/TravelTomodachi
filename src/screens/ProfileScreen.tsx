@@ -6,7 +6,9 @@
  */
 
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { AppHeader } from '@/components/AppHeader';
+import { ConfirmSheet } from '@/components/ConfirmSheet';
 import { initialOf, NICKNAME_MAX, nicknameMessage, nicknameProblem } from '@/auth';
 import { versionLabel } from '@/config';
 import { LOCALE_NAME, LOCALES, useLocaleSettings, useT } from '@/i18n';
@@ -66,11 +68,13 @@ export function ProfileScreen() {
   const account = useAuthStore((s) => s.account);
   const updateNickname = useAuthStore((s) => s.updateNickname);
   const signOut = useAuthStore((s) => s.signOut);
+  const deleteAccount = useAuthStore((s) => s.deleteAccount);
   const error = useAuthStore((s) => s.error);
   const t = useT();
 
   const [draft, setDraft] = useState(account?.nickname ?? '');
   const [saved, setSaved] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   if (!account) {
     return (
@@ -145,11 +149,41 @@ export function ProfileScreen() {
 
           <LanguageSetting />
 
-          <p className="signin__privacy">{t.profile.privacy}</p>
+          <p className="signin__privacy">
+            {t.profile.privacy}{' '}
+            <Link to="/privacy" className="signin__link">
+              {t.profile.privacyLink}
+            </Link>
+          </p>
+
+          {/*
+            탈퇴는 맨 아래에, 눈에 덜 띄게. 숨기지는 않는다 — 개인정보를 지울 방법이
+            화면에 있어야 한다(개인정보 보호법). 누르면 무엇이 어떻게 되는지 먼저 보여준다.
+          */}
+          <button className="profile__delete" onClick={() => setConfirmDelete(true)}>
+            {t.profile.deleteAccount}
+          </button>
 
           <p className="signin__version">TravelTomodachi {versionLabel(t.common.beta)}</p>
         </div>
       </main>
+
+      {confirmDelete && (
+        <ConfirmSheet
+          title={t.profile.deleteTitle}
+          confirmLabel={t.profile.deleteConfirm}
+          danger
+          onClose={() => setConfirmDelete(false)}
+          // 끝나면 계정이 사라져 App이 로그인 화면으로 바꾼다 — 따로 이동하지 않는다
+          onConfirm={deleteAccount}
+        >
+          <ul className="confirm__list">
+            {t.profile.deleteBody.map((line) => (
+              <li key={line}>{line}</li>
+            ))}
+          </ul>
+        </ConfirmSheet>
+      )}
     </div>
   );
 }

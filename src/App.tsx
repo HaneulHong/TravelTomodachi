@@ -26,6 +26,7 @@ import { InviteScreen } from '@/screens/InviteScreen';
 import { NicknameSetupScreen } from '@/screens/NicknameSetupScreen';
 import { OfflineBar } from '@/components/OfflineBar';
 import { ProfileScreen } from '@/screens/ProfileScreen';
+import { PrivacyScreen } from '@/screens/PrivacyScreen';
 import { SignInScreen } from '@/screens/SignInScreen';
 import { UnavailableScreen } from '@/screens/UnavailableScreen';
 import { hasBackend } from '@/supabase/client';
@@ -73,6 +74,17 @@ export function App() {
   const account = useAuthStore((s) => s.account);
   const restore = useAuthStore((s) => s.restore);
   const t = useT();
+
+  /*
+   * 로그인 전 화면(로그인·처리방침)은 라우터 밖이라 주소가 바뀌어도 다시 그려지지
+   * 않는다. 해시를 직접 지켜본다. 로그인 뒤에는 HashRouter가 맡는다.
+   */
+  const [hash, setHash] = useState(() => window.location.hash);
+  useEffect(() => {
+    const onHash = () => setHash(window.location.hash);
+    window.addEventListener('hashchange', onHash);
+    return () => window.removeEventListener('hashchange', onHash);
+  }, []);
 
   const loadTrips = useTripStore((s) => s.load);
 
@@ -161,6 +173,17 @@ export function App() {
   if (!hasBackend && import.meta.env.PROD) return <UnavailableScreen />;
 
   if (!account) {
+    /*
+     * 처리방침은 로그인 전에도 읽을 수 있어야 한다 — 가입하기 전에 읽는 문서다.
+     * 로그인 전 화면은 라우터 밖이라, 이 경우만 라우터로 감싸 띄운다.
+     */
+    if (hash.startsWith('#/privacy')) {
+      return (
+        <HashRouter>
+          <PrivacyScreen />
+        </HashRouter>
+      );
+    }
     // 초대 링크로 들어왔다면 로그인 동안 코드를 붙잡아 둔다
     const code = inviteCodeFromHash(window.location.hash);
     if (code) stashInvite(code);
@@ -194,6 +217,7 @@ export function App() {
         <Route path="/trip/:tripId/ideas" element={<IdeasScreen />} />
         <Route path="/trip/:tripId/members" element={<MembersScreen />} />
         <Route path="/profile" element={<ProfileScreen />} />
+        <Route path="/privacy" element={<PrivacyScreen />} />
         <Route path="/invite" element={<InviteRoute />} />
         <Route path="/invite/:code" element={<InviteRoute />} />
         <Route path="*" element={<Navigate to="/" replace />} />

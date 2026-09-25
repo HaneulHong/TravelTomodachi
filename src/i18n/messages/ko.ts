@@ -93,7 +93,8 @@ export const ko = {
     invited: '여행에 초대받았습니다. 로그인하면 바로 그 일정으로 들어갑니다.',
     devNote:
       '아직 백엔드가 연결되지 않아 **이 브라우저에만** 세션이 남습니다. 친구 초대와 공동 편집은 Supabase를 연결한 뒤에 동작합니다.',
-    privacy: '닉네임 외에는 아무것도 저장하지 않습니다. 이메일과 실명은 받지 않습니다.',
+    privacy: "앱에서 다른 사람에게 보이는 건 닉네임뿐입니다. 로그인에 쓰인 이메일은 보이지 않습니다.",
+    privacyLink: "개인정보 처리방침",
   },
 
   unavailable: {
@@ -432,13 +433,27 @@ export const ko = {
     saved: '저장했습니다',
     saveNickname: '닉네임 저장',
     signOut: '로그아웃',
-    privacy: '저장하는 정보는 닉네임뿐입니다. 이메일과 실명은 받지 않습니다.',
+    privacy: "앱에서 다른 사람에게 보이는 건 닉네임뿐입니다. 로그인에 쓰인 이메일은 보이지 않습니다.",
+    privacyLink: "개인정보 처리방침",
     /** 처음 가입할 때 붙는 닉네임. 가입한 사람의 언어로 정해진다. */
     defaultNickname: '여행자',
     language: '언어',
     languageAuto: '기기 언어 따르기',
     languageAutoHint: (name: string) => `지금 기기 언어: ${name}`,
     languageManualHint: '이 기기에서만 고른 언어로 보입니다.',
+    deleteAccount: "회원 탈퇴",
+    deleteTitle: "회원 탈퇴할까요?",
+    deleteConfirm: "탈퇴하기",
+    /** 탈퇴하면 무엇이 어떻게 되는지 — 확인 창에 한 줄씩 */
+    deleteBody: ["닉네임과 로그인 정보(이메일 등)가 바로 지워지고, 되돌릴 수 없습니다.", "내가 만든 여행은 함께하는 멤버 중 가장 먼저 들어온 사람에게 넘어갑니다. 혼자인 여행은 지워집니다.", "같이 쓰던 여행에 남긴 일정·댓글·지출은 남고, 작성자는 「나간 멤버」로 보입니다."],
+    deleteFailed: "탈퇴하지 못했습니다",
+  },
+
+  privacyPage: {
+    title: "개인정보 처리방침",
+    effective: "시행일",
+    /** 번역본이면 공식 문서가 한국어라는 안내. 한국어는 null */
+    authoritative: null as string | null,
   },
 
   nicknameSetup: {

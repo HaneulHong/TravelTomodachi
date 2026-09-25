@@ -174,6 +174,19 @@ export function createSupabaseAuthProvider(): AuthProvider {
       await client.auth.signOut();
     },
 
+    async deleteAccount(): Promise<void> {
+      /*
+       * 로그인 계정은 앱이 직접 지울 수 없다(service_role 키가 필요한데 클라이언트에
+       * 두면 안 된다). "자기 자신만" 지우는 DB 함수를 부른다.
+       */
+      const { error } = await client.rpc('delete_my_account');
+      if (error) {
+        throw new Error(`${getMessages().profile.deleteFailed}: ${translateServerError(error.message)}`);
+      }
+      // 서버에서는 이미 지워졌다. 이 기기의 세션만 치운다(서버 로그아웃은 계정이 없어 실패한다).
+      await client.auth.signOut({ scope: 'local' }).catch(() => {});
+    },
+
     async updateNickname(nickname: string): Promise<Account> {
       const problem = nicknameProblem(nickname);
       if (problem) throw new Error(nicknameMessage(problem, getMessages().nickname));
