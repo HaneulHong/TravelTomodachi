@@ -44,18 +44,31 @@ export function MapCanvas({ renderer, stops, path, onStopClick }: Props) {
    * 렌더러가 교체되면 그 실패는 더 이상 유효하지 않기 때문이다. 별도의 리셋
    * effect를 두면 새 렌더러를 한 번 마운트했다가 되돌리는 깜빡임이 생긴다.
    */
-  const [failure, setFailure] = useState<{ rendererId: string; reason: string } | null>(null);
-  const fallbackReason = failure?.rendererId === renderer.id ? failure.reason : null;
+  const [failure, setFailure] = useState<{
+    rendererId: string;
+    /** 실패한 렌더러 id들 (카카오 → Google 순서로 쌓인다) */
+    failedIds: string[];
+    reason: string;
+  } | null>(null);
+  const failedIds = failure?.rendererId === renderer.id ? failure.failedIds : [];
+  const fallbackReason = failedIds.length > 0 ? failure!.reason : null;
+  const failedKey = failedIds.join('|');
 
   /**
-   * 실제로 화면에 띄울 렌더러. SDK가 실패했으면 개략도로 한 단계 내려간다.
+   * 실제로 화면에 띄울 렌더러. SDK가 실패하면 한 단계씩 내려간다:
+   * 카카오 → Google(renderer.fallback) → 간략 지도.
    * useMemo가 필요한 이유는 아래 mount effect의 의존성이라서다 — 매 렌더마다
    * 새 객체가 나오면 지도를 계속 다시 마운트한다.
    */
-  const active = useMemo(
-    () => (fallbackReason ? createSchematicMapRenderer(renderer) : renderer),
-    [renderer, fallbackReason],
-  );
+  const active = useMemo(() => {
+    const failed = failedKey ? failedKey.split('|') : [];
+    let r: MapRenderer = renderer;
+    while (failed.includes(r.id)) {
+      r = r.fallback?.configured ? r.fallback : createSchematicMapRenderer(renderer);
+    }
+    return r;
+  }, [renderer, failedKey]);
+  const onSchematic = active.id.startsWith('schematic');
 
   // 콜백이 매 렌더마다 새로 만들어져도 지도를 다시 만들지 않도록 ref에 담는다
   const clickRef = useRef(onStopClick);
@@ -68,8 +81,13 @@ export function MapCanvas({ renderer, stops, path, onStopClick }: Props) {
   const failRef = useRef<(err: unknown) => void>(() => {});
   failRef.current = (err: unknown) => {
     const message = err instanceof Error ? err.message : '지도를 불러오지 못했습니다';
-    if (!fallbackReason && renderer.configured) {
-      setFailure({ rendererId: renderer.id, reason: message });
+    // 실제 지도가 실패했으면 다음 단계로. 간략 지도마저 실패해야 에러 화면이다.
+    if (!onSchematic && active.configured) {
+      setFailure({
+        rendererId: renderer.id,
+        failedIds: [...failedIds, active.id],
+        reason: message,
+      });
       return;
     }
     setError(message);
@@ -190,12 +208,20 @@ export function MapCanvas({ renderer, stops, path, onStopClick }: Props) {
         배포된 서비스에서는 설정법 대신 "간략 지도로 보여준다"만 말한다.
         사용자가 할 수 있는 일이 없는데 환경변수 이름을 보여줘 봐야 불안만 준다.
       */}
-      {!SHOW_DEV_HINTS && (fallbackReason || !renderer.configured) && (
+      {!SHOW_DEV_HINTS && onSchematic && (
         <div className="mapstage__note">{t.map.fallback}</div>
       )}
 
+      {/* 카카오가 실패해 Google로 대신 그린 경우 — 개발 중에만 알린다(사용자에겐 지도가 보인다) */}
+      {SHOW_DEV_HINTS && fallbackReason && !onSchematic && (
+        <div className="mapstage__note mapstage__note--warn">
+          ⚠ {renderer.label}을 불러오지 못해 <strong>{active.label}</strong>로 대신 그렸습니다 —{' '}
+          {fallbackReason}
+        </div>
+      )}
+
       {/* SDK가 실패해서 내려온 경우: 키는 있으니 환경변수 안내는 맞지 않는다 */}
-      {SHOW_DEV_HINTS && fallbackReason && (
+      {SHOW_DEV_HINTS && fallbackReason && onSchematic && (
         <div className="mapstage__note">
           개략도입니다. <strong>{renderer.label}</strong> 타일을 불러오지 못했습니다 —{' '}
           {fallbackReason} 동선과 순서는 아래에서 그대로 확인할 수 있습니다. 설정 확인은{' '}
@@ -213,8 +239,8 @@ export function MapCanvas({ renderer, stops, path, onStopClick }: Props) {
       )}
 
       {/* 지도는 떴지만 일부가 조용히 빠진 경우 (예: Map ID 누락 → 마커 없음) */}
-      {SHOW_DEV_HINTS && !fallbackReason && active.configured && status === 'ready' && renderer.warning && (
-        <div className="mapstage__note mapstage__note--warn">⚠ {renderer.warning}</div>
+      {SHOW_DEV_HINTS && !fallbackReason && active.configured && status === 'ready' && active.warning && (
+        <div className="mapstage__note mapstage__note--warn">⚠ {active.warning}</div>
       )}
 
       {active.configured && status === 'ready' && (

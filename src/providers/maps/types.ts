@@ -76,6 +76,12 @@ export interface MapRenderer {
    * 화면에 단서가 없으면 콘솔을 열기 전까지 원인을 알 수 없기 때문이다.
    */
   readonly warning?: string;
+  /**
+   * 이 렌더러가 실패하면 간략 지도로 가기 전에 먼저 시도할 실제 지도.
+   * 국내 일정의 카카오가 실패하면 Google로 — Google도 한국을 그린다(디테일이 얕을 뿐).
+   * 카카오 도메인 등록이 빠지는 일이 실제로 있었는데, 그때 간략 지도만 보였다.
+   */
+  readonly fallback?: MapRenderer;
   mount(container: HTMLElement, options?: MountOptions): Promise<MapHandle>;
 }
 

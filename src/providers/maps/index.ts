@@ -72,10 +72,26 @@ export function getMapRenderer(region: MapRegion): MapRenderer {
   const cached = rendererCache.get(region);
   if (cached) return cached;
 
-  const real = region === 'KR' ? kakaoRenderer : googleRenderer;
-  const chosen = real.configured ? real : createSchematicMapRenderer(real);
-  rendererCache.set(region, chosen);
-  return chosen;
+  rendererCache.set(region, pickRenderer(region));
+  return rendererCache.get(region)!;
+}
+
+/**
+ * 국내: 카카오 → (실패하면) Google → 간략 지도
+ * 해외: Google → 간략 지도
+ *
+ * 카카오 키가 아예 없어도 Google 키가 있으면 Google로 그린다.
+ * 카카오는 해외를 못 그리므로 반대 방향(Google 실패 → 카카오)은 없다.
+ */
+function pickRenderer(region: MapRegion): MapRenderer {
+  if (region === 'GLOBAL') {
+    return googleRenderer.configured ? googleRenderer : createSchematicMapRenderer(googleRenderer);
+  }
+  if (kakaoRenderer.configured) {
+    return googleRenderer.configured ? { ...kakaoRenderer, fallback: googleRenderer } : kakaoRenderer;
+  }
+  if (googleRenderer.configured) return googleRenderer;
+  return createSchematicMapRenderer(kakaoRenderer);
 }
 
 /** 실제 렌더러(키 유무와 무관). 설정 안내 문구를 보여줄 때 쓴다. */
