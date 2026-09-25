@@ -11,6 +11,7 @@
  */
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { effectiveLeg, recommendMode, type ModeMinutes } from '@/domain/legChoice';
 import { addMinutesToWallClock, wallClockToInstant } from '@/domain/time';
 import type { Coord, Item, TransportMode } from '@/domain/types';
 import { resolveLegRegion } from '@/providers';
@@ -21,26 +22,24 @@ export interface LegInfo {
   /** 이 구간이 끝나는 항목의 id */
   toItemId: string;
   status: 'idle' | 'loading' | 'ready' | 'unavailable' | 'manual' | 'cross_border';
-  /** 수단별 조회 결과 */
+  /** 수단별 조회 결과 — 직접 입력한 구간도 비교용으로 조회한다 */
   results: Partial<Record<TransportMode, RouteResult>>;
-  /** 추천 수단 — 이용 가능한 것 중 가장 빠른 것 */
+  /** 조회 결과만 보고 고른 추천 수단 */
   recommended?: TransportMode;
+  /** 화면에 보일 수단 — 사용자가 고른 게 있으면 그것, 없으면 추천 */
+  mode?: TransportMode;
+  /** 화면에 보일 시간(분). 모르면 비어 있다. */
+  minutes?: number;
   /** 대중교통 데이터가 없어서 추천에서 빠졌는지 */
   transitMissing: boolean;
+  /**
+   * 앞뒤 일정 중에 장소(좌표)가 없어서 계산을 못 하는지. 이때는 "직접 입력"보다
+   * "장소를 넣으면 계산된다"가 맞는 안내다 — 새 일정을 장소 없이 만들면 늘 이 상태다.
+   */
+  missingPlace?: boolean;
 }
 
 const MODES: TransportMode[] = ['walk', 'transit', 'car'];
-
-/**
- * 이보다 긴 도보는 추천하지 않는다.
- *
- * 다른 수단 조회가 실패하면 도보만 남는데, 그대로 두면 "도보 15시간 7분"이
- * 추천으로 올라온다. 사실이긴 해도 일정으로는 쓸모가 없고, 추천이라는 말이
- * 붙는 순간 오해를 부른다. 이럴 때는 추천을 비워 '이동 정보 없음 · 탭해서
- * 입력'으로 떨어뜨리는 게 이 앱의 원래 폴백 정책과도 맞는다.
- * (값 자체는 수단 비교 칸에 그대로 보여준다 — 숨기지는 않는다.)
- */
-const WALK_RECOMMEND_LIMIT_MIN = 120;
 
 /**
  * 앞 항목이 우리를 내려준 곳.
@@ -65,28 +64,53 @@ function departureOf(from: Item, timezone?: string): string | undefined {
   return wallClockToInstant(from.date, leaveAt, timezone);
 }
 
-function pickRecommended(results: Partial<Record<TransportMode, RouteResult>>):
-  | TransportMode
-  | undefined {
-  let best: { mode: TransportMode; minutes: number } | undefined;
+function minutesOf(results: Partial<Record<TransportMode, RouteResult>>): ModeMinutes {
+  const out: ModeMinutes = {};
   for (const mode of MODES) {
     const r = results[mode];
-    if (!r || !r.available) continue;
-    if (mode === 'walk' && r.minutes > WALK_RECOMMEND_LIMIT_MIN) continue;
-    // 도보 20분 이내면 도보를 선호한다 — 환승 대기까지 합치면
-    // 대중교통이 명목상 빨라도 실제로는 더 번거롭다.
-    const weighted = mode === 'walk' && r.minutes <= 20 ? r.minutes - 5 : r.minutes;
-    if (!best || weighted < best.minutes) best = { mode, minutes: weighted };
+    if (r?.available) out[mode] = r.minutes;
   }
-  return best?.mode;
+  return out;
+}
+
+/** 조회 결과와 사용자의 선택을 합쳐 구간 하나의 표시 상태를 만든다. */
+function toInfo(
+  to: Item,
+  results: Partial<Record<TransportMode, RouteResult>>,
+  loading: boolean,
+): LegInfo {
+  const byMode = minutesOf(results);
+  const shown = effectiveLeg(to.leg, byMode);
+  const transit = results.transit;
+  const status: LegInfo['status'] = shown.manual
+    ? 'manual'
+    : shown.mode && shown.minutes !== undefined
+      ? 'ready'
+      : loading
+        ? 'loading'
+        : 'unavailable';
+  return {
+    toItemId: to.id,
+    status,
+    results,
+    recommended: recommendMode(byMode),
+    mode: shown.mode,
+    minutes: shown.minutes,
+    transitMissing: !!transit && !transit.available && transit.reason === 'no_transit_data',
+  };
 }
 
 export function useDayLegs(items: Item[], timezone?: string): Map<string, LegInfo> {
-  const [legs, setLegs] = useState<Map<string, LegInfo>>(new Map());
+  /** 조회 결과만 들고 있는다. 사용자의 선택은 매 렌더 items에서 다시 읽는다. */
+  const [fetched, setFetched] = useState<Map<string, Partial<Record<TransportMode, RouteResult>>>>(
+    new Map(),
+  );
   const requestId = useRef(0);
 
   // 좌표 쌍이나 출발 시각이 바뀔 때만 다시 조회한다.
   // 시각을 빼면 일정 시간을 바꿔도 예전 시간대의 대중교통 결과가 그대로 남는다.
+  // 수단 선택·직접 입력은 조회와 무관하므로 여기 넣지 않는다 — 고를 때마다 다시
+  // 조회하면 결과가 '조회 중'으로 깜빡이고 남의 서버에 요청만 는다.
   const signature = useMemo(
     () =>
       items
@@ -94,7 +118,7 @@ export function useDayLegs(items: Item[], timezone?: string): Map<string, LegInf
           (i) =>
             `${i.id}:${i.coord ? `${i.coord.lat},${i.coord.lng}` : '-'}` +
             `>${i.toCoord ? `${i.toCoord.lat},${i.toCoord.lng}` : '-'}` +
-            `:${i.leg?.isManual ? 'm' : ''}:${i.date}@${i.localTime ?? ''}+${i.durationMin ?? ''}`,
+            `:${i.date}@${i.localTime ?? ''}+${i.durationMin ?? ''}`,
         )
         .join('|') + `#${timezone ?? ''}`,
     [items, timezone],
@@ -103,106 +127,64 @@ export function useDayLegs(items: Item[], timezone?: string): Map<string, LegInf
   useEffect(() => {
     const myRequest = requestId.current + 1;
     requestId.current = myRequest;
+    setFetched(new Map());
 
-    const pairs: { from: Item; to: Item }[] = [];
+    const pending: { from: Item; to: Item }[] = [];
     for (let i = 1; i < items.length; i += 1) {
       const from = items[i - 1]!;
       const to = items[i]!;
-      pairs.push({ from, to });
-    }
-
-    // 초기 상태를 먼저 깔아둔다 — 로딩 스켈레톤이 보이게
-    const initial = new Map<string, LegInfo>();
-    for (const { from, to } of pairs) {
-      if (to.leg?.isManual) {
-        initial.set(to.id, {
-          toItemId: to.id,
-          status: 'manual',
-          results: {},
-          recommended: to.leg.mode,
-          transitMissing: false,
-        });
-        continue;
-      }
       const fromCoord = arrivalOf(from);
-      const { crossBorder } = resolveLegRegion(fromCoord, to.coord);
-      if (!fromCoord || !to.coord) {
-        // 항공편처럼 좌표가 없는 항목이 끼면 조회 자체를 하지 않는다
-        initial.set(to.id, {
-          toItemId: to.id,
-          status: 'unavailable',
-          results: {},
-          transitMissing: false,
-        });
-        continue;
-      }
-      if (crossBorder) {
-        initial.set(to.id, {
-          toItemId: to.id,
-          status: 'cross_border',
-          results: {},
-          transitMissing: false,
-        });
-        continue;
-      }
-      initial.set(to.id, {
-        toItemId: to.id,
-        status: 'loading',
-        results: {},
-        transitMissing: false,
-      });
+      if (!fromCoord || !to.coord) continue;
+      if (resolveLegRegion(fromCoord, to.coord).crossBorder) continue;
+      pending.push({ from, to });
     }
-    setLegs(initial);
-
-    const pending = pairs.filter(({ from, to }) => {
-      if (to.leg?.isManual) return false;
-      if (!arrivalOf(from) || !to.coord) return false;
-      return !resolveLegRegion(arrivalOf(from), to.coord).crossBorder;
-    });
-
     if (pending.length === 0) return;
 
-    void (async () => {
-      const entries = await Promise.all(
-        pending.map(async ({ from, to }) => {
-          const results: Partial<Record<TransportMode, RouteResult>> = {};
-          await Promise.all(
-            MODES.map(async (mode) => {
-              results[mode] = await fetchRoute(
-                arrivalOf(from)!,
-                to.coord!,
-                mode,
-                departureOf(from, timezone),
-              );
-            }),
-          );
-          const transitResult = results.transit;
-          const transitMissing =
-            !!transitResult && !transitResult.available && transitResult.reason === 'no_transit_data';
-          const recommended = pickRecommended(results);
-          const info: LegInfo = {
-            toItemId: to.id,
-            status: recommended ? 'ready' : 'unavailable',
-            results,
-            recommended,
-            transitMissing,
-          };
-          return info;
-        }),
-      );
-
-      // 늦게 도착한 옛 요청은 버린다
-      if (requestId.current !== myRequest) return;
-
-      setLegs((prev) => {
-        const next = new Map(prev);
-        for (const info of entries) next.set(info.toItemId, info);
-        return next;
-      });
-    })();
-    // signature가 좌표·시각·수동여부 변화를 모두 담고 있다
+    for (const { from, to } of pending) {
+      void (async () => {
+        const results: Partial<Record<TransportMode, RouteResult>> = {};
+        await Promise.all(
+          MODES.map(async (mode) => {
+            results[mode] = await fetchRoute(
+              arrivalOf(from)!,
+              to.coord!,
+              mode,
+              departureOf(from, timezone),
+            );
+          }),
+        );
+        // 늦게 도착한 옛 요청은 버린다
+        if (requestId.current !== myRequest) return;
+        // 구간마다 도착하는 대로 채운다 — 가장 느린 구간을 기다리지 않는다
+        setFetched((prev) => new Map(prev).set(to.id, results));
+      })();
+    }
+    // signature가 좌표·시각 변화를 모두 담고 있다
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [signature]);
 
-  return legs;
+  return useMemo(() => {
+    const legs = new Map<string, LegInfo>();
+    for (let i = 1; i < items.length; i += 1) {
+      const from = items[i - 1]!;
+      const to = items[i]!;
+      const fromCoord = arrivalOf(from);
+      const { crossBorder } = resolveLegRegion(fromCoord, to.coord);
+      const canQuery = !!fromCoord && !!to.coord && !crossBorder;
+      const results = fetched.get(to.id);
+
+      if (crossBorder && !to.leg?.isManual) {
+        legs.set(to.id, { toItemId: to.id, status: 'cross_border', results: {}, transitMissing: false });
+        continue;
+      }
+      // 조회할 수 없는 구간(좌표 없음·국경)도 직접 입력한 값은 보여준다
+      const info = toInfo(to, results ?? {}, canQuery && !results);
+      // 항공편은 원래 좌표가 없을 수 있다 — 장소를 넣으라고 할 대상이 아니다
+      if ((!fromCoord && from.kind !== 'flight') || (!to.coord && to.kind !== 'flight')) {
+        info.missingPlace = true;
+      }
+      legs.set(to.id, info);
+    }
+    return legs;
+  }, [items, fetched]);
 }

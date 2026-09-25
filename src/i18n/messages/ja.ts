@@ -67,6 +67,7 @@ export const ja: Messages = {
     transitNoRoute: '路線なし',
     crossBorder: '国際区間 · 手入力',
     crossBorderShort: '国際区間',
+    needsPlace: '場所を入れると自動計算',
     unknownTap: '移動情報なし · タップして入力',
     unknown: '移動情報なし',
     manual: '手入力',

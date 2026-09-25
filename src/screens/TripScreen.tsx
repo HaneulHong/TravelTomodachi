@@ -83,20 +83,13 @@ function LegRow({ info }: { info?: LegInfo }) {
 
         {info?.status === 'loading' && <span className="tl-leg__skel" />}
 
-        {info?.status === 'manual' && info.recommended && (
-          <TransportChip mode={info.recommended} manual />
+        {info?.status === 'manual' && info.mode && (
+          <TransportChip mode={info.mode} minutes={info.minutes} manual />
         )}
 
-        {info?.status === 'ready' && info.recommended && (
+        {info?.status === 'ready' && info.mode && (
           <>
-            <TransportChip
-              mode={info.recommended}
-              minutes={
-                info.results[info.recommended]?.available
-                  ? (info.results[info.recommended] as { minutes: number }).minutes
-                  : undefined
-              }
-            />
+            <TransportChip mode={info.mode} minutes={info.minutes} />
             {info.transitMissing && (
               <span className="chip chip--warn">
                 <AlertIcon size={11} />
@@ -114,7 +107,7 @@ function LegRow({ info }: { info?: LegInfo }) {
         )}
 
         {info?.status === 'unavailable' && (
-          <span className="chip">{t.leg.unknownTap}</span>
+          <span className="chip">{info.missingPlace ? t.leg.needsPlace : t.leg.unknownTap}</span>
         )}
       </div>
     </div>

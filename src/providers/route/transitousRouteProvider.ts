@@ -84,8 +84,15 @@ interface MotisGeometry {
   precision?: number;
 }
 
+interface MotisPlace {
+  lat?: number;
+  lon?: number;
+}
+
 export interface MotisLeg {
   mode?: string;
+  from?: MotisPlace;
+  to?: MotisPlace;
   duration?: number;
   distance?: number;
   legGeometry?: MotisGeometry;
@@ -117,6 +124,20 @@ function lengthOf(line: Coord[]): number {
     total += haversineMeters(line[i - 1]!, line[i]!);
   }
   return total;
+}
+
+/**
+ * 대중교통 구간의 경로선이 믿을 만한지.
+ *
+ * 탄 구간의 선이 정류장 사이 직선거리보다 터무니없이 길면(노선 전체 모양이 오거나
+ * 좌표가 어긋난 경우) 쓰지 않는다. 실제로 명동 → 경복궁(2.7km)이 "대중교통 80km"로
+ * 보인 적이 있다. 그럴 때는 정류장 두 점을 잇고 거리도 직선으로 잰다.
+ */
+const DETOUR_LIMIT = 3;
+const DETOUR_SLACK_M = 1000;
+
+function placeOf(p: MotisPlace | undefined): Coord | undefined {
+  return p?.lat !== undefined && p.lon !== undefined ? { lat: p.lat, lng: p.lon } : undefined;
 }
 
 function isTransitLeg(leg: MotisLeg): boolean {
@@ -208,12 +229,22 @@ export function parsePlan(data: MotisPlan, query: RouteQuery): RouteResult {
       if (name && lines[lines.length - 1] !== name) lines.push(name);
     }
     const encoded = leg.legGeometry?.points;
-    const shape = encoded
+    let shape = encoded
       ? decodePolyline(encoded, leg.legGeometry?.precision ?? DEFAULT_PRECISION)
       : [];
+    let length = lengthOf(shape);
+    const a = placeOf(leg.from);
+    const b = placeOf(leg.to);
+    if (isTransitLeg(leg) && a && b) {
+      const straight = haversineMeters(a, b);
+      if (shape.length < 2 || length > straight * DETOUR_LIMIT + DETOUR_SLACK_M) {
+        shape = [a, b];
+        length = straight;
+      }
+    }
     line.push(...shape);
-    // 대중교통 구간은 distance가 비어 오는 경우가 있어 좌표로 직접 잰다.
-    distance += leg.distance ?? lengthOf(shape);
+    // 대중교통 구간은 distance가 오지 않는다(MOTIS: 걷기 등에만 준다) — 좌표로 잰다.
+    distance += isTransitLeg(leg) ? length : (leg.distance ?? length);
   }
 
   return {

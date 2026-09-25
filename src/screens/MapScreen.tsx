@@ -98,7 +98,7 @@ export function MapScreen() {
       // 앞 지점에서 이 항목까지 — 조회된 경로가 있으면 실선, 없으면 점선
       if (cursor) {
         const info = legs.get(item.id);
-        const mode = info?.recommended;
+        const mode = info?.mode;
         const result = mode ? info?.results[mode] : undefined;
         const shape = result?.available ? result.polyline : undefined;
 
@@ -195,18 +195,11 @@ export function MapScreen() {
                     </div>
                     <div className="stop-gap__body">
                       {info?.status === 'loading' && <span className="tl-leg__skel" />}
-                      {info?.status === 'manual' && info.recommended && (
-                        <TransportChip mode={info.recommended} manual />
+                      {info?.status === 'manual' && info.mode && (
+                        <TransportChip mode={info.mode} minutes={info.minutes} manual />
                       )}
-                      {info?.status === 'ready' && info.recommended && (
-                        <TransportChip
-                          mode={info.recommended}
-                          minutes={
-                            info.results[info.recommended]?.available
-                              ? (info.results[info.recommended] as { minutes: number }).minutes
-                              : undefined
-                          }
-                        />
+                      {info?.status === 'ready' && info.mode && (
+                        <TransportChip mode={info.mode} minutes={info.minutes} />
                       )}
                       {info?.status === 'cross_border' && (
                         <span className="chip chip--warn">
@@ -250,7 +243,7 @@ export function MapScreen() {
                           return (
                             <div
                               key={mode}
-                              className={`mode${info?.recommended === mode ? ' mode--active' : ''}${
+                              className={`mode${info?.mode === mode ? ' mode--active' : ''}${
                                 off ? ' mode--off' : ''
                               }`}
                             >

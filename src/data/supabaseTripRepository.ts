@@ -181,8 +181,9 @@ function toItem(row: ItemRow): Item {
     updatedBy: row.updated_by ?? undefined,
     updatedAt: row.updated_at ?? undefined,
     /*
-     * 저장된 leg은 사용자가 직접 고친 값뿐이다. 길찾기 조회 결과는 캐시라
-     * DB에 넣지 않으므로, 여기서 복원되는 건 항상 isManual = true다.
+     * 저장된 leg은 사용자가 고른 것뿐이다 — 수단만 골랐거나(isManual=false,
+     * 시간은 조회를 따라감) 시간까지 직접 고쳤거나(isManual=true).
+     * 길찾기 조회 결과 자체는 캐시라 DB에 넣지 않는다.
      */
     leg:
       row.leg_mode && row.leg_minutes !== null
@@ -223,15 +224,14 @@ function toItemRow(patch: Partial<Item>): Record<string, unknown> {
   }
 
   /*
-   * 사용자가 직접 고친 값만 저장한다. 조회 결과(isManual=false)가 오면
-   * 컬럼을 비운다 — 안 그러면 캐시가 DB에 눌러앉아 다음에 열 때 조회
-   * 결과 대신 옛날 값이 뜬다.
+   * 사용자가 고른 수단(과 직접 고친 시간)을 저장한다. 수단만 고른 경우의
+   * leg_minutes는 조회가 안 될 때만 보이는 마지막 값이다 — 조회가 되면 화면은
+   * 늘 새 조회 시간을 쓴다(domain/legChoice.ts). 비우면(undefined) 자동 추천으로.
    */
   if ('leg' in patch) {
-    const manual = patch.leg?.isManual ? patch.leg : undefined;
-    row.leg_mode = manual?.mode ?? null;
-    row.leg_minutes = manual?.minutes ?? null;
-    row.leg_is_manual = Boolean(manual);
+    row.leg_mode = patch.leg?.mode ?? null;
+    row.leg_minutes = patch.leg?.minutes ?? null;
+    row.leg_is_manual = Boolean(patch.leg?.isManual);
   }
 
   return row;

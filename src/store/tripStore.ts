@@ -90,10 +90,13 @@ interface TripState {
   getChecklist(tripId: string): ChecklistItem[];
 
   // ── 변경 ────────────────────────────────────────────────────────
-  /** 길찾기 결과를 반영. 사용자가 손으로 고친 값은 덮어쓰지 않는다. */
-  applyRouteResult(itemId: string, leg: Leg): void;
   /** 사용자가 이동수단/시간을 직접 지정 → isManual이 켜진다 */
   setLegManually(itemId: string, mode: TransportMode, minutes: number): void;
+  /**
+   * 이동 수단만 고른다. 시간은 그 수단의 조회 결과를 따라간다(minutes는 조회가
+   * 안 될 때 보여줄 마지막 값). 수단을 눌렀다고 시간이 박제되면 안 된다.
+   */
+  setLegMode(itemId: string, mode: TransportMode, minutes: number): void;
   /** 수동 지정을 해제하고 다시 자동 조회 대상으로 돌린다 */
   clearManualLeg(itemId: string): void;
   updateItem(itemId: string, patch: Partial<Omit<Item, 'id' | 'tripId'>>): void;
@@ -410,23 +413,19 @@ export const useTripStore = create<TripState>()((set, get) => {
 
     getChecklist: (tripId) => get().checklist.filter((c) => c.tripId === tripId),
 
-    applyRouteResult: (itemId, leg) =>
-      /*
-       * 조회 결과는 캐시다. 저장소에 보내지 않는다 — 다음에 열 때 다시
-       * 조회하면 되고, DB에 눌러앉으면 옛날 값이 새 조회를 덮는다.
-       */
-      set((state) => ({
-        items: state.items.map((item) => {
-          if (item.id !== itemId) return item;
-          // 사용자가 직접 고친 값은 절대 덮지 않는다.
-          // 이걸 빼면 현지에서 적어둔 이동시간이 새로고침마다 날아간다.
-          if (item.leg?.isManual) return item;
-          return { ...item, leg };
-        }),
-      })),
-
     setLegManually: (itemId, mode, minutes) => {
       const leg: Leg = { mode, minutes: Math.max(0, Math.round(minutes)), isManual: true };
+      const previous = { items: get().items };
+      set((state) => ({
+        items: state.items.map((item) =>
+          item.id === itemId ? { ...item, leg, ...editedNow() } : item,
+        ),
+      }));
+      rollbackOn(repository.updateItem(itemId, { leg }), previous);
+    },
+
+    setLegMode: (itemId, mode, minutes) => {
+      const leg: Leg = { mode, minutes: Math.max(0, Math.round(minutes)), isManual: false };
       const previous = { items: get().items };
       set((state) => ({
         items: state.items.map((item) =>
