@@ -254,6 +254,10 @@ create trigger on_auth_user_created
 | [`supabase/realtime.sql`](../supabase/realtime.sql) | 실시간 동기화 켜기 |
 | [`supabase/sharing.sql`](../supabase/sharing.sql) | 누가 고쳤는지, 권한 구멍 막기, 초대 코드 바꾸기 (새 DB면 schema.sql에 이미 있음 — 돌려도 무해) |
 | [`supabase/profile-tag.sql`](../supabase/profile-tag.sql) | 닉네임 번호(#1234) |
+| [`supabase/security-hardening.sql`](../supabase/security-hardening.sql) | 보안 보강 — 프로필은 같은 여행 멤버만, 멤버 직접 추가 금지, 후보 장소 사칭 금지 (새 DB면 schema.sql에 이미 있음) |
+
+> 위 프로필 SQL의 읽기 정책("로그인한 누구나")은 schema.sql·security-hardening.sql이
+> "자기와 같은 여행 멤버만"으로 좁힌다. 보안 시나리오 테스트: `npm run test:rls`
 | [`supabase/expenses.sql`](../supabase/expenses.sql) | 공동 가계부 + 예약 번호 칸 (새 DB면 schema.sql에 이미 있음 — 돌려도 무해) |
 | [`supabase/collab.sql`](../supabase/collab.sql) | 후보 장소 투표 + 일정 댓글 (새 DB면 schema.sql에 이미 있음 — 돌려도 무해) |
 

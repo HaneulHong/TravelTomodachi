@@ -46,6 +46,9 @@ drop function if exists public.join_trip_by_code(text);
 drop function if exists public.is_trip_member(uuid);
 drop function if exists public.is_trip_owner(uuid);
 drop function if exists public.new_invite_code();
+-- 프로필 정책이 이 함수를 쓴다(프로필 표는 이 파일이 지우지 않는다) — 정책째 지우고 아래서 다시 만든다
+drop function if exists public.shares_trip_with(uuid) cascade;
+drop function if exists public.stamp_place_creator();
 
 -- ── 초대 코드 ─────────────────────────────────────────────────────
 -- 사람이 불러줄 수 있어야 해서 8자로 짧게 하고, 헷갈리는 글자를 뺀다.
@@ -237,6 +240,33 @@ as $$
   );
 $$;
 
+-- 나와 같은 여행에 있는 사람인지 — 프로필을 볼 수 있는지 가른다
+create function public.shares_trip_with(other uuid)
+returns boolean
+language sql
+security definer
+stable
+set search_path = ''
+as $$
+  select exists (
+    select 1
+    from public.trip_members mine
+    join public.trip_members theirs on theirs.trip_id = mine.trip_id
+    where mine.user_id = auth.uid() and theirs.user_id = other
+  );
+$$;
+
+-- Supabase는 public 함수에 anon 실행 권한을 기본으로 준다. 로그인 안 한 요청이
+-- 부를 일이 없으니 닫는다. 로그인한 사람은 RLS 정책·초대 코드 기본값 때문에 필요하다.
+revoke execute on function public.is_trip_member(uuid) from public, anon;
+revoke execute on function public.is_trip_owner(uuid) from public, anon;
+revoke execute on function public.shares_trip_with(uuid) from public, anon;
+revoke execute on function public.new_invite_code() from public, anon;
+grant execute on function public.is_trip_member(uuid) to authenticated;
+grant execute on function public.is_trip_owner(uuid) to authenticated;
+grant execute on function public.shares_trip_with(uuid) to authenticated;
+grant execute on function public.new_invite_code() to authenticated;
+
 -- ═══════════════════════════════════════════════════════════════════
 -- RLS — 테이블마다 켜고, 정책을 붙인다
 --
@@ -295,10 +325,9 @@ create policy "같은 여행의 멤버 목록을 본다"
   on public.trip_members for select to authenticated
   using (public.is_trip_member(trip_id));
 
--- 직접 insert는 소유자만. 초대 코드로 들어오는 건 함수가 처리한다.
-create policy "소유자만 멤버를 추가한다"
-  on public.trip_members for insert to authenticated
-  with check (public.is_trip_owner(trip_id));
+-- 직접 insert 정책은 두지 않는다 — 소유자도 못 넣는다. 멤버는 초대 코드로만 들어온다
+-- (join_trip_by_code, 소유자 자신은 handle_new_trip 트리거 — 둘 다 security definer).
+-- 소유자가 넣을 수 있게 두면 동의 없이 아무나 여행에 끌어넣을 수 있다.
 
 -- 내보내기는 소유자, 나가기는 본인.
 -- 소유자는 자기를 지우지 못한다 — 주인은 있는데 멤버가 아닌 여행이 남는다.
@@ -528,6 +557,39 @@ $$;
 
 revoke execute on function public.regenerate_invite_code(uuid) from public, anon;
 grant execute on function public.regenerate_invite_code(uuid) to authenticated;
+
+-- 후보 장소의 "올린 사람"은 DB가 정한다 — 넣을 때 로그인한 사람, 고칠 때 그대로.
+-- 기본값(auth.uid())만 두면 앱이 다른 사람 id를 보내 사칭할 수 있었다(security-hardening.sql).
+create or replace function public.stamp_place_creator()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if tg_op = 'INSERT' then
+    new.created_by := coalesce(auth.uid(), new.created_by);
+  else
+    new.created_by := old.created_by;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists on_place_stamped on public.places;
+create trigger on_place_stamped
+  before insert or update on public.places
+  for each row execute procedure public.stamp_place_creator();
+
+-- ═══════════════════════════════════════════════════════════════════
+-- 프로필은 자기 것과 같은 여행 멤버 것만 보인다
+-- (프로필 표는 docs/AUTH_SETUP.md에서 먼저 만든다. 거기 정책은 "로그인한 누구나"라
+--  모든 사용자의 id·닉네임이 보였다 — 여기서 좁힌다)
+-- ═══════════════════════════════════════════════════════════════════
+drop policy if exists "프로필은 로그인한 사람이 읽는다" on public.profiles;
+drop policy if exists "자기와 같은 여행 멤버의 프로필만 본다" on public.profiles;
+create policy "자기와 같은 여행 멤버의 프로필만 본다"
+  on public.profiles for select to authenticated
+  using (id = auth.uid() or public.shares_trip_with(id));
 
 -- API가 새 테이블을 알아보게 캐시를 새로고침한다
 notify pgrst, 'reload schema';
