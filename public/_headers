@@ -1,0 +1,14 @@
+# Cloudflare Pages 응답 헤더 (docs/DEPLOY.md)
+#
+# X-Frame-Options · frame-ancestors: 다른 사이트가 이 앱을 iframe에 넣지 못하게 한다.
+#   넣을 수 있으면 투명한 iframe 위에 가짜 버튼을 얹어 "여행 삭제" 같은 걸 누르게
+#   만들 수 있다(클릭재킹). 이 앱을 다른 사이트에 끼워 넣을 일은 없다.
+# Permissions-Policy: 쓰지 않는 기기 권한(카메라·마이크 등)은 아예 요청 못 하게.
+#
+# 전체 콘텐츠 보안 정책(CSP)은 아직 두지 않는다 — 지도(Google·카카오)·Supabase·
+# 길찾기·날씨·환율이 여러 도메인에서 스크립트와 데이터를 가져와서, 목록이 조금만
+# 틀려도 지도가 조용히 깨진다. 넣을 때는 Report-Only로 먼저 확인한다.
+/*
+  X-Frame-Options: DENY
+  Content-Security-Policy: frame-ancestors 'none'
+  Permissions-Policy: camera=(), microphone=(), payment=(), usb=(), interest-cohort=()
