@@ -13,6 +13,7 @@
 
 import { useMemo, useState } from 'react';
 import { MenuSheet } from '@/components/MenuSheet';
+import { LIMITS } from '@/domain/limits';
 import { followingSameDays, formatDateLabel, tzShortLabel } from '@/domain/time';
 import { isDefaultZoneLabel, zoneLabel, zoneOptions } from '@/domain/timezones';
 import type { TripDay } from '@/domain/types';
@@ -81,7 +82,7 @@ export function DayEditSheet({ tripId, days, date, onClose }: Props) {
             value={city}
             onChange={(e) => setCity(e.target.value)}
             placeholder={zoneLabel(timezone, locale)}
-            maxLength={30}
+            maxLength={LIMITS.cityLabel}
           />
         </label>
 
