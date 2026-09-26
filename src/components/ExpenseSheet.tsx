@@ -12,6 +12,7 @@
 import { useState } from 'react';
 import { MenuSheet } from '@/components/MenuSheet';
 import { CURRENCIES, currencyName, formatMoney } from '@/domain/currency';
+import { LIMITS } from '@/domain/limits';
 import { formatDateLabel } from '@/domain/time';
 import { memberLabel, type Expense, type Trip } from '@/domain/types';
 import { useLocale, useT } from '@/i18n';
@@ -122,7 +123,7 @@ export function ExpenseSheet({ trip, expense, defaults, onClose }: Props) {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder={t.ledger.whatPlaceholder}
-            maxLength={60}
+            maxLength={LIMITS.expenseTitle}
           />
         </label>
 

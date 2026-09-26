@@ -526,6 +526,9 @@ export const ko = {
     onlyOwnerRegenerate: '여행을 만든 사람만 초대 코드를 바꿀 수 있습니다',
     regenerateFailed: '초대 코드를 만들지 못했습니다. 다시 시도해 주세요',
     nicknameCrowded: '이 닉네임을 쓰는 사람이 너무 많습니다. 다른 닉네임을 써 주세요',
+    /** limits.sql — 앞부분만 맞춰 찾는다(뒤에 표 이름·숫자가 붙는다) */
+    tooMany: '한 여행에 넣을 수 있는 개수를 넘었습니다',
+    tooManyTrips: '만들 수 있는 여행 수를 넘었습니다',
   },
 };
 

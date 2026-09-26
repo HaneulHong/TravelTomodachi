@@ -15,6 +15,7 @@ import { PlaceField } from '@/components/PlaceField';
 import { PinIcon, PlusIcon, TrashIcon } from '@/components/icons';
 import { SHOW_DEV_HINTS } from '@/config';
 import { rankPlaces } from '@/domain/ideas';
+import { LIMITS } from '@/domain/limits';
 import { formatDateLabel } from '@/domain/time';
 import { defaultDateFor } from '@/domain/today';
 import { memberLabel, type Coord, type Member, type Place } from '@/domain/types';
@@ -247,6 +248,7 @@ function AddIdeaSheet({
         <div className="dayedit__title">{t.ideas.addTitle}</div>
         <PlaceField
           label={t.ideas.where}
+          maxLength={LIMITS.ideaName}
           placeholder={t.ideas.wherePlaceholder}
           name={name}
           coord={coord}
@@ -262,7 +264,7 @@ function AddIdeaSheet({
           <textarea
             className="form__input form__textarea"
             rows={2}
-            maxLength={500}
+            maxLength={LIMITS.ideaNote}
             value={note}
             onChange={(e) => setNote(e.target.value)}
             placeholder={t.ideas.notePlaceholder}

@@ -7,12 +7,13 @@
  */
 
 import { useMemo, useState } from 'react';
+import { LIMITS } from '@/domain/limits';
 import { formatRelative } from '@/domain/time';
 import { memberLabel, type Trip } from '@/domain/types';
 import { useLocale, useT } from '@/i18n';
 import { useTripStore } from '@/store/tripStore';
 
-const MAX = 500;
+const MAX = LIMITS.comment;
 
 export function ItemComments({ trip, itemId }: { trip: Trip; itemId: string }) {
   const t = useT();

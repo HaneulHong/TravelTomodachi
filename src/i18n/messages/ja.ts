@@ -501,5 +501,7 @@ export const ja: Messages = {
     onlyOwnerRegenerate: '旅行を作成した人だけが招待コードを変更できます',
     regenerateFailed: '招待コードを作成できませんでした。もう一度お試しください',
     nicknameCrowded: 'このニックネームを使っている人が多すぎます。別のニックネームにしてください',
+    tooMany: 'この旅行に追加できる数の上限に達しました',
+    tooManyTrips: '作成できる旅行の数の上限に達しました',
   },
 };
