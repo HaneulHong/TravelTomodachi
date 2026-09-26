@@ -302,6 +302,8 @@ export const en: Messages = {
     title: 'Data sources',
     searchUse: 'Place search · routing',
     osm: '© OpenStreetMap contributors',
+    krSearchUse: 'Place search in Korea',
+    kakao: 'Kakao',
     ratesUse: 'Exchange rates',
     weatherUse: 'Weather',
     transitUse: 'Public transit',

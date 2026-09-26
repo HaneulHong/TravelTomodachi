@@ -299,6 +299,8 @@ export const ja: Messages = {
     title: 'データの出典',
     searchUse: '場所検索 · ルート検索',
     osm: '© OpenStreetMap 貢献者',
+    krSearchUse: '韓国国内の場所検索',
+    kakao: 'Kakao',
     ratesUse: '為替レート',
     weatherUse: '天気',
     transitUse: '公共交通',

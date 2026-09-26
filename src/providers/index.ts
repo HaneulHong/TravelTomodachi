@@ -8,6 +8,8 @@
 import type { Coord, Region } from '@/domain/types';
 import { resolveRegion } from './region';
 import { combinedRouteProvider } from './route';
+import { createCombinedPlaceProvider } from './places/combinedPlaceProvider';
+import { createKakaoPlaceProvider } from './places/kakaoPlaceProvider';
 import { createPhotonPlaceProvider } from './places/photonPlaceProvider';
 import type { PlaceProvider, RouteProvider } from './types';
 
@@ -34,16 +36,22 @@ export function getRouteProviderFor(coord?: Coord): RouteProvider {
 }
 
 /**
- * 장소 검색은 지역을 나누지 않는다.
+ * 장소 검색 — 국내는 카카오, 해외는 Photon(OpenStreetMap). 둘을 같이 부르고 합친다
+ * (places/combinedPlaceProvider.ts). 카카오 키가 없으면 Photon만.
  *
- * Photon(OpenStreetMap)은 전 세계를 한 엔드포인트로 덮고 키도 필요 없다.
- * 국내만 카카오로 갈라두면 코드 경로가 둘이 되고 응답 모양이 달라 버그만 는다.
+ * 처음에는 Photon 하나로 국내외를 덮었는데, 국내 가게·식당이 잘 안 찾혔다.
+ * 지역을 입력 전에 알 수 없어서 region으로 고르지 않고 결과를 합친다.
  *
  * Google Places를 쓰지 않는 이유는 과금 SKU이기 때문이다. 자동완성은 타이핑
  * 자리라 비용이 가장 빨리 새는 곳이고, 이 앱은 무료로 굴러가야 한다.
+ * 카카오 로컬은 무료다(하루 한도를 넘으면 청구가 아니라 막힌다).
  */
-const osmPlaces = createPhotonPlaceProvider();
+const KAKAO_KEY = import.meta.env.VITE_KAKAO_MAPS_JS_KEY ?? '';
+const places = createCombinedPlaceProvider(
+  KAKAO_KEY.length > 0 ? createKakaoPlaceProvider(KAKAO_KEY) : null,
+  createPhotonPlaceProvider(),
+);
 
 export function getPlaceProvider(_region: Region): PlaceProvider {
-  return osmPlaces;
+  return places;
 }

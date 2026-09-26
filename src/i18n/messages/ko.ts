@@ -317,6 +317,8 @@ export const ko = {
     title: '데이터 출처',
     searchUse: '장소 검색 · 길찾기',
     osm: '© OpenStreetMap 기여자',
+    krSearchUse: '국내 장소 검색',
+    kakao: '카카오',
     ratesUse: '환율',
     weatherUse: '날씨',
     transitUse: '대중교통',
