@@ -65,6 +65,12 @@ export interface TripDay {
   timezone: string;
   /** '방콕' 같은 그 날의 거점 도시 */
   cityLabel: string;
+  /**
+   * 그 날 묵는 숙소. 하루의 끝(마지막 일정 → 숙소)이자 다음 날의 시작(숙소 → 첫 일정).
+   * lodging.sql 이전 DB에는 칸이 없다.
+   */
+  lodgingName?: string;
+  lodgingCoord?: Coord;
 }
 
 /** 앞 항목에서 이 항목까지의 이동 */

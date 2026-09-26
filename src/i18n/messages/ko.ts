@@ -187,6 +187,9 @@ export const ko = {
     menuCalendar: '캘린더로 내보내기',
     menuShareDay: '이 날 일정 보내기',
     menuActivity: '변경 기록',
+    lodgingFrom: (name: string) => `${name}에서 출발`,
+    lodgingAt: (name: string) => `${name}에서 묵음`,
+    addLodging: '이 날 숙소 정하기',
     newBadge: '새로',
     newBadgeAria: (who: string) => `${who}님이 새로 바꿈`,
     menuShare: '친구에게 공유',
@@ -225,6 +228,9 @@ export const ko = {
       `일정 시간은 그대로 둡니다. 09:00 일정은 ${city} 현지 09:00이 됩니다.`,
     withFollowing: (n: number) => `뒤로 이어지는 ${n}일도 같이 바꾸기`,
     until: (date: string, city: string) => `${date}까지 · 지금 ${city}`,
+    lodging: '묵는 숙소',
+    lodgingPlaceholder: '호텔·숙소 검색',
+    lodgingHint: '마지막 일정 → 숙소, 숙소 → 다음 날 첫 일정의 이동 시간을 계산합니다.',
   },
 
   tripCreate: {

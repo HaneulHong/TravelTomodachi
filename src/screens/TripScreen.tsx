@@ -198,7 +198,49 @@ export function TripScreen() {
     [allItems, tripId, activeDate],
   );
 
-  const legs = useDayLegs(items, day?.timezone);
+  /*
+   * 숙소 — 전날 묵은 곳에서 출발해 이 날 묵는 곳으로 끝난다. 이동 시간을 하루의 양 끝까지
+   * 계산하려고 일정 목록 앞뒤에 가짜 항목으로 끼워 useDayLegs에 넘긴다(화면에는 따로 그린다).
+   */
+  const lodgingStart = useMemo<Item | null>(
+    () =>
+      prevDay?.lodgingCoord
+        ? {
+            id: `lodging:${prevDay.date}`,
+            tripId,
+            date: activeDate,
+            sortKey: '',
+            kind: 'place',
+            title: prevDay.lodgingName ?? '',
+            coord: prevDay.lodgingCoord,
+          }
+        : null,
+    [prevDay, tripId, activeDate],
+  );
+  const lodgingEnd = useMemo<Item | null>(
+    () =>
+      day?.lodgingCoord
+        ? {
+            id: `lodging:${day.date}`,
+            tripId,
+            date: activeDate,
+            sortKey: '',
+            kind: 'place',
+            title: day.lodgingName ?? '',
+            coord: day.lodgingCoord,
+          }
+        : null,
+    [day, tripId, activeDate],
+  );
+  const legItems = useMemo(
+    () => [
+      ...(lodgingStart ? [lodgingStart] : []),
+      ...items,
+      ...(lodgingEnd && items.length > 0 ? [lodgingEnd] : []),
+    ],
+    [lodgingStart, items, lodgingEnd],
+  );
+  const legs = useDayLegs(legItems, day?.timezone);
   /** 앞 일정보다 이른 시각인 일정. 순서를 바꾸거나 다른 날에서 옮겨 오면 생긴다. */
   const conflicts = useMemo(() => timeConflicts(items.map((i) => i.localTime)), [items]);
 
@@ -255,6 +297,7 @@ export function TripScreen() {
         city,
       ),
       items,
+      lodging: day.lodgingName ? t.trip.lodgingAt(day.lodgingName) : undefined,
       legOf: (it) => {
         const leg = legs.get(it.id);
         return leg?.mode && leg.minutes !== undefined
@@ -439,8 +482,17 @@ export function TripScreen() {
             </div>
           )}
 
+          {!reorder && prevDay?.lodgingName && (
+            <div className="tl-lodging">
+              <span aria-hidden>🏨</span>
+              <span className="tl-lodging__text">{t.trip.lodgingFrom(prevDay.lodgingName)}</span>
+            </div>
+          )}
+
           {!reorder && items.map((item, i) => (
             <div key={item.id}>
+              {/* 첫 일정 앞은 전날 숙소에서 오는 길 */}
+              {i === 0 && lodgingStart && <LegRow info={legs.get(item.id)} />}
               {i > 0 && (
                 <LegRow
                   info={legs.get(item.id)}
@@ -512,6 +564,20 @@ export function TripScreen() {
             추가 버튼을 목록 끝에 둔다. 띄우는 버튼(FAB)은 마지막 항목을 가려서,
             일정이 꽉 찬 날일수록 방해가 된다.
           */}
+          {/* 끝: 이 날 묵는 숙소 — 없으면 정하는 버튼(날짜 설정 시트) */}
+          {!reorder && lodgingEnd && <LegRow info={legs.get(lodgingEnd.id)} />}
+          {!reorder && (
+            <button
+              className={`tl-lodging tl-lodging--btn${day.lodgingName ? '' : ' tl-lodging--add'}`}
+              onClick={() => setDayEditOpen(true)}
+            >
+              <span aria-hidden>🏨</span>
+              <span className="tl-lodging__text">
+                {day.lodgingName ? t.trip.lodgingAt(day.lodgingName) : t.trip.addLodging}
+              </span>
+            </button>
+          )}
+
           {!reorder && (
             <button
               className="tl-add"
@@ -713,6 +779,7 @@ export function TripScreen() {
           tripId={trip.id}
           days={trip.days}
           date={activeDate}
+          near={items.flatMap((i) => (i.coord ? [i.coord] : []))}
           onClose={() => setDayEditOpen(false)}
         />
       )}

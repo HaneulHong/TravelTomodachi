@@ -18,6 +18,7 @@
 
 import { create } from 'zustand';
 import { getTripRepository, type DayPatch, type RemoteChange } from '@/data';
+import { applyDayPatch } from '@/data/tripRepository';
 import { isNetworkError, loadSnapshot, saveSnapshot } from '@/data/offlineCache';
 import {
   enqueue,
@@ -687,7 +688,7 @@ export const useTripStore = create<TripState>()((set, get) => {
           t.id === tripId
             ? {
                 ...t,
-                days: t.days.map((d) => (dates.includes(d.date) ? { ...d, ...patch } : d)),
+                days: t.days.map((d) => (dates.includes(d.date) ? applyDayPatch(d, patch) : d)),
               }
             : t,
         ),

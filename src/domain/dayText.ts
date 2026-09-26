@@ -25,6 +25,8 @@ export interface DayTextInput {
   /** 첫 줄 — "🏙️ 서울 3일 테스트 · 3일차 9월 27일 (일) · 서울" */
   heading: string;
   items: readonly Item[];
+  /** 마지막 줄 — "🏨 ○○호텔에서 묵음" (숙소를 정했으면) */
+  lodging?: string;
   /** 앞 일정에서 이 일정까지 — 화면에 보이는 수단·시간(useDayLegs) */
   legOf(item: Item): { mode: TransportMode; minutes: number } | undefined;
   labels: {
@@ -36,7 +38,7 @@ export interface DayTextInput {
   };
 }
 
-export function formatDayText({ heading, items, legOf, labels }: DayTextInput): string {
+export function formatDayText({ heading, items, lodging, legOf, labels }: DayTextInput): string {
   const lines = [heading, ''];
   if (items.length === 0) {
     lines.push(labels.empty);
@@ -58,5 +60,6 @@ export function formatDayText({ heading, items, legOf, labels }: DayTextInput): 
     if (item.durationMin) line += ` (${labels.minutes(item.durationMin)})`;
     lines.push(line);
   });
+  if (lodging) lines.push('', `🏨 ${lodging}`);
   return lines.join('\n');
 }

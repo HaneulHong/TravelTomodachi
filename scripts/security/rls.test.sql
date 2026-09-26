@@ -169,6 +169,7 @@ select t.sees('C: 자기 프로필은 보임', format('select * from public.prof
 select t.denied('C: 남의 여행에 일정 넣기', format('insert into public.items (trip_id, date, sort_key, title) values (%L, ''2026-10-01'', ''b'', ''x'')', :T));
 select t.denied('C: 남의 일정 고치기', format('update public.items set title = ''해킹'' where id = %L', :I));
 select t.denied('C: 남의 일정 지우기', format('delete from public.items where id = %L', :I));
+select t.denied('C: 남의 날짜에 숙소 정하기', format('update public.trip_days set lodging_name = ''x'' where trip_id = %L', :T));
 select t.denied('C: 남의 여행 이름 바꾸기', format('update public.trips set name = ''해킹'' where id = %L', :T));
 select t.denied('C: 남의 여행 지우기', format('delete from public.trips where id = %L', :T));
 select t.denied('C: 남의 여행에 자기를 멤버로 넣기', format('insert into public.trip_members (trip_id, user_id) values (%L, %L)', :T, :C));
@@ -258,6 +259,10 @@ select t.denied('B: 메모 2001자는 막힘',
   format('update public.items set description = repeat(''가'', 2001) where id = %L', :I));
 select t.denied('B: 장소 이름 201자는 막힘',
   format('update public.items set place_name = repeat(''a'', 201) where id = %L', :I));
+select t.allowed('B: 날짜에 숙소 정하기',
+  format('update public.trip_days set lodging_name = ''호텔'', lodging_lat = 37.5, lodging_lng = 127 where trip_id = %L', :T));
+select t.denied('B: 숙소 이름 201자는 막힘',
+  format('update public.trip_days set lodging_name = repeat(''a'', 201) where trip_id = %L', :T));
 select t.denied('B: 도시 이름 31자는 막힘',
   format('update public.trip_days set city_label = repeat(''a'', 31) where trip_id = %L', :T));
 select t.denied('B: 나눠 낼 사람 101명은 막힘',

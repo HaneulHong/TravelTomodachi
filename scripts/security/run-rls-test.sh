@@ -44,6 +44,7 @@ FILES=(
   "$ROOT/supabase/limits.sql"
   "$ROOT/supabase/account-delete.sql"
   "$ROOT/supabase/activity.sql"
+  "$ROOT/supabase/lodging.sql"
 )
 # SKIP_HARDENING=1: 새 DB용 파일만으로도 안전한지 (덧붙이기 SQL 없이) 확인할 때
 if [ -z "${SKIP_HARDENING:-}" ] && [ -f "$ROOT/supabase/security-hardening.sql" ]; then

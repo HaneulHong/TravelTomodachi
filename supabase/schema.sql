@@ -97,6 +97,10 @@ create table public.trip_days (
   date date not null,
   timezone text not null,
   city_label text not null default '',
+  -- 그 날 묵는 숙소 — 하루의 끝이자 다음 날의 시작 (lodging.sql)
+  lodging_name text check (lodging_name is null or char_length(lodging_name) <= 200),
+  lodging_lat double precision,
+  lodging_lng double precision,
   primary key (trip_id, date)
 );
 

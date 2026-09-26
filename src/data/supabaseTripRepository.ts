@@ -65,6 +65,23 @@ interface DayRow {
   date: string;
   timezone: string;
   city_label: string;
+  // lodging.sql 이전 DB에는 없다 (select('*')라 그때는 undefined)
+  lodging_name?: string | null;
+  lodging_lat?: number | null;
+  lodging_lng?: number | null;
+}
+
+function toDay(row: DayRow): TripDay {
+  return {
+    date: row.date,
+    timezone: row.timezone,
+    cityLabel: row.city_label,
+    lodgingName: row.lodging_name ?? undefined,
+    lodgingCoord:
+      row.lodging_lat != null && row.lodging_lng != null
+        ? { lat: row.lodging_lat, lng: row.lodging_lng }
+        : undefined,
+  };
 }
 
 interface ItemRow {
@@ -415,7 +432,7 @@ export function createSupabaseTripRepository(): TripRepository {
       const daysByTrip = new Map<string, TripDay[]>();
       for (const d of (daysRes.data ?? []) as DayRow[]) {
         const list = daysByTrip.get(d.trip_id) ?? [];
-        list.push({ date: d.date, timezone: d.timezone, cityLabel: d.city_label });
+        list.push(toDay(d));
         daysByTrip.set(d.trip_id, list);
       }
 
@@ -569,9 +586,15 @@ export function createSupabaseTripRepository(): TripRepository {
     },
 
     async updateDays(tripId: string, dates: string[], patch: DayPatch): Promise<void> {
-      const row: { timezone?: string; city_label?: string } = {};
+      const row: Record<string, string | number | null> = {};
       if (patch.timezone !== undefined) row.timezone = patch.timezone;
       if (patch.cityLabel !== undefined) row.city_label = patch.cityLabel;
+      // 숙소 칸은 바꿀 때만 보낸다 — lodging.sql 이전 DB에 보내면 도시 고치기까지 실패한다
+      if (patch.lodgingName !== undefined) row.lodging_name = patch.lodgingName;
+      if (patch.lodgingCoord !== undefined) {
+        row.lodging_lat = patch.lodgingCoord?.lat ?? null;
+        row.lodging_lng = patch.lodgingCoord?.lng ?? null;
+      }
       if (dates.length === 0 || Object.keys(row).length === 0) return;
 
       const { error } = await client
@@ -771,7 +794,7 @@ export function createSupabaseTripRepository(): TripRepository {
           onChange({
             kind: 'day-upsert',
             tripId: row.trip_id,
-            day: { date: row.date, timezone: row.timezone, cityLabel: row.city_label },
+            day: toDay(row),
           });
         })
         .on('postgres_changes', { event: '*', schema: 'public', table: 'trips' }, (p) => {

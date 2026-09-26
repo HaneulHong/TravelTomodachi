@@ -18,7 +18,7 @@ import {
   MOCK_TRIPS,
   MOCK_VOTES,
 } from './mockTrips';
-import type { TripDraft, TripRepository, TripSnapshot } from './tripRepository';
+import { applyDayPatch, type TripDraft, type TripRepository, type TripSnapshot } from './tripRepository';
 
 let idCounter = 0;
 function nextId(prefix: string): string {
@@ -108,7 +108,7 @@ export const mockTripRepository: TripRepository = {
   async updateDays(tripId, dates, patch): Promise<void> {
     trips = trips.map((t) =>
       t.id === tripId
-        ? { ...t, days: t.days.map((d) => (dates.includes(d.date) ? { ...d, ...patch } : d)) }
+        ? { ...t, days: t.days.map((d) => (dates.includes(d.date) ? applyDayPatch(d, patch) : d)) }
         : t,
     );
   },
