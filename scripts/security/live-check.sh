@@ -70,6 +70,7 @@ echo "── 배포 사이트 ($SITE) ──"
 headers=$(curl -sI "$SITE/")
 printf %s "$headers" | grep -qi '^x-frame-options: *deny' && ok "다른 사이트 iframe 금지(X-Frame-Options)" || bad "X-Frame-Options 없음" "public/_headers가 배포됐는지"
 printf %s "$headers" | grep -qi "frame-ancestors 'none'" && ok "frame-ancestors 'none'" || bad "frame-ancestors 없음" "public/_headers"
+printf %s "$headers" | grep -qi "^content-security-policy: *default-src" && ok "콘텐츠 보안 정책(CSP) 적용" || bad "CSP가 적용되지 않음(보고 모드이거나 없음)" "public/_headers"
 for p in .env .env.local .git/config supabase/schema.sql; do
   first=$(curl -s "$SITE/$p" | head -c 200)
   if printf %s "$first" | grep -qi '<!doctype html'; then ok "/$p 노출 안 됨"; else bad "/$p" "$(printf %s "$first" | head -c 60)"; fi

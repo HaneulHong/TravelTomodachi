@@ -5,15 +5,17 @@
 #   만들 수 있다(클릭재킹). 이 앱을 다른 사이트에 끼워 넣을 일은 없다.
 # Permissions-Policy: 쓰지 않는 기기 권한(카메라·마이크 등)은 아예 요청 못 하게.
 #
-# Content-Security-Policy-Report-Only: 전체 콘텐츠 보안 정책을 **보고만** 한다(막지 않는다).
-#   지도(Google·카카오)·Supabase·길찾기·날씨·환율이 여러 도메인에서 스크립트와 데이터를
-#   가져와서, 목록이 조금만 틀려도 지도가 조용히 깨진다. 그래서 먼저 보고 모드로 두고
-#   브라우저 콘솔의 "[Report Only]" 경고가 없는 걸 확인한 뒤 이름을
-#   Content-Security-Policy로 바꿔 실제로 적용한다(docs/SECURITY.md).
-#   외부 서비스를 새로 붙이면 여기에 도메인을 더한다.
+# Content-Security-Policy: 스크립트·연결·이미지를 쓰는 곳만 허용한다(콘텐츠 보안 정책).
+#   2026-09-26 보고 모드로 먼저 배포하고, 실제 적용 상태로 로컬에서 전 기능(카카오·Google 지도,
+#   이동 시간, 장소 검색, 날씨, 환율, 실시간)이 도는 걸 확인한 뒤 적용했다(docs/SECURITY.md).
+#   - 카카오 지도 SDK가 eval을 쓰지만 막아도 지도가 뜬다 → 'unsafe-eval'은 넣지 않는다
+#   - http://*.daumcdn.net · http://dapi.kakao.com은 로컬(http://localhost) 미리보기용이다.
+#     카카오 SDK가 페이지와 같은 방식으로 부르기 때문. https 배포본에서는 브라우저가 http를
+#     아예 막으므로(혼합 콘텐츠) 열어 둬도 아무 영향이 없다
+#   - frame-ancestors 'none': 다른 사이트의 iframe 금지(X-Frame-Options와 같은 뜻, 새 브라우저용)
+#   외부 서비스를 새로 붙이면 여기에 도메인을 더한다. 빠뜨리면 그 기능이 조용히 막힌다.
 #   로컬에서 확인: npm run build && npx vite preview (vite.config.ts가 이 파일을 읽는다)
 /*
   X-Frame-Options: DENY
-  Content-Security-Policy: frame-ancestors 'none'
   Permissions-Policy: camera=(), microphone=(), payment=(), usb=(), interest-cohort=()
-  Content-Security-Policy-Report-Only: default-src 'self'; script-src 'self' blob: https://maps.googleapis.com https://*.gstatic.com https://dapi.kakao.com https://*.daumcdn.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.googleapis.com https://*.gstatic.com https://*.google.com https://photon.komoot.io https://valhalla1.openstreetmap.de https://api.transitous.org https://api.open-meteo.com https://open.er-api.com https://*.kakao.com https://*.daumcdn.net; worker-src 'self' blob:; frame-src https://*.google.com; object-src 'none'; base-uri 'self'; form-action 'self'
+  Content-Security-Policy: default-src 'self'; script-src 'self' blob: https://maps.googleapis.com https://*.gstatic.com https://dapi.kakao.com https://*.daumcdn.net http://*.daumcdn.net http://dapi.kakao.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https: http://*.daumcdn.net; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.googleapis.com https://*.gstatic.com https://*.google.com https://photon.komoot.io https://valhalla1.openstreetmap.de https://api.transitous.org https://api.open-meteo.com https://open.er-api.com https://*.kakao.com https://*.daumcdn.net; worker-src 'self' blob:; frame-src https://*.google.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
