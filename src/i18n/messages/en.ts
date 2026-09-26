@@ -171,6 +171,7 @@ export const en: Messages = {
     menuLedger: 'Expenses',
     menuIdeas: 'Ideas',
     menuCalendar: 'Export to calendar',
+    menuShareDay: "Send this day's plan",
     menuShare: 'Share with friends',
     menuMembers: 'Members · invite code',
     menuDelete: 'Delete trip',
@@ -310,6 +311,14 @@ export const en: Messages = {
     searchMore: 'Search more landmarks by name',
     moreNone: 'Nothing more found. Try English or the local language.',
     pinnedName: 'Pinned location',
+  },
+
+  shareDay: {
+    heading: (emoji: string, trip: string, n: number, date: string, city: string) =>
+      `${emoji} ${trip} · Day ${n}, ${date} · ${city}`,
+    empty: 'No plans yet.',
+    copied: "Copied this day's plan — paste it into your chat",
+    failed: "Couldn't share. Please try again.",
   },
 
   directions: {

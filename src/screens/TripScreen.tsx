@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { AppHeader } from '@/components/AppHeader';
 import { BottomTabs } from '@/components/BottomTabs';
@@ -11,6 +11,7 @@ import { MenuSheet } from '@/components/MenuSheet';
 import { OptimizeSheet } from '@/components/OptimizeSheet';
 import { TransportChip } from '@/components/TransportChip';
 import {
+  ChatIcon,
   AlertIcon,
   BusIcon,
   ClockIcon,
@@ -36,6 +37,7 @@ import { useDayLegs, type LegInfo } from '@/hooks/useDayLegs';
 import { useInviteShare } from '@/hooks/useInviteShare';
 import { useReorderDrag } from '@/hooks/useReorderDrag';
 import { buildIcs } from '@/domain/ics';
+import { formatDayText } from '@/domain/dayText';
 import { timeConflicts, timeSortedOrder } from '@/domain/order';
 import { useMinuteTick } from '@/hooks/useMinuteTick';
 import { useSwipe } from '@/hooks/useSwipe';
@@ -160,6 +162,10 @@ export function TripScreen() {
   const leaveTrip = useTripStore((s) => s.leaveTrip);
   const deleteTrip = useTripStore((s) => s.deleteTrip);
   const { share: shareInvite, toast } = useInviteShare();
+  /** 하루 일정 보내기의 결과(복사됨 등) */
+  const [dayToast, setDayToast] = useState<string | null>(null);
+  const dayToastTimer = useRef<ReturnType<typeof setTimeout>>();
+  useEffect(() => () => clearTimeout(dayToastTimer.current), []);
   const t = useT();
   const locale = useLocale();
 
@@ -219,6 +225,42 @@ export function TripScreen() {
     moveItem(tripId, activeDate, from, to);
     platform.vibrate(8);
   });
+
+  /**
+   * 이 날 일정을 글로 만들어 공유 시트로 — 카카오톡을 고르면 단톡방에 바로 간다.
+   * 공유 시트가 없는 곳(데스크톱)은 복사하고 알린다.
+   */
+  async function onShareDay() {
+    if (!trip || !day) return;
+    setMenuOpen(false);
+    const city = day.cityLabel || zoneLabel(day.timezone, locale);
+    const text = formatDayText({
+      heading: t.shareDay.heading(
+        trip.coverEmoji,
+        trip.name,
+        dayIndex + 1,
+        formatDateLabel(day.date, locale),
+        city,
+      ),
+      items,
+      legOf: (it) => {
+        const leg = legs.get(it.id);
+        return leg?.mode && leg.minutes !== undefined
+          ? { mode: leg.mode, minutes: leg.minutes }
+          : undefined;
+      },
+      labels: {
+        minutes: (n) => formatMinutes(n, locale),
+        mode: (m) => t.transport[m],
+        empty: t.shareDay.empty,
+      },
+    });
+    const result = await platform.share({ title: trip.name, text });
+    if (result === 'shared' || result === 'cancelled') return;
+    setDayToast(result === 'copied' ? t.shareDay.copied : t.shareDay.failed);
+    clearTimeout(dayToastTimer.current);
+    dayToastTimer.current = setTimeout(() => setDayToast(null), 2400);
+  }
 
   async function onShare() {
     if (!trip) return;
@@ -544,6 +586,10 @@ export function TripScreen() {
             {t.trip.menuCalendar}
           </button>
         )}
+        <button className="sheet__item" onClick={() => void onShareDay()}>
+          <ChatIcon />
+          {t.trip.menuShareDay}
+        </button>
         <button className="sheet__item" onClick={onShare}>
           <ShareIcon />
           {t.trip.menuShare}
@@ -651,7 +697,7 @@ export function TripScreen() {
         />
       )}
 
-      {toast && <div className="toast">{toast}</div>}
+      {(toast ?? dayToast) && <div className="toast">{toast ?? dayToast}</div>}
 
       <BottomTabs tripId={trip.id} date={activeDate} />
     </div>

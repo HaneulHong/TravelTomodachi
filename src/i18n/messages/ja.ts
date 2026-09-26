@@ -171,6 +171,7 @@ export const ja: Messages = {
     menuLedger: '家計簿',
     menuIdeas: '行きたい場所',
     menuCalendar: 'カレンダーに書き出す',
+    menuShareDay: 'この日の予定を送る',
     menuShare: '友だちに共有',
     menuMembers: 'メンバー · 招待コード',
     menuDelete: '旅行を削除',
@@ -307,6 +308,14 @@ export const ja: Messages = {
     searchMore: '名所を名前でさらに探す',
     moreNone: 'これ以上見つかりませんでした。英語か現地の言葉で入力してみてください。',
     pinnedName: '地図で選んだ場所',
+  },
+
+  shareDay: {
+    heading: (emoji: string, trip: string, n: number, date: string, city: string) =>
+      `${emoji} ${trip} · ${n}日目 ${date} · ${city}`,
+    empty: 'まだ予定がありません。',
+    copied: 'この日の予定をコピーしました — トークに貼り付けてください',
+    failed: '送れませんでした。もう一度お試しください。',
   },
 
   directions: {

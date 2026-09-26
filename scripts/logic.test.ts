@@ -52,6 +52,7 @@ import { parsePlan, type MotisLeg } from '../src/providers/route/transitousRoute
 import { decodePolyline } from '../src/providers/route/polyline';
 import { inRegion } from '../src/providers/places/regionPlaceProviders';
 import { directionsApp, directionsUrl } from '../src/providers/directions';
+import { formatDayText } from '../src/domain/dayText';
 import { nominatimToPlace } from '../src/providers/places/nominatimPlaceProvider';
 import { effectiveLeg, recommendMode } from '../src/domain/legChoice';
 
@@ -879,6 +880,28 @@ console.log('\n── 길찾기 (지도 앱으로) ──');
   eq('구글: 걸어가는 구간이면 도보', directionsUrl(tokyo, 'walk')?.endsWith('travelmode=walking'), true);
   eq('구글: 좌표 없으면 이름으로', directionsUrl({ name: 'Ichiran Shinjuku' })?.includes('destination=Ichiran+Shinjuku'), true);
   eq('이름도 좌표도 없으면 없음', directionsUrl({ name: ' ' }), null);
+}
+
+console.log('\n── 하루 일정 글로 (메신저 공유) ──');
+{
+  const it = (o: Partial<Item> & { id: string; title: string }) =>
+    ({ tripId: 't', date: '2026-09-27', sortKey: o.id, kind: 'place', ...o }) as Item;
+  const labels = { minutes: (n: number) => `${n}분`, mode: (m: string) => ({ walk: '도보', transit: '대중교통', car: '차량' })[m]!, empty: '일정 없음' };
+  const text = formatDayText({
+    heading: '🏙️ 서울 · 3일차',
+    items: [
+      it({ id: 'a', title: '서울스카이', placeName: '롯데월드타워', localTime: '10:00', durationMin: 90 }),
+      it({ id: 'b', title: '경복궁', placeName: '경복궁', localTime: '13:00' }),
+      it({ id: 'c', title: 'KTX', kind: 'train', carrierCode: 'KTX 101', placeName: '서울역', toPlaceName: '부산역' }),
+    ],
+    legOf: (i) => (i.id === 'b' ? { mode: 'transit', minutes: 40 } : undefined),
+    labels,
+  });
+  eq('제목·장소·머무는 시간', text.split('\n')[2], '10:00 서울스카이 — 롯데월드타워 (90분)');
+  eq('이동 줄', text.split('\n')[3], '  ↓ 대중교통 40분');
+  eq('제목과 장소가 같으면 한 번만', text.split('\n')[4], '13:00 경복궁');
+  eq('구간: 편명과 출발 → 도착, 시각 없으면 —', text.split('\n')[5], '— 🚆 KTX KTX 101 — 서울역 → 부산역');
+  eq('빈 날', formatDayText({ heading: 'h', items: [], legOf: () => undefined, labels }), 'h\n\n일정 없음');
 }
 
 console.log(`\n${failed === 0 ? '✓ 전부 통과' : '✗ 실패 있음'} — ${passed} passed, ${failed} failed\n`);
