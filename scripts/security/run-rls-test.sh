@@ -7,7 +7,7 @@
 #
 # 순서는 실제 DB에 적용한 순서와 같다:
 #   Supabase 흉내 → 프로필(AUTH_SETUP.md의 SQL) → schema → sharing → realtime →
-#   expenses → collab → profile-tag → security-hardening(있으면)
+#   expenses → collab → profile-tag → limits → security-hardening(있으면)
 # 새 SQL 파일을 만들면 아래 FILES에 더한다.
 set -euo pipefail
 # macOS: 로케일 변수가 없으면 postgres가 "postmaster became multithreaded"로 시작하지 않는다
@@ -41,6 +41,7 @@ FILES=(
   "$ROOT/supabase/expenses.sql"
   "$ROOT/supabase/collab.sql"
   "$ROOT/supabase/profile-tag.sql"
+  "$ROOT/supabase/limits.sql"
 )
 # SKIP_HARDENING=1: 새 DB용 파일만으로도 안전한지 (덧붙이기 SQL 없이) 확인할 때
 if [ -z "${SKIP_HARDENING:-}" ] && [ -f "$ROOT/supabase/security-hardening.sql" ]; then

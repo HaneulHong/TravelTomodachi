@@ -15,6 +15,7 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppHeader } from '@/components/AppHeader';
+import { LIMITS } from '@/domain/limits';
 import { formatDateLabel, tzShortLabel } from '@/domain/time';
 import { deviceTimezone, zoneLabel, zoneOptions } from '@/domain/timezones';
 import type { TripDay } from '@/domain/types';
@@ -127,7 +128,7 @@ export function TripCreateScreen() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder={t.tripCreate.namePlaceholder}
-              maxLength={60}
+              maxLength={LIMITS.tripName}
               autoFocus
             />
           </label>

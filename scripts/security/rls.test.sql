@@ -247,6 +247,36 @@ select t.denied('C: 바뀌기 전 옛 코드로 참가', format('select public.j
 select t.allowed('C: 새 코드로 참가(소문자·공백도)', format('select public.join_trip_by_code(%L)', '  ' || lower(:'newcode') || ' '));
 rollback;
 
+\echo
+\echo '── 글자 수·개수 상한 (supabase/limits.sql) ──────────────'
+begin;
+set local role authenticated;
+select set_config('request.jwt.claim.sub', :B, true);
+select t.allowed('B: 메모 2000자는 됨',
+  format('update public.items set description = repeat(''가'', 2000) where id = %L', :I));
+select t.denied('B: 메모 2001자는 막힘',
+  format('update public.items set description = repeat(''가'', 2001) where id = %L', :I));
+select t.denied('B: 장소 이름 201자는 막힘',
+  format('update public.items set place_name = repeat(''a'', 201) where id = %L', :I));
+select t.denied('B: 도시 이름 31자는 막힘',
+  format('update public.trip_days set city_label = repeat(''a'', 31) where trip_id = %L', :T));
+select t.denied('B: 나눠 낼 사람 101명은 막힘',
+  format('insert into public.expenses (trip_id, title, amount, currency, split_among) select %L, ''x'', 1, ''KRW'', array_agg(gen_random_uuid()) from generate_series(1, 101)', :T));
+rollback;
+
+-- 체크리스트 500개가 찬 여행에 하나 더
+begin;
+insert into public.checklist (trip_id, title) select :T, 'x' || g from generate_series(1, 499) g;  -- A가 넣은 1개 + 499
+set local role authenticated;
+select set_config('request.jwt.claim.sub', :B, true);
+select t.denied('B: 체크리스트 501번째는 막힘', format('insert into public.checklist (trip_id, title) values (%L, ''하나 더'')', :T));
+rollback;
+begin;
+set local role authenticated;
+select set_config('request.jwt.claim.sub', :B, true);
+select t.allowed('B: 상한 전에는 체크리스트 추가됨', format('insert into public.checklist (trip_id, title) values (%L, ''하나 더'')', :T));
+rollback;
+
 \set QUIET on
 select currval('t.passes') as passes \gset
 select coalesce((select last_value from t.fails where is_called), 0) as fails \gset

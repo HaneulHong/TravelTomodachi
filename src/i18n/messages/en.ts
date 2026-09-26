@@ -490,5 +490,7 @@ export const en: Messages = {
     onlyOwnerRegenerate: 'Only the trip owner can change the invite code',
     regenerateFailed: "Couldn't make a new invite code. Please try again",
     nicknameCrowded: 'Too many people use this nickname. Please pick another one',
+    tooMany: 'This trip has reached the maximum number of entries',
+    tooManyTrips: 'You’ve reached the maximum number of trips',
   },
 };
