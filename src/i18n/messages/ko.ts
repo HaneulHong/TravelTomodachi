@@ -74,6 +74,8 @@ export const ko = {
 
   /** 일정 사이 이동 구간 칩 */
   leg: {
+    /** 앞 일정을 마치고 이동하면 다음 일정에 늦는다 — domain/schedule.ts */
+    late: (d: string) => `이동 시간 부족 · ${d} 늦음`,
     transitMissing: '대중교통 정보 없음',
     transitNoRoute: '노선 없음',
     crossBorder: '국제 구간 · 직접 입력',
@@ -135,6 +137,9 @@ export const ko = {
   },
 
   today: {
+    /** 지금 하고 있는 일정 — 오늘 카드와 일정 목록 */
+    now: "지금",
+    until: (end: string) => `${end}까지`,
     label: '오늘',
     dayCity: (n: number, city: string) => `${n}일차 · ${city}`,
     localTime: (time: string) => `현지 ${time}`,
@@ -150,7 +155,8 @@ export const ko = {
       snow: '눈',
       storm: '뇌우',
     },
-    rainChance: (n: number) => `강수 ${n}%`,
+    /** 오늘 중 가장 높은 강수 확률 — '지금 날씨'와 헷갈리지 않게 '오늘'을 붙인다 */
+    rainChance: (n: number) => `오늘 비 올 확률 ${n}%`,
     rate: (from: string, to: string) => `1 ${from} ≈ ${to}`,
   },
 
@@ -161,6 +167,11 @@ export const ko = {
       `어제와 시차가 **${delta}** 있습니다. 아래 시간은 모두 **${city} 현지 시각**입니다.`,
     emptyDay: '이 날은 아직 비어 있습니다.',
     addItem: '일정 추가',
+    /** 일정 화면 위의 바로가기 — 메뉴 속 자주 쓰는 기능을 상태와 함께 */
+    shortcuts: '여행 바로가기',
+    shortcutChecklist: (done: number, total: number) => total ? `준비물 ${done}/${total}` : '준비물',
+    shortcutLedger: (n: number) => n ? `가계부 ${n}건` : '가계부',
+    shortcutIdeas: (n: number) => n ? `후보 ${n}` : '후보 장소',
     menuChecklist: '체크리스트',
     timeConflict:
       '앞 일정보다 이른 시각이 있습니다. 자정을 넘기는 일정이 아니라면 순서를 확인해 보세요.',
@@ -231,6 +242,9 @@ export const ko = {
   },
 
   itemEdit: {
+    timeSuggested: (title: string) => `앞 일정(${title})이 끝나는 시각으로 채웠어요. 이동 시간만큼 늦춰 주세요.`,
+    deleteTitle: "이 일정을 지울까요?",
+    deleteBody: ["같은 여행 친구들 화면에서도 사라집니다.", "달린 댓글도 함께 지워지고, 되돌릴 수 없습니다."],
     titleNew: '일정 추가',
     titleEdit: '일정 수정',
     date: '날짜',

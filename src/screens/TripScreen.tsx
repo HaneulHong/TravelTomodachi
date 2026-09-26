@@ -37,6 +37,7 @@ import { useInviteShare } from '@/hooks/useInviteShare';
 import { useReorderDrag } from '@/hooks/useReorderDrag';
 import { buildIcs } from '@/domain/ics';
 import { timeConflicts, timeSortedOrder } from '@/domain/order';
+import { useMinuteTick } from '@/hooks/useMinuteTick';
 import { useSwipe } from '@/hooks/useSwipe';
 import {
   formatDateLabel,
@@ -45,6 +46,8 @@ import {
   timezoneShift,
   tzShortLabel,
 } from '@/domain/time';
+import { slackMinutes } from '@/domain/schedule';
+import { currentItem, endTimeOf, findToday } from '@/domain/today';
 import { zoneLabel } from '@/domain/timezones';
 import { isSegmentKind, type Item } from '@/domain/types';
 import { useLocale, useT } from '@/i18n';
@@ -71,8 +74,16 @@ function KindIcon({ kind }: { kind: Item['kind'] }) {
 }
 
 /** 구간 한 줄. 상태별로 다르게 보여준다 — 특히 '모름'을 숨기지 않는다. */
-function LegRow({ info }: { info?: LegInfo }) {
+/** 늦으면 몇 분(양수), 아니면 undefined */
+function lateByOf(prev: Item, next: Item, travel: number | undefined): number | undefined {
+  const slack = slackMinutes(prev, next, travel);
+  return slack !== null && slack < 0 ? -slack : undefined;
+}
+
+/** lateBy: 앞 일정을 마치고 이동하면 다음 일정에 몇 분 늦는지(늦지 않으면 없음) */
+function LegRow({ info, lateBy }: { info?: LegInfo; lateBy?: number }) {
   const t = useT();
+  const locale = useLocale();
   return (
     <div className="tl-leg">
       <div className="tl-leg__rail">
@@ -109,6 +120,13 @@ function LegRow({ info }: { info?: LegInfo }) {
         {info?.status === 'unavailable' && (
           <span className="chip">{info.missingPlace ? t.leg.needsPlace : t.leg.unknownTap}</span>
         )}
+        {/* 늦는 구간 — 여행 당일이 아니라 계획할 때 알게 */}
+        {lateBy !== undefined && (
+          <span className="chip chip--warn">
+            <AlertIcon size={11} />
+            {t.leg.late(formatMinutes(lateBy, locale))}
+          </span>
+        )}
       </div>
     </div>
   );
@@ -125,6 +143,10 @@ export function TripScreen() {
   const moveItem = useTripStore((s) => s.moveItem);
   const setDayOrder = useTripStore((s) => s.setDayOrder);
   const ideaCount = useTripStore((s) => s.places.filter((p) => p.tripId === tripId).length);
+  const checklist = useTripStore((s) => s.checklist);
+  const expenseCount = useTripStore((s) => s.expenses.filter((e) => e.tripId === tripId).length);
+  const packing = checklist.filter((c) => c.tripId === tripId);
+  const packed = packing.filter((c) => c.checked).length;
   const allComments = useTripStore((s) => s.comments);
   /** 일정별 댓글 수 — 타임라인 카드에 💬 N */
   const commentCount = useMemo(() => {
@@ -161,6 +183,22 @@ export function TripScreen() {
   const legs = useDayLegs(items, day?.timezone);
   /** 앞 일정보다 이른 시각인 일정. 순서를 바꾸거나 다른 날에서 옮겨 오면 생긴다. */
   const conflicts = useMemo(() => timeConflicts(items.map((i) => i.localTime)), [items]);
+
+  /*
+   * 여행 당일이면 "지금"을 보여 준다 — 하고 있는 일정에 표시, 지나간 일정은 흐리게.
+   * 오늘인지는 그 날 도시의 현지 날짜로 판단한다(domain/today.ts).
+   */
+  const tick = useMinuteTick();
+  const nowLocal = useMemo(() => {
+    if (!trip) return null;
+    const today = findToday([trip], tick);
+    return today && today.day.date === activeDate ? today.localTime : null;
+  }, [trip, tick, activeDate]);
+  const nowItem = nowLocal ? currentItem(items, nowLocal) : null;
+  const isPast = (item: Item): boolean => {
+    if (!nowLocal || item === nowItem || !item.localTime) return false;
+    return (endTimeOf(item) ?? item.localTime) <= nowLocal;
+  };
   const hasConflict = conflicts.some(Boolean);
 
   function goToDay(offset: number) {
@@ -228,6 +266,37 @@ export function TripScreen() {
       {/* 가로 스와이프로 날짜 전환. 세로 스크롤은 그대로 동작한다. */}
       {/* 순서 바꾸기 중에는 끌기와 헷갈리지 않게 날짜 스와이프를 끈다 */}
       <main className="main" {...(reorder ? {} : swipe)} style={{ touchAction: 'pan-y' }}>
+        {/*
+          메뉴 속에 숨어 있던 자주 쓰는 기능을 상태와 함께 바로 보이게 한다.
+          여행 중에 "돈 누가 냈지", "뭐 챙겼지"를 보려고 메뉴를 열 필요가 없다.
+          메뉴에도 그대로 남아 있다.
+        */}
+        {!reorder && (
+          <nav className="shortcuts" aria-label={t.trip.shortcuts}>
+            <button
+              className="shortcut"
+              onClick={() => navigate(`/trip/${trip.id}/checklist`)}
+            >
+              <ListIcon size={15} />
+              {t.trip.shortcutChecklist(packed, packing.length)}
+            </button>
+            <button
+              className="shortcut"
+              onClick={() => navigate(`/trip/${trip.id}/expenses?date=${activeDate}`)}
+            >
+              <WalletIcon size={15} />
+              {t.trip.shortcutLedger(expenseCount)}
+            </button>
+            <button
+              className="shortcut"
+              onClick={() => navigate(`/trip/${trip.id}/ideas?date=${activeDate}`)}
+            >
+              <IdeaIcon size={15} />
+              {t.trip.shortcutIdeas(ideaCount)}
+            </button>
+          </nav>
+        )}
+
         {/*
           도시·타임존은 머리를 눌러 고친다. 도시를 옮기는 날만 고치는 값이라
           화면에 따로 버튼을 두기보다 그 값이 보이는 자리를 누르게 한다.
@@ -318,7 +387,12 @@ export function TripScreen() {
 
           {!reorder && items.map((item, i) => (
             <div key={item.id}>
-              {i > 0 && <LegRow info={legs.get(item.id)} />}
+              {i > 0 && (
+                <LegRow
+                  info={legs.get(item.id)}
+                  lateBy={lateByOf(items[i - 1]!, item, legs.get(item.id)?.minutes)}
+                />
+              )}
 
               <div className="tl-row">
                 <div
@@ -333,10 +407,15 @@ export function TripScreen() {
                 </div>
 
                 <button
-                  className="tl-item"
+                  className={`tl-item${item === nowItem ? ' tl-item--now' : ''}${isPast(item) ? ' tl-item--past' : ''}`}
                   onClick={() => navigate(`/trip/${trip.id}/item/${item.id}`)}
                 >
                   <div className="tl-item__head">
+                    {item === nowItem && (
+                      <span className="chip chip--accent now-chip">
+                        <span className="now-dot" aria-hidden /> {t.today.now}
+                      </span>
+                    )}
                     <span className="tl-item__title">{item.title}</span>
                     {isSegmentKind(item.kind) && (
                       <span className={`chip chip--${KIND_TONE[item.kind]}`}>

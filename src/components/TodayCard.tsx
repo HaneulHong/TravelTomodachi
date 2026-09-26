@@ -13,9 +13,10 @@ import { useNavigate } from 'react-router-dom';
 import { convert } from '@/domain/settle';
 import { currencyForTimezone, formatMoney, homeCurrency } from '@/domain/currency';
 import { formatMinutes } from '@/domain/time';
-import { findToday, minutesUntil, nextItem } from '@/domain/today';
+import { currentItem, endTimeOf, findToday, minutesUntil, nextItem } from '@/domain/today';
 import { zoneLabel } from '@/domain/timezones';
 import { bySortKey } from '@/domain/fractionalIndex';
+import { useMinuteTick } from '@/hooks/useMinuteTick';
 import { useLocale, useT } from '@/i18n';
 import { getRates, type RatesResult } from '@/providers/rates';
 import {
@@ -25,16 +26,6 @@ import {
   type TodayWeather,
 } from '@/providers/weather';
 import { useTripStore } from '@/store/tripStore';
-
-/** 1분마다 다시 그린다 — "다음 일정까지 N분"과 현지 시각이 흘러가야 한다 */
-function useMinuteTick(): Date {
-  const [now, setNow] = useState(() => new Date());
-  useEffect(() => {
-    const id = setInterval(() => setNow(new Date()), 60_000);
-    return () => clearInterval(id);
-  }, []);
-  return now;
-}
 
 export function TodayCard() {
   const t = useT();
@@ -84,6 +75,8 @@ export function TodayCard() {
 
   const { trip, day, dayIndex, localTime } = today;
   const next = nextItem(items, localTime);
+  // 지금 하고 있는 일정 — "다음 일정 15:00"만 보이면 지금 어디 있어야 하는지 모른다
+  const current = currentItem(items, localTime);
   const city = day.cityLabel || zoneLabel(day.timezone, locale);
   const rate =
     rates && localCurrency && localCurrency !== home
@@ -106,6 +99,17 @@ export function TodayCard() {
         <span className="today-card__city">{t.today.dayCity(dayIndex + 1, city)}</span>
         <span className="today-card__clock">{t.today.localTime(localTime)}</span>
       </div>
+
+      {current && (
+        <div className="today-card__next today-card__now">
+          <span className="today-card__muted">
+            <span className="now-dot" aria-hidden /> {t.today.now}
+          </span>
+          <span className="today-card__nextline">
+            <strong>{current.title}</strong> {t.today.until(endTimeOf(current)!)}
+          </span>
+        </div>
+      )}
 
       <div className="today-card__next">
         {items.length === 0 ? (
@@ -130,9 +134,15 @@ export function TodayCard() {
             <span className="chip">
               {WEATHER_EMOJI[weatherKind(weather.code)]} {t.today.weather[weatherKind(weather.code)]}{' '}
               {Math.round(weather.temp)}° · {Math.round(weather.min)}°/{Math.round(weather.max)}°
-              {weather.rainChance !== undefined && weather.rainChance > 0
-                ? ` · ${t.today.rainChance(weather.rainChance)}`
-                : ''}
+            </span>
+          )}
+          {/*
+            비 확률은 따로 적는다. "맑음 · 강수 94%"처럼 한 칩에 붙이면 지금 날씨(맑음)와
+            오늘 중 가장 높은 확률(94%)이 섞여 앞뒤가 안 맞아 보였다. 높으면 우산을 챙기라고.
+          */}
+          {weather && weather.rainChance !== undefined && weather.rainChance >= 20 && (
+            <span className={`chip${weather.rainChance >= 50 ? ' chip--warn' : ''}`}>
+              {weather.rainChance >= 50 ? '☂️' : '💧'} {t.today.rainChance(weather.rainChance)}
             </span>
           )}
           {rate !== null && localCurrency && (
