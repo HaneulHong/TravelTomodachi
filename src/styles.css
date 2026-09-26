@@ -3447,3 +3447,34 @@ button.activity__row:active {
   background: transparent;
   color: var(--text-3);
 }
+
+/* ── 준비물 기본 목록 (ChecklistScreen) ───────────────────────────── */
+
+.checklist__template {
+  width: 100%;
+  gap: 6px;
+  margin: 4px 0 8px;
+}
+
+.template {
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.template__group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.template__group legend {
+  margin-bottom: 6px;
+}
+
+/* 이미 목록에 있는 항목 — 고를 수 없다는 걸 흐리게 */
+.template__row--have {
+  opacity: 0.55;
+}

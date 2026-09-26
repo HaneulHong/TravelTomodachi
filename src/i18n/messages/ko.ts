@@ -469,6 +469,16 @@ export const ko = {
     title: '체크리스트',
     empty: '아직 항목이 없습니다.',
     addPlaceholder: '항목 추가',
+    fromTemplate: '기본 목록에서 고르기',
+    templateTitle: '기본 준비물',
+    groupCommon: '어디든',
+    groupAbroad: '해외여행',
+    already: '이미 있음',
+    addSome: (n: number) => (n > 0 ? `${n}개 넣기` : '고른 항목이 없습니다'),
+    templates: {
+      common: ['휴대폰 충전기', '보조배터리', '신분증', '카드·현금', '상비약', '세면도구', '갈아입을 옷', '우산'],
+      abroad: ['여권', '여권 사본', '항공권 (e-티켓)', '숙소 예약 확인', '유심·eSIM', '여행자 보험', '환전', '해외 결제 카드', '멀티 어댑터'],
+    },
   },
 
   members: {
