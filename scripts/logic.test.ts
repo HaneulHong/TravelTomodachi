@@ -53,6 +53,8 @@ import { decodePolyline } from '../src/providers/route/polyline';
 import { inRegion } from '../src/providers/places/regionPlaceProviders';
 import { directionsApp, directionsUrl } from '../src/providers/directions';
 import { formatDayText } from '../src/domain/dayText';
+import { alreadyApplied, encodeArgs, enqueue, flushOutbox, pendingOps } from '../src/data/outbox';
+import type { TripRepository } from '../src/data/tripRepository';
 import { nominatimToPlace } from '../src/providers/places/nominatimPlaceProvider';
 import { effectiveLeg, recommendMode } from '../src/domain/legChoice';
 
@@ -902,6 +904,47 @@ console.log('\n── 하루 일정 글로 (메신저 공유) ──');
   eq('제목과 장소가 같으면 한 번만', text.split('\n')[4], '13:00 경복궁');
   eq('구간: 편명과 출발 → 도착, 시각 없으면 —', text.split('\n')[5], '— 🚆 KTX KTX 101 — 서울역 → 부산역');
   eq('빈 날', formatDayText({ heading: 'h', items: [], legOf: () => undefined, labels }), 'h\n\n일정 없음');
+}
+
+console.log('\n── 오프라인에서 고친 것 모아 보내기 ──');
+{
+  // 지운 칸(undefined)이 저장하면서 사라지면 안 된다 — 일정·가계부 patch만
+  const itemArgs = encodeArgs('updateItem', ['i1', { leg: undefined, title: 'x' }]) as [string, Record<string, unknown>];
+  eq('일정 patch: 지운 칸은 null로 남김', 'leg' in itemArgs[1] && itemArgs[1].leg === null, true);
+  const dayArgs = encodeArgs('updateDays', ['t', ['2026-10-01'], { timezone: 'Asia/Tokyo', cityLabel: undefined }]) as [string, string[], Record<string, unknown>];
+  eq('날짜 patch: 안 바꾼 칸은 빼 둠', 'cityLabel' in dayArgs[2], false);
+
+  eq('추가가 이미 들어가 있으면 된 것으로', alreadyApplied('addItem', new Error('duplicate key value violates unique constraint')), true);
+  eq('표 넣기도', alreadyApplied('setVote', new Error('23505')), true);
+  eq('수정 실패는 된 게 아님', alreadyApplied('updateItem', new Error('duplicate key')), false);
+  eq('다른 이유는 된 게 아님', alreadyApplied('addItem', new Error('permission denied')), false);
+
+  // 가짜 저장소로 순서대로 보내는지
+  const calls: string[] = [];
+  const fake = {
+    addItem: async (item: { id: string }) => {
+      calls.push(`add ${item.id}`);
+      if (item.id === 'dup') throw new Error('duplicate key value');
+    },
+    updateItem: async (id: string) => {
+      calls.push(`update ${id}`);
+      if (id === 'offline') throw new TypeError('Failed to fetch');
+      if (id === 'denied') throw new Error('permission denied');
+    },
+  } as unknown as TripRepository;
+  const net = (e: unknown) => e instanceof TypeError;
+  const u = 'user-test';
+  enqueue(u, 'addItem', [{ id: 'a' } as never]);
+  enqueue(u, 'addItem', [{ id: 'dup' } as never]);
+  enqueue(u, 'updateItem', ['denied', {}]);
+  enqueue(u, 'updateItem', ['offline', {}]);
+  enqueue(u, 'updateItem', ['later', {}]);
+  const r = await flushOutbox(u, fake, net);
+  eq('쌓인 순서대로, 끊긴 데서 멈춤', calls.join(' | '), 'add a | add dup | update denied | update offline');
+  eq('보낸 수(이미 있던 것 포함)', r.sent, 2);
+  eq('서버가 안 받은 건 버림', r.dropped, 1);
+  eq('끊겨서 멈춤', r.stalled, true);
+  eq('남은 것: 끊긴 것부터', pendingOps(u).map((o) => o.args[0]).join(','), 'offline,later');
 }
 
 console.log(`\n${failed === 0 ? '✓ 전부 통과' : '✗ 실패 있음'} — ${passed} passed, ${failed} failed\n`);

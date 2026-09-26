@@ -19,6 +19,13 @@
 import { create } from 'zustand';
 import { getTripRepository, type DayPatch, type RemoteChange } from '@/data';
 import { isNetworkError, loadSnapshot, saveSnapshot } from '@/data/offlineCache';
+import {
+  enqueue,
+  flushOutbox,
+  pendingOps,
+  type OutboxArgs,
+  type OutboxMethod,
+} from '@/data/outbox';
 import { bySortKey, keyBetween, keyForMove } from '@/domain/fractionalIndex';
 import { moved, predecessorsChanged } from '@/domain/order';
 import type {
@@ -71,8 +78,17 @@ interface TripState {
    * 켜져 있으면 화면이 "마지막으로 불러온 일정"이라고 알린다.
    */
   fromCache: boolean;
+  /**
+   * 연결이 없어 아직 못 보낸 변경 수 (data/outbox.ts). 화면이 "연결되면 보냅니다"라고
+   * 알린다. 0이면 다 보냈다.
+   */
+  pending: number;
+  /** 쌓인 변경을 보내는 중 */
+  syncing: boolean;
 
   load(userId: string): Promise<void>;
+  /** 쌓인 변경을 지금 보낸다(연결이 돌아왔을 때). 다 보내면 서버 것을 다시 받는다. */
+  sync(): Promise<void>;
   clearError(): void;
   /**
    * 다른 사람의 변경을 반영한다. 돌려준 함수로 구독을 끊는다.
@@ -165,6 +181,57 @@ function newId(): string {
 
 export const useTripStore = create<TripState>()((set, get) => {
   /**
+   * 저장소에 보낸다. 네트워크 탓으로 못 보내면 되돌리지 않고 쌓아 둔다(data/outbox.ts).
+   * 이미 쌓인 게 있으면 순서를 지키려고 이것도 뒤에 쌓는다.
+   * 네트워크가 아닌 실패는 그대로 던져 rollbackOn이 되돌리게 한다.
+   */
+  function send<M extends OutboxMethod>(method: M, ...args: OutboxArgs<M>): Promise<void> {
+    const call = () =>
+      (repository[method] as (...a: OutboxArgs<M>) => Promise<unknown>)(...args).then(() => {});
+    const userId = get().currentUserId;
+    // 목 저장소는 기기 안이라 끊길 일이 없다
+    if (!repository.persistent || !userId) return call();
+    const hold = (): void => {
+      enqueue(userId, method, args);
+      set({ pending: pendingOps(userId).length });
+    };
+    if (pendingOps(userId).length > 0) {
+      hold();
+      return Promise.resolve();
+    }
+    return call().catch((err: unknown) => {
+      if (!isNetworkError(err)) throw err;
+      hold();
+    });
+  }
+
+  /**
+   * 서버 것을 다시 받아 화면을 맞춘다. 못 보낸 변경이 남아 있으면 받지 않는다 —
+   * 받으면 내가 고친 게(아직 서버에 없어서) 화면에서 사라졌다가 보낸 뒤에야 돌아온다.
+   */
+  async function reloadFromServer(): Promise<void> {
+    const userId = get().currentUserId;
+    if (userId && pendingOps(userId).length > 0) return;
+    const snapshot = await repository.load().catch(() => null);
+    if (!snapshot) return;
+    if (userId && pendingOps(userId).length > 0) return;
+    set({ ...snapshot, fromCache: false });
+  }
+
+  /** 쌓인 변경을 보낸다. 서버가 받지 않은 건 버리고 알린다. */
+  async function flushPending(): Promise<{ sent: number; stalled: boolean }> {
+    const userId = get().currentUserId;
+    if (!userId || pendingOps(userId).length === 0) return { sent: 0, stalled: false };
+    set({ syncing: true });
+    const result = await flushOutbox(userId, repository, isNetworkError);
+    set({ syncing: false, pending: pendingOps(userId).length });
+    if (result.dropped > 0) {
+      set({ error: getMessages().offline.dropped(result.dropped, result.firstError ?? '') });
+    }
+    return result;
+  }
+
+  /**
    * 저장이 실패하면 되돌린다.
    *
    * 조용히 되돌리면 사용자는 자기가 고친 게 사라진 걸 나중에야 알아챈다.
@@ -206,7 +273,7 @@ export const useTripStore = create<TripState>()((set, get) => {
       }),
     }));
     rollbackOn(
-      Promise.all([...patches].map(([id, patch]) => repository.updateItem(id, patch))),
+      Promise.all([...patches].map(([id, patch]) => send('updateItem', id, patch))),
       previous,
     );
   }
@@ -352,7 +419,7 @@ export const useTripStore = create<TripState>()((set, get) => {
           change.userId === currentUserId ||
           trips.some((t) => t.id === change.tripId);
         if (!mine) return;
-        void repository.load().then((snapshot) => set({ ...snapshot }));
+        void reloadFromServer();
         return;
       }
     }
@@ -372,6 +439,8 @@ export const useTripStore = create<TripState>()((set, get) => {
     loading: true,
     error: null,
     fromCache: false,
+    pending: 0,
+    syncing: false,
 
     load: async (userId) => {
       /*
@@ -379,7 +448,21 @@ export const useTripStore = create<TripState>()((set, get) => {
        * 오늘 일정은 바로 열린다. 서버 것이 오면 그걸로 바꾼다.
        */
       const cached = loadSnapshot(userId);
-      set({ currentUserId: userId, loading: !cached, ...(cached ?? {}) });
+      set({
+        currentUserId: userId,
+        loading: !cached,
+        ...(cached ?? {}),
+        pending: pendingOps(userId).length,
+      });
+      /*
+       * 오프라인에서 고친 게 남았으면 먼저 보낸다. 보내기 전에 서버 것으로 바꾸면
+       * 고친 게 화면에서 사라진다. 또 못 보내면(아직 끊김) 사본 + 내 변경을 그대로 둔다.
+       */
+      const { stalled } = await flushPending();
+      if (stalled && cached) {
+        set({ loading: false, fromCache: true });
+        return;
+      }
       try {
         const snapshot = await repository.load();
         set({ ...snapshot, loading: false, error: null, fromCache: false });
@@ -397,6 +480,12 @@ export const useTripStore = create<TripState>()((set, get) => {
     },
 
     clearError: () => set({ error: null }),
+
+    sync: async () => {
+      const { sent, stalled } = await flushPending();
+      // 다 보냈으면 서버 것을 받아 친구들이 그사이 고친 것과 맞춘다
+      if (sent > 0 && !stalled) await reloadFromServer();
+    },
 
     subscribe: () => repository.subscribe((change) => applyRemote(change)),
 
@@ -421,7 +510,7 @@ export const useTripStore = create<TripState>()((set, get) => {
           item.id === itemId ? { ...item, leg, ...editedNow() } : item,
         ),
       }));
-      rollbackOn(repository.updateItem(itemId, { leg }), previous);
+      rollbackOn(send('updateItem', itemId, { leg }), previous);
     },
 
     setLegMode: (itemId, mode, minutes) => {
@@ -432,7 +521,7 @@ export const useTripStore = create<TripState>()((set, get) => {
           item.id === itemId ? { ...item, leg, ...editedNow() } : item,
         ),
       }));
-      rollbackOn(repository.updateItem(itemId, { leg }), previous);
+      rollbackOn(send('updateItem', itemId, { leg }), previous);
     },
 
     clearManualLeg: (itemId) => {
@@ -442,7 +531,7 @@ export const useTripStore = create<TripState>()((set, get) => {
           item.id === itemId ? { ...item, leg: undefined, ...editedNow() } : item,
         ),
       }));
-      rollbackOn(repository.updateItem(itemId, { leg: undefined }), previous);
+      rollbackOn(send('updateItem', itemId, { leg: undefined }), previous);
     },
 
     updateItem: (itemId, patch) => {
@@ -452,7 +541,7 @@ export const useTripStore = create<TripState>()((set, get) => {
           item.id === itemId ? { ...item, ...patch, ...editedNow() } : item,
         ),
       }));
-      rollbackOn(repository.updateItem(itemId, patch), previous);
+      rollbackOn(send('updateItem', itemId, patch), previous);
     },
 
     moveItem: (tripId, date, from, to) => {
@@ -522,7 +611,7 @@ export const useTripStore = create<TripState>()((set, get) => {
 
       const previous = { items: get().items };
       set((state) => ({ items: [...state.items, item] }));
-      rollbackOn(repository.addItem(item), previous);
+      rollbackOn(send('addItem', item), previous);
       return item.id;
     },
 
@@ -533,7 +622,7 @@ export const useTripStore = create<TripState>()((set, get) => {
         items: state.items.filter((i) => i.id !== itemId),
         comments: state.comments.filter((c) => c.itemId !== itemId),
       }));
-      rollbackOn(repository.removeItem(itemId), previous);
+      rollbackOn(send('removeItem', itemId), previous);
     },
 
     createTrip: async (draft) => {
@@ -599,7 +688,7 @@ export const useTripStore = create<TripState>()((set, get) => {
             : t,
         ),
       }));
-      rollbackOn(repository.updateDays(tripId, dates, patch), previous);
+      rollbackOn(send('updateDays', tripId, dates, patch), previous);
     },
 
     toggleChecklistItem: (itemId) => {
@@ -611,20 +700,20 @@ export const useTripStore = create<TripState>()((set, get) => {
       set((state) => ({
         checklist: state.checklist.map((c) => (c.id === itemId ? { ...c, checked } : c)),
       }));
-      rollbackOn(repository.updateChecklistItem(itemId, checked), previous);
+      rollbackOn(send('updateChecklistItem', itemId, checked), previous);
     },
 
     addChecklistItem: (tripId, title) => {
       const entry: ChecklistItem = { id: newId(), tripId, title, checked: false };
       const previous = { checklist: get().checklist };
       set((state) => ({ checklist: [...state.checklist, entry] }));
-      rollbackOn(repository.addChecklistItem(entry), previous);
+      rollbackOn(send('addChecklistItem', entry), previous);
     },
 
     removeChecklistItem: (itemId) => {
       const previous = { checklist: get().checklist };
       set((state) => ({ checklist: state.checklist.filter((c) => c.id !== itemId) }));
-      rollbackOn(repository.removeChecklistItem(itemId), previous);
+      rollbackOn(send('removeChecklistItem', itemId), previous);
     },
 
     addExpense: (draft) => {
@@ -636,7 +725,7 @@ export const useTripStore = create<TripState>()((set, get) => {
       };
       const previous = { expenses: get().expenses };
       set((state) => ({ expenses: [...state.expenses, expense] }));
-      rollbackOn(repository.addExpense(expense), previous);
+      rollbackOn(send('addExpense', expense), previous);
     },
 
     updateExpense: (id, patch) => {
@@ -646,13 +735,13 @@ export const useTripStore = create<TripState>()((set, get) => {
           e.id === id ? { ...e, ...patch, updatedBy: get().currentUserId || e.updatedBy } : e,
         ),
       }));
-      rollbackOn(repository.updateExpense(id, patch), previous);
+      rollbackOn(send('updateExpense', id, patch), previous);
     },
 
     removeExpense: (id) => {
       const previous = { expenses: get().expenses };
       set((state) => ({ expenses: state.expenses.filter((e) => e.id !== id) }));
-      rollbackOn(repository.removeExpense(id), previous);
+      rollbackOn(send('removeExpense', id), previous);
     },
 
     addPlace: (draft) => {
@@ -666,7 +755,7 @@ export const useTripStore = create<TripState>()((set, get) => {
         votes: vote ? [...state.votes, vote] : state.votes,
       }));
       rollbackOn(
-        repository.addPlace(place).then(() => (vote ? repository.setVote(vote, true) : undefined)),
+        send('addPlace', place).then(() => (vote ? send('setVote', vote, true) : undefined)),
         previous,
       );
     },
@@ -677,7 +766,7 @@ export const useTripStore = create<TripState>()((set, get) => {
         places: state.places.filter((p) => p.id !== id),
         votes: state.votes.filter((v) => v.placeId !== id),
       }));
-      rollbackOn(repository.removePlace(id), previous);
+      rollbackOn(send('removePlace', id), previous);
     },
 
     toggleVote: (placeId) => {
@@ -692,7 +781,7 @@ export const useTripStore = create<TripState>()((set, get) => {
           ? [...state.votes, vote]
           : state.votes.filter((v) => !(v.placeId === placeId && v.userId === me)),
       }));
-      rollbackOn(repository.setVote(vote, on), previous);
+      rollbackOn(send('setVote', vote, on), previous);
     },
 
     placeToItem: (placeId, date) => {
@@ -722,13 +811,13 @@ export const useTripStore = create<TripState>()((set, get) => {
       };
       const previous = { comments: get().comments };
       set((state) => ({ comments: [...state.comments, comment] }));
-      rollbackOn(repository.addComment(comment), previous);
+      rollbackOn(send('addComment', comment), previous);
     },
 
     removeComment: (id) => {
       const previous = { comments: get().comments };
       set((state) => ({ comments: state.comments.filter((c) => c.id !== id) }));
-      rollbackOn(repository.removeComment(id), previous);
+      rollbackOn(send('removeComment', id), previous);
     },
   };
 });
@@ -770,3 +859,20 @@ useTripStore.subscribe((state, prev) => {
     }
   }, 400);
 });
+
+/*
+ * 못 보낸 변경을 다시 보내 볼 때. 연결이 돌아온 순간(online)은 App.tsx가 load()를
+ * 부르며 보낸다. 여기는 그 밖의 경우 — "online"은 켜져 있는데 실제로는 안 되던 때
+ * (약한 와이파이·지하철)와 앱을 다시 앞으로 가져왔을 때.
+ */
+const RETRY_MS = 20_000;
+if (typeof window !== 'undefined') {
+  const retry = (): void => {
+    const s = useTripStore.getState();
+    if (s.pending > 0 && !s.syncing && navigator.onLine) void s.sync();
+  };
+  setInterval(retry, RETRY_MS);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') retry();
+  });
+}
