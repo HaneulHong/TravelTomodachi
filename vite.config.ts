@@ -56,5 +56,18 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: true,
+    /*
+     * 라이브러리(React·Supabase·라우터 등)를 앱 코드와 다른 파일로 둔다. 배포할 때마다
+     * 바뀌는 건 앱 코드뿐이라, 다시 방문한 사람은 라이브러리를 저장본에서 쓰고 바뀐 앱
+     * 코드만 받는다. 한 파일에 섞여 있으면 배포 때마다 전부(약 600KB) 다시 받는다.
+     * 화면별 분리는 src/screens/lazy.ts.
+     */
+    rolldownOptions: {
+      output: {
+        codeSplitting: {
+          groups: [{ name: 'vendor', test: /node_modules/ }],
+        },
+      },
+    },
   },
 });

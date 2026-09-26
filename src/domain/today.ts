@@ -66,6 +66,33 @@ export function nextItem(items: readonly Item[], nowTime: string): Item | null {
   return best;
 }
 
+/**
+ * 지금 하고 있는 일정 — 시작했고 아직 안 끝난 것(시작 ≤ 지금 < 시작 + 머무는 시간).
+ * 여러 개면 가장 늦게 시작한 것. 머무는 시간이 없으면 끝을 몰라 고르지 않는다.
+ */
+export function currentItem(items: readonly Item[], nowTime: string): Item | null {
+  const m = (t: string) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5));
+  const now = m(nowTime);
+  let best: Item | null = null;
+  for (const it of items) {
+    if (!it.localTime || it.durationMin === undefined) continue;
+    const start = m(it.localTime);
+    if (start <= now && now < start + it.durationMin) {
+      if (!best || start > m(best.localTime!)) best = it;
+    }
+  }
+  return best;
+}
+
+/** 일정이 끝나는 시각 'HH:MM' (자정을 넘기면 24시 이후는 다음 날 시각으로 접는다) */
+export function endTimeOf(item: Item): string | null {
+  if (!item.localTime || item.durationMin === undefined) return null;
+  const total = Number(item.localTime.slice(0, 2)) * 60 + Number(item.localTime.slice(3, 5)) + item.durationMin;
+  const h = Math.floor(total / 60) % 24;
+  const min = total % 60;
+  return `${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}`;
+}
+
 /** '14:05'에서 '15:30'까지 몇 분 */
 export function minutesUntil(from: string, to: string): number {
   const m = (t: string) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5));

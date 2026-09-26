@@ -63,6 +63,7 @@ export const ja: Messages = {
   region: { KR: '韓国', GLOBAL: '海外' },
 
   leg: {
+    late: (d: string) => `移動時間が足りません · ${d}遅れ`,
     transitMissing: '公共交通の情報なし',
     transitNoRoute: '路線なし',
     crossBorder: '国際区間 · 手入力',
@@ -123,6 +124,9 @@ export const ja: Messages = {
   },
 
   today: {
+    /** 지금 하고 있는 일정 — 오늘 카드와 일정 목록 */
+    now: "いま",
+    until: (end: string) => `${end}まで`,
     label: '今日',
     dayCity: (n, city) => `${n}日目 · ${city}`,
     localTime: (time) => `現地 ${time}`,
@@ -138,7 +142,7 @@ export const ja: Messages = {
       snow: '雪',
       storm: '雷雨',
     },
-    rainChance: (n) => `降水 ${n}%`,
+    rainChance: (n) => `今日の降水確率 ${n}%`,
     rate: (from, to) => `1 ${from} ≈ ${to}`,
   },
 
@@ -149,6 +153,11 @@ export const ja: Messages = {
       `前日との時差は**${delta}**です。以下の時刻はすべて**${city}の現地時刻**です。`,
     emptyDay: 'この日はまだ予定がありません。',
     addItem: '予定を追加',
+    /** 일정 화면 위의 바로가기 — 메뉴 속 자주 쓰는 기능을 상태와 함께 */
+    shortcuts: '旅行のショートカット',
+    shortcutChecklist: (done: number, total: number) => total ? `持ち物 ${done}/${total}` : '持ち物',
+    shortcutLedger: (n: number) => n ? `家計簿 ${n}件` : '家計簿',
+    shortcutIdeas: (n: number) => n ? `候補 ${n}` : '候補地',
     menuChecklist: 'チェックリスト',
     timeConflict:
       '前の予定より早い時刻があります。日付をまたぐ予定でなければ、順番を確認してください。',
@@ -218,6 +227,9 @@ export const ja: Messages = {
   },
 
   itemEdit: {
+    timeSuggested: (title: string) => `前の予定（${title}）が終わる時刻を入れました。移動時間の分だけ遅らせてください。`,
+    deleteTitle: "この予定を削除しますか？",
+    deleteBody: ["同じ旅行のメンバーの画面からも消えます。", "付いているコメントも一緒に削除され、元に戻せません。"],
     titleNew: '予定を追加',
     titleEdit: '予定を編集',
     date: '日付',

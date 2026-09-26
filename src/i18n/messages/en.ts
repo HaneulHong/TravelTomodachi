@@ -63,6 +63,7 @@ export const en: Messages = {
   region: { KR: 'Korea', GLOBAL: 'Abroad' },
 
   leg: {
+    late: (d: string) => `Not enough time · ${d} late`,
     transitMissing: 'No transit data',
     transitNoRoute: 'No line',
     crossBorder: 'International · enter manually',
@@ -123,6 +124,9 @@ export const en: Messages = {
   },
 
   today: {
+    /** 지금 하고 있는 일정 — 오늘 카드와 일정 목록 */
+    now: "Now",
+    until: (end: string) => `until ${end}`,
     label: 'Today',
     dayCity: (n, city) => `Day ${n} · ${city}`,
     localTime: (time) => `Local ${time}`,
@@ -138,7 +142,7 @@ export const en: Messages = {
       snow: 'Snow',
       storm: 'Storm',
     },
-    rainChance: (n) => `${n}% rain`,
+    rainChance: (n) => `${n}% chance of rain today`,
     rate: (from, to) => `1 ${from} ≈ ${to}`,
   },
 
@@ -149,6 +153,11 @@ export const en: Messages = {
       `Time difference from yesterday: **${delta}**. All times below are **local time in ${city}**.`,
     emptyDay: 'Nothing planned for this day yet.',
     addItem: 'Add to plan',
+    /** 일정 화면 위의 바로가기 — 메뉴 속 자주 쓰는 기능을 상태와 함께 */
+    shortcuts: 'Trip shortcuts',
+    shortcutChecklist: (done: number, total: number) => total ? `Packing ${done}/${total}` : 'Packing',
+    shortcutLedger: (n: number) => n ? `Expenses · ${n}` : 'Expenses',
+    shortcutIdeas: (n: number) => n ? `Ideas · ${n}` : 'Ideas',
     menuChecklist: 'Checklist',
     timeConflict:
       "Some times are earlier than the plan before them. Unless it's past midnight, check the order.",
@@ -222,6 +231,9 @@ export const en: Messages = {
   },
 
   itemEdit: {
+    timeSuggested: (title: string) => `Filled in with when the previous plan (${title}) ends. Add travel time as needed.`,
+    deleteTitle: "Delete this plan?",
+    deleteBody: ["It disappears for everyone on this trip.", "Its comments are deleted too. This can’t be undone."],
     titleNew: 'Add to plan',
     titleEdit: 'Edit plan',
     date: 'Day',
