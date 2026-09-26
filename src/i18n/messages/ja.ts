@@ -88,6 +88,21 @@ export const ja: Messages = {
     privacyLink: "プライバシーポリシー",
   },
 
+  inApp: {
+    opening: "いつものブラウザで開いています…",
+    openedTitle: "いつものブラウザで開きました",
+    openedBody: (app: string) => `${app}の中では Google ログインがブロックされるため、Safari や Chrome などのいつものブラウザで同じページを開きました。この画面は閉じて大丈夫です。開かなかった場合は下の方法で開いてください。`,
+    backToKakao: "カカオトークに戻る",
+    retry: "もう一度開く",
+    manualTitle: (app: string) => `${app}の中ではログインできません`,
+    manualBody: "Google はアプリ内ブラウザでのログインをブロックしています。Safari や Chrome などのいつものブラウザで開いてください。",
+    steps: "画面の上か下にある ⋯ メニューから「Safari で開く」「ブラウザで開く」を選ぶか、リンクをコピーしてブラウザのアドレス欄に貼り付けてください。",
+    linkLabel: "このページのアドレス",
+    copyLink: "リンクをコピー",
+    copied: "コピーしました — ブラウザに貼り付けてください",
+    apps: { kakaotalk: "カカオトーク", line: "LINE", instagram: "Instagram", facebook: "Facebook", naver: "NAVER アプリ", band: "BAND", daum: "Daum アプリ", everytime: "Everytime", webview: "このアプリ" },
+  },
+
   unavailable: {
     title: 'ただいまサービスを利用できません',
     body: 'メンテナンス中か、一時的な問題が発生しています。しばらくしてからもう一度お試しください。',

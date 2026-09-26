@@ -3141,3 +3141,16 @@ body:has(.offline-bar) .main {
 .today-card__now {
   margin-bottom: 6px;
 }
+
+/* ── 앱 안 브라우저 → 기본 브라우저 (OpenInBrowserScreen) ─────────── */
+
+.inapp__copy {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.inapp__copy .form__input {
+  font-size: 13px;
+}

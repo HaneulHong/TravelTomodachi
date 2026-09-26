@@ -6,6 +6,7 @@
 
 import { currentItem, endTimeOf } from '../src/domain/today';
 import { slackMinutes } from '../src/domain/schedule';
+import { detectInApp, externalOpenUrl, restoreHashFromQuery } from '../src/domain/inAppBrowser';
 import {
   keyBetween,
   firstKey,
@@ -789,6 +790,51 @@ console.log('\n── 지금 하고 있는 일정 ──');
   eq('끝나는 시각', endTimeOf(it('x', '12:30', 120)), '14:30');
   eq('자정 넘기면 다음 날 시각', endTimeOf(it('x', '23:00', 90)), '00:30');
   eq('머무는 시간 없으면 모름', endTimeOf(it('x', '12:30')), null);
+}
+
+console.log('\n── 앱 안 브라우저 → 기본 브라우저 ──');
+{
+  const UA = {
+    kakaoIos: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 KAKAOTALK 10.8.5',
+    kakaoAndroid: 'Mozilla/5.0 (Linux; Android 14; SM-S918N Build/UP1A; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/128.0 Mobile Safari/537.36;KAKAOTALK 2410850',
+    lineIos: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 Safari Line/14.10.0',
+    instaIos: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 Instagram 340.0.0.22.109',
+    instaAndroid: 'Mozilla/5.0 (Linux; Android 14; Pixel 8; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/128.0 Mobile Safari/537.36 Instagram 340.0.0.22.109 Android',
+    naver: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 NAVER(inapp; search; 2000; 12.6.1)',
+    safari: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1',
+    chromeAndroid: 'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0 Mobile Safari/537.36',
+    samsung: 'Mozilla/5.0 (Linux; Android 14; SM-S918N) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/25.0 Chrome/121.0 Mobile Safari/537.36',
+    desktopOnline: 'Mozilla/5.0 (Macintosh) Chrome/128.0 Safari/537.36 OnlineShop',
+  };
+  eq('카카오톡 iOS', detectInApp(UA.kakaoIos), 'kakaotalk');
+  eq('카카오톡 안드로이드 (wv보다 카카오톡이 먼저)', detectInApp(UA.kakaoAndroid), 'kakaotalk');
+  eq('라인', detectInApp(UA.lineIos), 'line');
+  eq('인스타그램', detectInApp(UA.instaIos), 'instagram');
+  eq('네이버앱', detectInApp(UA.naver), 'naver');
+  eq('사파리는 아님', detectInApp(UA.safari), null);
+  eq('크롬은 아님', detectInApp(UA.chromeAndroid), null);
+  eq('삼성 인터넷은 아님', detectInApp(UA.samsung), null);
+  eq('"Online" 글자는 라인이 아님', detectInApp(UA.desktopOnline), null);
+
+  const invite = 'https://traveltomodachi.pages.dev/#/invite/XE2PY5NA';
+  const kakao = externalOpenUrl('kakaotalk', invite, UA.kakaoIos)!;
+  ok('카카오톡: 외부 열기 주소', kakao.startsWith('kakaotalk://web/openExternal?url='));
+  eq('카카오톡: 초대 코드까지 그대로 넘어감',
+    decodeURIComponent(kakao.split('url=')[1]!), invite);
+
+  eq('라인: 쿼리는 해시 앞에',
+    externalOpenUrl('line', invite, UA.lineIos),
+    'https://traveltomodachi.pages.dev/?openExternalBrowser=1#/invite/XE2PY5NA');
+
+  const intent = externalOpenUrl('instagram', invite, UA.instaAndroid)!;
+  ok('안드로이드: intent 주소', intent.startsWith('intent://traveltomodachi.pages.dev/?tt_hash='));
+  ok('안드로이드: 패키지를 정하지 않음(기본 브라우저)', !intent.includes('package='));
+  ok('안드로이드: 실패하면 원래 주소로', intent.includes('S.browser_fallback_url=' + encodeURIComponent(invite)));
+  const backUrl = 'https://' + intent.slice('intent://'.length, intent.indexOf('#Intent'));
+  eq('안드로이드: 넘어간 뒤 해시(초대 코드) 되살림', restoreHashFromQuery(backUrl), invite);
+  eq('되살릴 것 없으면 null', restoreHashFromQuery(invite), null);
+
+  eq('iOS 인스타그램은 강제할 방법 없음', externalOpenUrl('instagram', invite, UA.instaIos), null);
 }
 
 console.log(`\n${failed === 0 ? '✓ 전부 통과' : '✗ 실패 있음'} — ${passed} passed, ${failed} failed\n`);

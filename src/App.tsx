@@ -8,6 +8,7 @@ import {
   stashInvite,
   takeStashedInvite,
 } from '@/auth/pendingInvite';
+import { detectInApp, externalOpenUrl } from '@/domain/inAppBrowser';
 import { platform } from '@/platform';
 import { cacheLoadedAssets } from '@/platform/cacheAssets';
 import { APP_SCHEME } from '@/platform/native';
@@ -32,6 +33,7 @@ import {
 import { TripScreen } from '@/screens/TripScreen';
 import { NicknameSetupScreen } from '@/screens/NicknameSetupScreen';
 import { OfflineBar } from '@/components/OfflineBar';
+import { OpenInBrowserScreen } from '@/screens/OpenInBrowserScreen';
 import { SignInScreen } from '@/screens/SignInScreen';
 import { UnavailableScreen } from '@/screens/UnavailableScreen';
 import { hasBackend } from '@/supabase/client';
@@ -188,6 +190,18 @@ export function App() {
    * 세션 복구가 끝나기 전에는 아무것도 결정하지 않는다. 바로 로그인 화면을
    * 띄우면 이미 로그인한 사람에게도 한 번 깜빡이고 지나간다.
    */
+  /*
+   * 앱 안 브라우저(카카오톡·라인·인스타그램 등)에서 열렸다 — Google이 여기서는 로그인을
+   * 막는다(domain/inAppBrowser.ts). 기본 브라우저로 옮길 수 있으면 로그인 여부와 상관없이
+   * 바로 옮긴다. 강제할 수 없는 곳(iOS의 인스타그램 등)은 아래 로그인 화면 대신 안내한다.
+   * 앱(Capacitor)은 해당 없다.
+   */
+  const ua = navigator.userAgent;
+  const inApp = platform.kind === 'web' ? detectInApp(ua) : null;
+  if (inApp && externalOpenUrl(inApp, window.location.href, ua)) {
+    return <OpenInBrowserScreen kind={inApp} ua={ua} />;
+  }
+
   if (loading) {
     return (
       <div className="app">
@@ -215,6 +229,9 @@ export function App() {
         </HashRouter>
       );
     }
+    // 로그인이 막히는 앱 안 브라우저 — Google 버튼을 누르기 전에 알려 준다
+    if (inApp) return <OpenInBrowserScreen kind={inApp} ua={ua} />;
+
     // 초대 링크로 들어왔다면 로그인 동안 코드를 붙잡아 둔다
     const code = inviteCodeFromHash(window.location.hash);
     if (code) stashInvite(code);

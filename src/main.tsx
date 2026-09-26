@@ -1,9 +1,17 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
+import { restoreHashFromQuery } from './domain/inAppBrowser';
 import { platform } from './platform';
 import { cacheLoadedAssets } from './platform/cacheAssets';
 import './styles.css';
+
+/*
+ * 앱 안 브라우저에서 안드로이드 intent로 넘어오면 해시(#/invite/코드)가 쿼리에 실려 온다
+ * (intent 주소는 `#`을 자기 구분자로 써서). 앱이 뜨기 전에 원래 주소로 되돌린다.
+ */
+const restored = restoreHashFromQuery(window.location.href);
+if (restored) window.history.replaceState(null, '', restored);
 
 const root = document.getElementById('root');
 if (!root) throw new Error('#root 엘리먼트가 없습니다');
