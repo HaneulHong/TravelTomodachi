@@ -309,6 +309,13 @@ export const ja: Messages = {
     pinnedName: '地図で選んだ場所',
   },
 
+  directions: {
+    open: '経路',
+    kakao: 'カカオマップ',
+    google: 'Googleマップ',
+    aria: (app: string, place: string) => `${app}で${place}への経路`,
+  },
+
   placeSearch: {
     region: '地域',
     domestic: '韓国国内',

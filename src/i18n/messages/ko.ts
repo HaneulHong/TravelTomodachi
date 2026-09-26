@@ -328,6 +328,13 @@ export const ko = {
     pinnedName: '지도에서 고른 위치',
   },
 
+  directions: {
+    open: '길찾기',
+    kakao: '카카오맵',
+    google: '구글 지도',
+    aria: (app: string, place: string) => `${app}에서 ${place} 길찾기`,
+  },
+
   placeSearch: {
     region: '지역',
     domestic: '국내',
