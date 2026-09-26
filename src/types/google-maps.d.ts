@@ -55,6 +55,8 @@ declare namespace google.maps {
     fitBounds(bounds: LatLngBounds, padding?: number | Padding): void;
     setCenter(latLng: LatLngLiteral): void;
     setZoom(zoom: number): void;
+    /** 지도가 아직 준비 전이면 undefined */
+    getCenter(): LatLng | undefined;
   }
 
   /** 점선을 만들 때 선 위에 반복해 찍는 심볼. */

@@ -41,6 +41,7 @@ declare namespace kakao.maps {
       paddingLeft?: number,
     ): void;
     setCenter(latlng: LatLng): void;
+    getCenter(): LatLng;
     setLevel(level: number): void;
     relayout(): void;
   }

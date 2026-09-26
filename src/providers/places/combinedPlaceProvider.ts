@@ -90,6 +90,9 @@ export function createCombinedPlaceProvider(
     // 해외 명소를 한글 이름으로 — 버튼을 눌렀을 때만 (nominatimPlaceProvider.ts)
     searchMore: searchByName,
 
+    // 지도에서 찍은 곳의 이름 — 전 세계를 덮는 Photon으로
+    reverse: osm.reverse ? (coord: Coord) => osm.reverse!(coord) : undefined,
+
     async resolve(place: Place): Promise<Place> {
       return place;
     },

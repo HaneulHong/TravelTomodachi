@@ -310,6 +310,18 @@ export const en: Messages = {
     noCoord: "No coordinates, so it won't show on the map.",
     searchMore: 'Search more landmarks by name',
     moreNone: 'Nothing more found. Try English or the local language.',
+    pickOnMap: '📍 Pick on the map',
+    adjustOnMap: 'Adjust on the map',
+    pinnedName: 'Pinned location',
+  },
+
+  mapPick: {
+    title: 'Pick a location',
+    search: 'Jump to a place or area',
+    searchPlaceholder: 'e.g. Shinjuku, Haeundae',
+    hint: 'Move the map so the pin tip is on the spot',
+    confirm: 'Use this location',
+    unavailable: "Couldn't load the map. Please pick from search instead.",
   },
 
   credits: {

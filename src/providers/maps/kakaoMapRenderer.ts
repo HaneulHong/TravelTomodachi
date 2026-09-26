@@ -23,6 +23,9 @@ import {
 
 /** 카카오 level은 숫자가 작을수록 확대. Google zoom과 반대 방향이다. */
 const SINGLE_STOP_LEVEL = 3;
+/** 위치 고르기: 가게를 짚을 만큼 / 동네가 보일 만큼 */
+const PICK_CLOSE_LEVEL = 2;
+const PICK_AREA_LEVEL = 5;
 
 export function createKakaoMapRenderer(jsKey: string): MapRenderer {
   return {
@@ -128,6 +131,16 @@ export function createKakaoMapRenderer(jsKey: string): MapRenderer {
           if (!bounds.isEmpty()) {
             map.setBounds(bounds, FIT_PADDING_PX, FIT_PADDING_PX, FIT_PADDING_PX, FIT_PADDING_PX);
           }
+        },
+
+        getCenter(): Coord | null {
+          const c = map.getCenter();
+          return { lat: c.getLat(), lng: c.getLng() };
+        },
+
+        setView(coord: Coord, closeUp: boolean): void {
+          map.setLevel(closeUp ? PICK_CLOSE_LEVEL : PICK_AREA_LEVEL);
+          map.setCenter(new kakao.maps.LatLng(coord.lat, coord.lng));
         },
 
         destroy(): void {
