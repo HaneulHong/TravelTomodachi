@@ -1,6 +1,6 @@
 /**
  * 장소 검색 — Photon (OpenStreetMap 기반). 해외 담당, 국내는 카카오가 앞선다
- * (combinedPlaceProvider.ts).
+ * (regionPlaceProviders.ts).
  *
  * ── 왜 Google이 아니라 이걸 쓰나 ──────────────────────────────────
  * Google Places는 과금 SKU다. 월 무료 사용량이 있긴 하지만 초과분은 청구되고,

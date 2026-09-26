@@ -322,23 +322,25 @@ export const ko = {
     searchHttpFailed: (status: number) =>
       `장소 검색에 실패했습니다 (${status}). 잠시 후 다시 시도해 주세요.`,
     searching: '찾는 중…',
-    noResults:
-      '후보가 없습니다. 해외 장소는 현지어나 영어로 쳐보세요 (예: 도쿄 스카이트리 → Tokyo Skytree).',
     noCoord: '좌표가 없어 지도에는 표시되지 않습니다.',
     searchMore: '해외 명소를 한글 이름으로 더 찾기',
     moreNone: '더 찾지 못했습니다. 영어나 현지어로 쳐 보세요.',
-    pickOnMap: '📍 지도에서 직접 찍기',
-    adjustOnMap: '지도에서 위치 고치기',
     pinnedName: '지도에서 고른 위치',
   },
 
-  mapPick: {
-    title: '위치 고르기',
-    search: '장소·동네로 이동',
-    searchPlaceholder: '예: 신주쿠, 해운대',
-    hint: '지도를 움직여 핀 끝을 원하는 곳에 맞추세요',
+  placeSearch: {
+    region: '지역',
+    domestic: '국내',
+    overseas: '해외',
+    domesticPlaceholder: '예: 경복궁, 성수 카페, 서울역',
+    overseasPlaceholder: '예: Tokyo Skytree, 신주쿠',
+    hint: '검색해서 고르거나, 지도를 움직여 가운데 핀으로 찍으세요',
     confirm: '이 위치로',
-    unavailable: '지도를 불러오지 못했습니다. 검색으로 골라 주세요.',
+    nameOnly: '위치 없이 이름만 넣기',
+    mapUnavailable: '지도를 불러오지 못했습니다. 검색 결과를 눌러 고르거나 이름만 넣어 주세요.',
+    noResultsKr: '검색 결과가 없습니다. 지도를 움직여 가운데 핀으로 찍을 수 있어요.',
+    noResultsGlobal: '검색 결과가 없습니다. 영어·현지어로 쳐 보거나, 지도를 움직여 핀으로 찍으세요.',
+    clear: '장소 지우기',
   },
 
   credits: {
