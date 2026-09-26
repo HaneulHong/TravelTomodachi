@@ -22,9 +22,31 @@ interface AuthState {
   signIn(method: SignInMethod): Promise<void>;
   signOut(): Promise<void>;
   updateNickname(nickname: string): Promise<void>;
+  /** 실패하면 던진다 — 확인 창이 이유를 보여준다 */
+  deleteAccount(): Promise<void>;
 }
 
 const auth = getAuthProvider();
+
+/**
+ * 이 기기에 남은 여행을 치운다 — 메모리와 오프라인 사본 모두. 같은 기기로
+ * 다른 사람이 로그인했을 때 앞사람 여행이 잠깐이라도 보이면 안 된다.
+ */
+function clearLocalTrips(): void {
+  clearOfflineCache();
+  useTripStore.setState({
+    currentUserId: '',
+    trips: [],
+    items: [],
+    checklist: [],
+    expenses: [],
+    places: [],
+    votes: [],
+    comments: [],
+    loading: true,
+    fromCache: false,
+  });
+}
 
 export const useAuthStore = create<AuthState>()((set) => ({
   loading: true,
@@ -53,23 +75,13 @@ export const useAuthStore = create<AuthState>()((set) => ({
 
   signOut: async () => {
     await auth.signOut();
-    /*
-     * 이 기기에 남은 여행을 치운다 — 메모리와 오프라인 사본 모두. 같은 기기로
-     * 다른 사람이 로그인했을 때 앞사람 여행이 잠깐이라도 보이면 안 된다.
-     */
-    clearOfflineCache();
-    useTripStore.setState({
-      currentUserId: '',
-      trips: [],
-      items: [],
-      checklist: [],
-      expenses: [],
-      places: [],
-      votes: [],
-      comments: [],
-      loading: true,
-      fromCache: false,
-    });
+    clearLocalTrips();
+    set({ account: null, error: null });
+  },
+
+  deleteAccount: async () => {
+    await auth.deleteAccount();
+    clearLocalTrips();
     set({ account: null, error: null });
   },
 

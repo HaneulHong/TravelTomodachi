@@ -72,7 +72,13 @@ export function SignInScreen({ methods, invited = false }: Props) {
           </p>
         )}
 
-        <p className="signin__privacy">{t.signIn.privacy}</p>
+        <p className="signin__privacy">
+          {t.signIn.privacy}{' '}
+          {/* 로그인 전이라 라우터 밖이다 — 주소만 바꾸면 App이 처리방침을 띄운다 */}
+          <a href="#/privacy" className="signin__link">
+            {t.signIn.privacyLink}
+          </a>
+        </p>
 
         <p className="signin__version">{versionLabel(t.common.beta)}</p>
       </main>

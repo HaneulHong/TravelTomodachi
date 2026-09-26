@@ -48,6 +48,11 @@ export interface AuthProvider {
   signOut(): Promise<void>;
   /** 닉네임 변경. 반영된 계정을 돌려준다. */
   updateNickname(nickname: string): Promise<Account>;
+  /**
+   * 회원 탈퇴 — 로그인 계정과 프로필을 지운다. 만든 여행은 다른 멤버에게 넘어가고
+   * 혼자인 여행은 지워진다(supabase/account-delete.sql). 끝나면 로그아웃 상태다.
+   */
+  deleteAccount(): Promise<void>;
 }
 
 /** 닉네임 첫 글자를 아바타용으로. 이모지·영문도 한 글자로 끊는다. */

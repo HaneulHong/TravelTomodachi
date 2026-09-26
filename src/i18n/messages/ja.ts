@@ -83,7 +83,8 @@ export const ja: Messages = {
     invited: '旅行に招待されました。ログインするとそのプランにすぐ入れます。',
     devNote:
       'まだバックエンドにつながっていないため、セッションは**このブラウザだけ**に残ります。招待と共同編集はSupabaseにつないでから使えます。',
-    privacy: '保存するのはニックネームだけです。メールアドレスや本名は受け取りません。',
+    privacy: "ほかの人に見えるのはニックネームだけです。ログインに使ったメールアドレスは表示されません。",
+    privacyLink: "プライバシーポリシー",
   },
 
   unavailable: {
@@ -413,12 +414,26 @@ export const ja: Messages = {
     saved: '保存しました',
     saveNickname: 'ニックネームを保存',
     signOut: 'ログアウト',
-    privacy: '保存するのはニックネームだけです。メールアドレスや本名は受け取りません。',
+    privacy: "ほかの人に見えるのはニックネームだけです。ログインに使ったメールアドレスは表示されません。",
+    privacyLink: "プライバシーポリシー",
     defaultNickname: '旅行者',
     language: '言語',
     languageAuto: '端末の言語に合わせる',
     languageAutoHint: (name) => `現在の端末の言語: ${name}`,
     languageManualHint: '選んだ言語はこの端末でだけ使われます。',
+    deleteAccount: "退会する",
+    deleteTitle: "退会しますか？",
+    deleteConfirm: "退会する",
+    /** 탈퇴하면 무엇이 어떻게 되는지 — 확인 창에 한 줄씩 */
+    deleteBody: ["ニックネームとログイン情報（メールアドレスなど）はすぐに削除され、元に戻せません。", "あなたが作った旅行は、いちばん先に参加したメンバーに引き継がれます。ひとりだけの旅行は削除されます。", "共有していた旅行に残した予定・コメント・支出は残り、作成者は「退出したメンバー」と表示されます。"],
+    deleteFailed: "退会できませんでした",
+  },
+
+  privacyPage: {
+    title: "プライバシーポリシー",
+    effective: "施行日",
+    /** 번역본이면 공식 문서가 한국어라는 안내. 한국어는 null */
+    authoritative: "これは日本語訳です。正式なポリシーは韓国語版です。",
   },
 
   nicknameSetup: {

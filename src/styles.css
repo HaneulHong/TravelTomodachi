@@ -2947,3 +2947,116 @@ body:has(.offline-bar) .main {
   font-size: 12px;
   color: var(--text-3);
 }
+
+/* ── 개인정보 처리방침 · 탈퇴 ─────────────────────────────────── */
+
+.signin__link {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  white-space: nowrap;
+}
+
+/* 탈퇴는 눈에 덜 띄게 — 그러나 찾을 수 있게 */
+.profile__delete {
+  align-self: center;
+  font-size: 12.5px;
+  color: var(--danger);
+  padding: 6px 10px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.confirm__list {
+  margin: 0;
+  padding-left: 1.1em;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.policy {
+  padding: 16px 16px 40px;
+  font-size: 13.5px;
+  line-height: 1.65;
+  color: var(--text);
+}
+
+.policy__meta {
+  margin: 0 0 4px;
+  font-size: 12px;
+  color: var(--text-3);
+}
+
+.policy__note {
+  margin: 8px 0 0;
+  font-size: 12.5px;
+  color: var(--text-2);
+}
+
+.policy__section {
+  margin-top: 20px;
+}
+
+.policy__section p,
+.policy__section ul {
+  margin: 6px 0 0;
+}
+
+.policy__section ul {
+  padding-left: 1.2em;
+}
+
+.policy__title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+/* 표 — 넓으면 3칸, 좁은 폰에서는 칸마다 쌓는다(옆으로 밀리지 않게) */
+.policy__table {
+  margin-top: 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.policy__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) minmax(0, 1.2fr);
+  gap: 10px;
+  padding: 9px 11px;
+  font-size: 12.5px;
+}
+
+.policy__row + .policy__row {
+  border-top: 1px solid var(--border);
+}
+
+.policy__row--head {
+  font-weight: 650;
+  color: var(--text-2);
+  background: var(--surface-3);
+}
+
+@media (max-width: 420px) {
+  .policy__row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 3px;
+  }
+  .policy__row--head {
+    display: none;
+  }
+  .policy__row span[data-label]::before {
+    content: attr(data-label) ' · ';
+    color: var(--text-3);
+    font-weight: 600;
+  }
+  .policy__row span[data-label]:first-child {
+    font-weight: 650;
+  }
+  .policy__row span[data-label]:first-child::before {
+    content: none;
+  }
+}

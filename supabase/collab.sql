@@ -78,6 +78,11 @@ language plpgsql
 set search_path = ''
 as $$
 begin
+  -- 계정을 지울 때 DB가 이 칸을 연쇄로 비우는 수정(on delete set null)이면 손대지 않는다.
+  -- 여기서 auth.uid()(= 지워지는 그 사람)를 다시 적으면 외래키에 걸려 탈퇴가 실패한다.
+  if pg_trigger_depth() > 1 then
+    return new;
+  end if;
   if tg_op = 'INSERT' then
     new.created_by := coalesce(auth.uid(), new.created_by);
   else

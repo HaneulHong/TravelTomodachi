@@ -49,6 +49,7 @@ drop function if exists public.new_invite_code();
 -- 프로필 정책이 이 함수를 쓴다(프로필 표는 이 파일이 지우지 않는다) — 정책째 지우고 아래서 다시 만든다
 drop function if exists public.shares_trip_with(uuid) cascade;
 drop function if exists public.stamp_place_creator();
+drop function if exists public.delete_my_account();
 
 -- ── 초대 코드 ─────────────────────────────────────────────────────
 -- 사람이 불러줄 수 있어야 해서 8자로 짧게 하고, 헷갈리는 글자를 뺀다.
@@ -463,6 +464,11 @@ language plpgsql
 set search_path = ''
 as $$
 begin
+  -- 계정을 지울 때 DB가 이 칸을 연쇄로 비우는 수정(on delete set null)이면 손대지 않는다.
+  -- 여기서 auth.uid()(= 지워지는 그 사람)를 다시 적으면 외래키에 걸려 탈퇴가 실패한다.
+  if pg_trigger_depth() > 1 then
+    return new;
+  end if;
   new.updated_by := coalesce(auth.uid(), new.updated_by);
   if tg_op = 'UPDATE' then
     new.updated_at := now();
@@ -566,6 +572,11 @@ language plpgsql
 set search_path = ''
 as $$
 begin
+  -- 계정을 지울 때 DB가 이 칸을 연쇄로 비우는 수정(on delete set null)이면 손대지 않는다.
+  -- 여기서 auth.uid()(= 지워지는 그 사람)를 다시 적으면 외래키에 걸려 탈퇴가 실패한다.
+  if pg_trigger_depth() > 1 then
+    return new;
+  end if;
   if tg_op = 'INSERT' then
     new.created_by := coalesce(auth.uid(), new.created_by);
   else
@@ -590,6 +601,48 @@ drop policy if exists "자기와 같은 여행 멤버의 프로필만 본다" on
 create policy "자기와 같은 여행 멤버의 프로필만 본다"
   on public.profiles for select to authenticated
   using (id = auth.uid() or public.shares_trip_with(id));
+
+-- ═══════════════════════════════════════════════════════════════════
+-- 회원 탈퇴 — 자기 계정만 지운다 (자세한 설명은 account-delete.sql)
+-- 만든 여행은 다른 멤버에게 넘기고, 혼자인 여행은 지운다.
+-- ═══════════════════════════════════════════════════════════════════
+create or replace function public.delete_my_account()
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  me uuid := auth.uid();
+  owned record;
+  successor uuid;
+begin
+  if me is null then
+    raise exception '로그인이 필요합니다';
+  end if;
+
+  for owned in select id from public.trips where owner_id = me loop
+    select m.user_id into successor
+    from public.trip_members m
+    where m.trip_id = owned.id and m.user_id <> me
+    order by m.joined_at, m.user_id
+    limit 1;
+
+    if successor is null then
+      delete from public.trips where id = owned.id;
+    else
+      update public.trips set owner_id = successor where id = owned.id;
+      update public.trip_members set role = 'owner'
+        where trip_id = owned.id and user_id = successor;
+    end if;
+  end loop;
+
+  delete from auth.users where id = me;
+end;
+$$;
+
+revoke execute on function public.delete_my_account() from public, anon;
+grant execute on function public.delete_my_account() to authenticated;
 
 -- API가 새 테이블을 알아보게 캐시를 새로고침한다
 notify pgrst, 'reload schema';

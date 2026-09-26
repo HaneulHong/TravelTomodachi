@@ -275,6 +275,39 @@ begin;
 set local role authenticated;
 select set_config('request.jwt.claim.sub', :B, true);
 select t.allowed('B: 상한 전에는 체크리스트 추가됨', format('insert into public.checklist (trip_id, title) values (%L, ''하나 더'')', :T));
+\echo '── 회원 탈퇴 ─────────────────────────────────────────'
+begin;
+set local role anon;
+select t.denied('익명: 탈퇴 함수 호출 못 함', 'select public.delete_my_account()');
+rollback;
+
+-- A(소유자, B와 같이 쓰는 여행) 탈퇴 → 여행은 B에게 넘어가고 A의 흔적은 비워진다
+begin;
+set local role authenticated;
+select set_config('request.jwt.claim.sub', :A, true);
+select public.delete_my_account();
+reset role;
+select t.check('A 탈퇴: 로그인 계정 지워짐', not exists (select 1 from auth.users where id = :A));
+select t.check('A 탈퇴: 프로필 지워짐', not exists (select 1 from public.profiles where id = :A));
+select t.check('A 탈퇴: 여행은 남고 B가 소유자', (select owner_id from public.trips where id = :T) = :B);
+select t.check('A 탈퇴: B의 역할이 owner', (select role from public.trip_members where trip_id = :T and user_id = :B) = 'owner');
+select t.check('A 탈퇴: 일정은 남음', exists (select 1 from public.items where id = :I));
+select t.check('A 탈퇴: A가 쓴 댓글은 남고 작성자는 비워짐',
+  exists (select 1 from public.comments where item_id = :I and author_id is null));
+select t.check('A 탈퇴: A의 투표는 지워짐', not exists (select 1 from public.place_votes where user_id = :A));
+select t.check('A 탈퇴: B·C 계정은 그대로', (select count(*) from auth.users where id in (:B, :C)) = 2);
+rollback;
+
+-- 혼자인 여행의 소유자가 탈퇴하면 그 여행은 지워진다
+begin;
+set local role authenticated;
+select set_config('request.jwt.claim.sub', :C, true);
+insert into public.trips (id, name, start_date, end_date, owner_id)
+  values ('99999999-0000-0000-0000-000000000009', 'C 혼자', '2026-10-01', '2026-10-01', :C);
+select public.delete_my_account();
+reset role;
+select t.check('C 탈퇴: 혼자인 여행은 지워짐', not exists (select 1 from public.trips where id = '99999999-0000-0000-0000-000000000009'));
+select t.check('C 탈퇴: 남의 여행(A·B)은 그대로', exists (select 1 from public.trips where id = :T));
 rollback;
 
 \set QUIET on

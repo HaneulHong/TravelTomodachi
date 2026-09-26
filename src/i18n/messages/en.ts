@@ -83,7 +83,8 @@ export const en: Messages = {
     invited: "You've been invited to a trip. Sign in and you'll go straight to it.",
     devNote:
       'No backend is connected yet, so the session stays **in this browser only**. Invites and shared editing work once Supabase is connected.',
-    privacy: 'We only store your nickname. No email, no real name.',
+    privacy: "Other people only ever see your nickname. The email you sign in with stays hidden.",
+    privacyLink: "Privacy policy",
   },
 
   unavailable: {
@@ -417,12 +418,26 @@ export const en: Messages = {
     saved: 'Saved',
     saveNickname: 'Save nickname',
     signOut: 'Sign out',
-    privacy: 'We only store your nickname. No email, no real name.',
+    privacy: "Other people only ever see your nickname. The email you sign in with stays hidden.",
+    privacyLink: "Privacy policy",
     defaultNickname: 'Traveler',
     language: 'Language',
     languageAuto: 'Use device language',
     languageAutoHint: (name) => `Device language: ${name}`,
     languageManualHint: 'Only this device uses the language you pick.',
+    deleteAccount: "Delete account",
+    deleteTitle: "Delete your account?",
+    deleteConfirm: "Delete account",
+    /** 탈퇴하면 무엇이 어떻게 되는지 — 확인 창에 한 줄씩 */
+    deleteBody: ["Your nickname and sign-in details (such as your email) are deleted right away. This can't be undone.", "Trips you created go to the member who joined them first. Trips where you're the only member are deleted.", "Plans, comments and expenses you added to shared trips stay, shown as by a “former member”."],
+    deleteFailed: "Couldn't delete your account",
+  },
+
+  privacyPage: {
+    title: "Privacy policy",
+    effective: "Effective",
+    /** 번역본이면 공식 문서가 한국어라는 안내. 한국어는 null */
+    authoritative: "This is an English translation. The Korean version is the official policy.",
   },
 
   nicknameSetup: {
