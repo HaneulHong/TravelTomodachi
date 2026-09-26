@@ -10,6 +10,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { DirectionsButton } from '@/components/DirectionsButton';
 import { convert } from '@/domain/settle';
 import { currencyForTimezone, formatMoney, homeCurrency } from '@/domain/currency';
 import { formatMinutes } from '@/domain/time';
@@ -83,10 +84,26 @@ export function TodayCard() {
       ? convert(1, localCurrency, home, rates.rates)
       : null;
 
+  const openDay = (): void => void navigate(`/trip/${trip.id}?date=${day.date}`);
+
   return (
-    <button
+    /*
+     * 카드 전체가 눌리는 자리라 원래 <button>이었는데, 안에 길찾기 버튼을 두려면
+     * 버튼 안에 버튼이 된다(HTML이 허용하지 않고, 안쪽을 눌러도 바깥이 먹는다).
+     * 그래서 div에 버튼 역할을 준다 — 키보드로도 열린다.
+     */
+    <div
       className="today-card"
-      onClick={() => navigate(`/trip/${trip.id}?date=${day.date}`)}
+      role="button"
+      tabIndex={0}
+      onClick={openDay}
+      onKeyDown={(e) => {
+        if (e.target !== e.currentTarget) return;
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          openDay();
+        }
+      }}
     >
       <div className="today-card__top">
         <span className="today-card__label">{t.today.label}</span>
@@ -122,6 +139,13 @@ export function TodayCard() {
             <span className="today-card__nextline">
               <strong>{next.localTime}</strong> {next.title}
             </span>
+            {(next.coord || next.placeName) && (
+              <DirectionsButton
+                target={{ name: next.placeName ?? next.title, coord: next.coord }}
+                mode={next.leg?.mode}
+                compact
+              />
+            )}
           </>
         ) : (
           <span className="today-card__muted">{t.today.allDone}</span>
@@ -158,6 +182,6 @@ export function TodayCard() {
           )}
         </div>
       )}
-    </button>
+    </div>
   );
 }

@@ -18,6 +18,7 @@ import type { PlaceProvider, RouteProvider } from './types';
 
 export * from './types';
 export * from './region';
+export * from './directions';
 export * from './maps';
 
 

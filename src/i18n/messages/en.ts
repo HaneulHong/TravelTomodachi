@@ -312,6 +312,13 @@ export const en: Messages = {
     pinnedName: 'Pinned location',
   },
 
+  directions: {
+    open: 'Directions',
+    kakao: 'KakaoMap',
+    google: 'Google Maps',
+    aria: (app: string, place: string) => `Directions to ${place} in ${app}`,
+  },
+
   placeSearch: {
     region: 'Region',
     domestic: 'Korea',

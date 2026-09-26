@@ -51,6 +51,7 @@ import { ja } from '../src/i18n/messages/ja';
 import { parsePlan, type MotisLeg } from '../src/providers/route/transitousRouteProvider';
 import { decodePolyline } from '../src/providers/route/polyline';
 import { inRegion } from '../src/providers/places/regionPlaceProviders';
+import { directionsApp, directionsUrl } from '../src/providers/directions';
 import { nominatimToPlace } from '../src/providers/places/nominatimPlaceProvider';
 import { effectiveLeg, recommendMode } from '../src/domain/legChoice';
 
@@ -857,6 +858,27 @@ console.log('\n── 이름으로 더 찾기 (Nominatim) ──');
   eq('좌표는 숫자로', osaka?.coord?.lng, 135.525);
   eq('이름이 비면 display_name 첫 칸', nominatimToPlace({ name: '', display_name: 'Eiffel, Paris', lat: '1', lon: '2' })?.name, 'Eiffel');
   eq('좌표 없으면 버림', nominatimToPlace({ name: 'x', display_name: 'x' }), null);
+}
+
+console.log('\n── 길찾기 (지도 앱으로) ──');
+{
+  const seoul = { name: '경복궁', coord: { lat: 37.5796, lng: 126.977 } };
+  const tokyo = { name: 'Tokyo Skytree', coord: { lat: 35.7101, lng: 139.8107 } };
+  eq('국내 좌표는 카카오맵', directionsApp(seoul), 'kakao');
+  eq('해외 좌표는 구글 지도', directionsApp(tokyo), 'google');
+  eq('좌표 없고 한글 이름이면 카카오', directionsApp({ name: '을지로 노가리골목' }), 'kakao');
+  eq('좌표 없고 영어 이름이면 구글', directionsApp({ name: 'Ichiran Shinjuku' }), 'google');
+  eq('카카오: 목적지 이름·좌표',
+    directionsUrl(seoul), `https://map.kakao.com/link/to/${encodeURIComponent('경복궁')},37.5796,126.977`);
+  eq('카카오: 이름 속 쉼표는 뺌',
+    directionsUrl({ name: '서울, 역', coord: seoul.coord })?.includes(encodeURIComponent('서울  역')), true);
+  eq('카카오: 좌표 없으면 검색',
+    directionsUrl({ name: '노가리골목' }), `https://map.kakao.com/link/search/${encodeURIComponent('노가리골목')}`);
+  eq('구글: 좌표와 대중교통',
+    directionsUrl(tokyo), 'https://www.google.com/maps/dir/?api=1&destination=35.7101%2C139.8107&travelmode=transit');
+  eq('구글: 걸어가는 구간이면 도보', directionsUrl(tokyo, 'walk')?.endsWith('travelmode=walking'), true);
+  eq('구글: 좌표 없으면 이름으로', directionsUrl({ name: 'Ichiran Shinjuku' })?.includes('destination=Ichiran+Shinjuku'), true);
+  eq('이름도 좌표도 없으면 없음', directionsUrl({ name: ' ' }), null);
 }
 
 console.log(`\n${failed === 0 ? '✓ 전부 통과' : '✗ 실패 있음'} — ${passed} passed, ${failed} failed\n`);

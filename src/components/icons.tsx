@@ -59,6 +59,13 @@ export const PinIcon = ({ size = 13, className }: IconProps) => (
   </svg>
 );
 
+/** 길찾기 — 비스듬한 화살표(내비게이션) */
+export const NavigateIcon = ({ size = 16, className }: IconProps) => (
+  <svg {...base(size, className)}>
+    <path d="M20 4L3.5 10.8l7 2.7 2.7 7L20 4z" />
+  </svg>
+);
+
 export const CheckIcon = ({ size = 14, className }: IconProps) => (
   <svg {...base(size, className)} strokeWidth={2.6}>
     <path d="M5 12.5l4.5 4.5L19 7" />

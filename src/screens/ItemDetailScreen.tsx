@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AppHeader } from '@/components/AppHeader';
 import { SHOW_DEV_HINTS } from '@/config';
+import { DirectionsButton } from '@/components/DirectionsButton';
 import { EditedBy } from '@/components/EditedBy';
 import { ItemComments } from '@/components/ItemComments';
 import { MODE_ICON } from '@/components/TransportChip';
@@ -133,6 +134,13 @@ export function ItemDetailScreen() {
               )}
               {item.carrierCode && <span className="chip">{item.carrierCode}</span>}
             </div>
+            {/* 현지에서 가장 자주 누를 버튼 — 구간 항목이면 출발 터미널로 */}
+            {(item.coord || item.placeName) && (
+              <DirectionsButton
+                target={{ name: item.placeName ?? item.title, coord: item.coord }}
+                mode={item.leg?.mode}
+              />
+            )}
             {/*
               예약 번호는 체크인 카운터 앞에서 찾는다 — 눌러서 바로 복사되게.
               클립보드를 못 쓰는 환경이면 글자를 길게 눌러 복사하면 된다(select-all).
