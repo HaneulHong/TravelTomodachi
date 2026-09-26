@@ -15,7 +15,8 @@
     "app:ios": "npm run build && cap sync ios && cap open ios",
     "app:android": "npm run build && cap sync android && cap open android",
     "test:rls": "bash scripts/security/run-rls-test.sh",
-    "test:live": "bash scripts/security/live-check.sh"
+    "test:live": "bash scripts/security/live-check.sh",
+    "backup": "bash scripts/backup.sh"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.2",
