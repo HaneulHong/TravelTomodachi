@@ -509,8 +509,12 @@ export const ja: Messages = {
   },
 
   offline: {
-    offline: 'オフライン — 最後に読み込んだ予定です。変更は保存されない場合があります。',
+    offline: 'オフライン — 最後に読み込んだ予定です。変更は接続が戻ったら送ります。',
     serverDown: 'サーバーに接続できないため、最後に読み込んだ予定を表示しています。',
+    pending: (n: number) => `まだ送っていない変更が ${n} 件あります — 接続が戻ったら送ります`,
+    syncing: '変更を送信中…',
+    dropped: (n: number, reason: string) =>
+      `オフラインでの変更のうち ${n} 件は保存できませんでした${reason ? `（${reason}）` : ''}。予定を確認してください。`,
   },
 
   nickname: {

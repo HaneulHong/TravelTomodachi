@@ -532,8 +532,12 @@ export const ko = {
   },
 
   offline: {
-    offline: '오프라인 — 마지막으로 불러온 일정입니다. 고친 내용은 저장되지 않을 수 있습니다.',
+    offline: '오프라인 — 마지막으로 불러온 일정입니다. 고친 내용은 연결되면 보냅니다.',
     serverDown: '서버에 연결하지 못해 마지막으로 불러온 일정을 보여 드립니다.',
+    pending: (n: number) => `고친 내용 ${n}개를 아직 못 보냈습니다 — 연결되면 보냅니다`,
+    syncing: '고친 내용을 보내는 중…',
+    dropped: (n: number, reason: string) =>
+      `오프라인에서 고친 것 중 ${n}개는 저장하지 못했습니다${reason ? ` (${reason})` : ''}. 지금 일정을 확인해 주세요.`,
   },
 
   nickname: {

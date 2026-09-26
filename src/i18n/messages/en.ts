@@ -513,8 +513,12 @@ export const en: Messages = {
   },
 
   offline: {
-    offline: "Offline — showing the plan you last loaded. Changes may not be saved.",
+    offline: 'Offline — showing the plan you last loaded. Your changes will be sent when you reconnect.',
     serverDown: "Couldn't reach the server, so this is the plan you last loaded.",
+    pending: (n: number) => `${n} change${n === 1 ? '' : 's'} not sent yet — will send when you reconnect`,
+    syncing: 'Sending your changes…',
+    dropped: (n: number, reason: string) =>
+      `${n} offline change${n === 1 ? '' : 's'} couldn't be saved${reason ? ` (${reason})` : ''}. Please check the plan.`,
   },
 
   nickname: {

@@ -9,6 +9,7 @@
 import { create } from 'zustand';
 import { getAuthProvider, type Account, type SignInMethod } from '@/auth';
 import { clearOfflineCache, saveAccount } from '@/data/offlineCache';
+import { forgetOutbox } from '@/data/outbox';
 import { getMessages } from '@/i18n/store';
 import { useTripStore } from './tripStore';
 
@@ -33,7 +34,9 @@ const auth = getAuthProvider();
  * 다른 사람이 로그인했을 때 앞사람 여행이 잠깐이라도 보이면 안 된다.
  */
 function clearLocalTrips(): void {
+  // 못 보낸 변경도 같이 지운다 — 로그아웃한 기기에 내 일정이 남지 않게 (data/outbox.ts)
   clearOfflineCache();
+  forgetOutbox();
   useTripStore.setState({
     currentUserId: '',
     trips: [],
@@ -45,6 +48,8 @@ function clearLocalTrips(): void {
     comments: [],
     loading: true,
     fromCache: false,
+    pending: 0,
+    syncing: false,
   });
 }
 

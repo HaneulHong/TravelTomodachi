@@ -31,11 +31,26 @@ export function OfflineBar() {
   const t = useT();
   const online = useOnline();
   const fromCache = useTripStore((s) => s.fromCache);
+  const pending = useTripStore((s) => s.pending);
+  const syncing = useTripStore((s) => s.syncing);
 
-  if (online && !fromCache) return null;
+  // 오프라인에서 고친 것 — 끊겨 있으면 몇 개가 기다리는지, 붙으면 보내는 중
+  const text = !online
+    ? pending > 0
+      ? t.offline.pending(pending)
+      : t.offline.offline
+    : syncing
+      ? t.offline.syncing
+      : pending > 0
+        ? t.offline.pending(pending)
+        : fromCache
+          ? t.offline.serverDown
+          : null;
+
+  if (!text) return null;
   return (
     <div className="offline-bar" role="status">
-      {online ? t.offline.serverDown : t.offline.offline}
+      {text}
     </div>
   );
 }
