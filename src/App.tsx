@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { HashRouter, Navigate, Route, Routes, useParams } from 'react-router-dom';
 import { getAuthProvider } from '@/auth';
 import { shouldAskNickname } from '@/auth/onboarding';
@@ -9,28 +9,32 @@ import {
   takeStashedInvite,
 } from '@/auth/pendingInvite';
 import { platform } from '@/platform';
+import { cacheLoadedAssets } from '@/platform/cacheAssets';
 import { APP_SCHEME } from '@/platform/native';
 import { useT } from '@/i18n';
 import { useAuthStore } from '@/store/authStore';
 import { useTripStore } from '@/store/tripStore';
 import { HomeScreen } from '@/screens/HomeScreen';
+import {
+  ChecklistScreen,
+  ExpensesScreen,
+  IdeasScreen,
+  InviteScreen,
+  ItemDetailScreen,
+  ItemEditScreen,
+  MapScreen,
+  MembersScreen,
+  preloadScreens,
+  PrivacyScreen,
+  ProfileScreen,
+  TripCreateScreen,
+} from '@/screens/lazy';
 import { TripScreen } from '@/screens/TripScreen';
-import { ItemDetailScreen } from '@/screens/ItemDetailScreen';
-import { ItemEditScreen } from '@/screens/ItemEditScreen';
-import { MapScreen } from '@/screens/MapScreen';
-import { MembersScreen } from '@/screens/MembersScreen';
-import { ChecklistScreen } from '@/screens/ChecklistScreen';
-import { ExpensesScreen } from '@/screens/ExpensesScreen';
-import { IdeasScreen } from '@/screens/IdeasScreen';
-import { InviteScreen } from '@/screens/InviteScreen';
 import { NicknameSetupScreen } from '@/screens/NicknameSetupScreen';
 import { OfflineBar } from '@/components/OfflineBar';
-import { ProfileScreen } from '@/screens/ProfileScreen';
-import { PrivacyScreen } from '@/screens/PrivacyScreen';
 import { SignInScreen } from '@/screens/SignInScreen';
 import { UnavailableScreen } from '@/screens/UnavailableScreen';
 import { hasBackend } from '@/supabase/client';
-import { TripCreateScreen } from '@/screens/TripCreateScreen';
 
 /**
  * HashRouter를 쓰는 이유 — Capacitor 전환 제약 #1·#2.
@@ -67,6 +71,18 @@ function ItemEditRoute() {
 function InviteRoute() {
   const { code } = useParams();
   return <InviteScreen key={code ?? 'manual'} />;
+}
+
+/** 따로 받는 화면이 도착하기 전 — 대개 한순간이라 글자만 */
+function ScreenLoading() {
+  const t = useT();
+  return (
+    <div className="app">
+      <main className="main main--no-tabs">
+        <p className="empty">{t.common.loading}</p>
+      </main>
+    </div>
+  );
 }
 
 export function App() {
@@ -129,6 +145,19 @@ export function App() {
   }, [account, subscribeTrips]);
 
   /*
+   * 첫 화면이 뜬 뒤 남는 시간에 나머지 화면을 미리 받아 둔다 — 누를 때 기다리지 않게,
+   * 그리고 오프라인에서도 열리게(서비스 워커가 저장). screens/lazy.ts 참고.
+   */
+  useEffect(() => {
+    if (!account) return;
+    const idle =
+      window.requestIdleCallback ?? ((cb: () => void) => window.setTimeout(cb, 1500));
+    idle(() => {
+      void preloadScreens().then(() => cacheLoadedAssets());
+    });
+  }, [account]);
+
+  /*
    * 초대 링크를 연 사람이 로그인하고 돌아왔으면 그 초대로 다시 보낸다.
    * (왜 필요한지는 auth/pendingInvite.ts)
    */
@@ -180,7 +209,9 @@ export function App() {
     if (hash.startsWith('#/privacy')) {
       return (
         <HashRouter>
-          <PrivacyScreen />
+          <Suspense fallback={<ScreenLoading />}>
+            <PrivacyScreen />
+          </Suspense>
         </HashRouter>
       );
     }
@@ -202,6 +233,8 @@ export function App() {
   return (
     <HashRouter>
       <OfflineBar />
+      {/* 따로 받는 화면(screens/lazy.ts)이 도착할 때까지 */}
+      <Suspense fallback={<ScreenLoading />}>
       <Routes>
         <Route path="/" element={<HomeScreen />} />
         {/* 'new'가 :tripId로 잡히지 않도록 먼저 선언한다 */}
@@ -222,6 +255,7 @@ export function App() {
         <Route path="/invite/:code" element={<InviteRoute />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      </Suspense>
     </HashRouter>
   );
 }

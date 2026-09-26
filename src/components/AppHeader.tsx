@@ -24,10 +24,23 @@ export function AppHeader({ title, back = false, onMenu, action, onProfile }: Pr
   const navigate = useNavigate();
   const t = useT();
 
+  /*
+   * 앞 화면이 없으면(링크로 바로 들어온 경우 — 카톡으로 받은 처리방침·초대 링크 등)
+   * 뒤로 갈 곳이 없어 버튼이 아무 일도 안 했다. 그때는 홈으로.
+   * React Router가 history.state.idx에 이 앱 안에서 몇 번째 화면인지 적어 둔다.
+   */
+  const goBack = (): void => {
+    const idx = (window.history.state as { idx?: number } | null)?.idx ?? 0;
+    if (idx > 0) navigate(-1);
+    // 라우터의 navigate는 hashchange를 내지 않아, 로그인 전 화면(App이 해시를 직접 지켜봄)이
+    // 바뀌지 않았다. 주소를 직접 바꾸면 hashchange가 나고 라우터도 따라온다.
+    else window.location.replace('#/');
+  };
+
   return (
     <header className="header">
       {back ? (
-        <button className="header__btn" onClick={() => navigate(-1)} aria-label={t.common.back}>
+        <button className="header__btn" onClick={goBack} aria-label={t.common.back}>
           <ChevronLeft />
         </button>
       ) : (

@@ -2,6 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
 import { platform } from './platform';
+import { cacheLoadedAssets } from './platform/cacheAssets';
 import './styles.css';
 
 const root = document.getElementById('root');
@@ -17,15 +18,8 @@ if (import.meta.env.PROD && platform.kind === 'web' && 'serviceWorker' in naviga
   window.addEventListener('load', () => {
     navigator.serviceWorker
       .register('./sw.js')
-      .then(() => navigator.serviceWorker.ready)
-      .then((reg) => {
-        // 이 페이지가 이미 받은 앱 파일을 알려 준다 — 첫 방문에도 저장되게 (sw.js)
-        const urls = performance
-          .getEntriesByType('resource')
-          .map((e) => e.name)
-          .filter((u) => u.startsWith(window.location.origin) && u.includes('/assets/'));
-        reg.active?.postMessage({ type: 'cache-assets', urls });
-      })
+      // 이 페이지가 이미 받은 앱 파일을 알려 준다 — 첫 방문에도 저장되게 (sw.js)
+      .then(() => cacheLoadedAssets())
       .catch(() => {});
   });
 }
