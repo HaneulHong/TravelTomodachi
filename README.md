@@ -96,7 +96,7 @@ src/
     region.ts         KR / GLOBAL 판별 (길찾기용)
     index.ts          지역별 구현체 선택 (팩토리)
     routeCache.ts     조회 캐시 + 동시 요청 제한
-    places/           장소 검색 (국내 카카오 + 해외 Photon + 한글 이름 Nominatim)
+    places/           장소 검색 — 국내 카카오 / 해외 Photon + 한글 이름 Nominatim
     route/            길찾기 (Valhalla · Transitous)
     maps/             지도 렌더러 (실제 SDK)
       types.ts          MapRenderer / MapHandle, 공용 마커 DOM

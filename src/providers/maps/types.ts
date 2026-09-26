@@ -43,7 +43,7 @@ export interface MapHandle {
   setPath(segments: PathSegment[]): void;
   /** 모든 지점이 보이도록 뷰포트 맞춤 */
   fit(): void;
-  /** 지금 화면 가운데 좌표 — 지도에서 위치 고르기(MapPickSheet)가 읽는다. 개략도에는 없다 */
+  /** 지금 화면 가운데 좌표 — 장소 검색 화면(PlaceSearchSheet)이 읽는다. 개략도에는 없다 */
   getCenter?(): Coord | null;
   /** 이 좌표를 가운데로. closeUp이면 가게를 고를 수 있을 만큼 확대, 아니면 동네 수준 */
   setView?(coord: Coord, closeUp: boolean): void;

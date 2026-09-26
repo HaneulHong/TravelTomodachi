@@ -1657,122 +1657,6 @@ select.form__input {
   color: var(--accent);
 }
 
-/* ── 장소 자동완성 ───────────────────────────────────────────── */
-
-.ac {
-  position: relative;
-}
-
-.ac__field {
-  position: relative;
-  display: block;
-}
-
-/* 좌표가 잡힌 상태 표시. 입력 글자와 겹치지 않게 오른쪽 여백을 준다. */
-.ac__field .form__input {
-  padding-right: 32px;
-}
-
-.ac__pin {
-  position: absolute;
-  right: 11px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--accent);
-  pointer-events: none;
-}
-
-/*
- * 후보 목록은 입력칸 위에 띄운다. 흐름 안에 두면 글자를 칠 때마다 아래
- * 입력칸들이 밀려 내려가서 겨눈 자리가 움직인다.
- */
-.ac__list {
-  position: absolute;
-  z-index: 30;
-  top: calc(100% + 4px);
-  left: 0;
-  right: 0;
-  max-height: 232px;
-  overflow-y: auto;
-  list-style: none;
-  margin: 0;
-  padding: 4px;
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-sm);
-  background: var(--surface);
-  box-shadow: var(--shadow);
-}
-
-.ac__item {
-  width: 100%;
-  text-align: left;
-  padding: 9px 10px;
-  border-radius: 6px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.ac__item--on {
-  background: var(--accent-soft);
-}
-
-.ac__name {
-  font-size: 14px;
-  font-weight: 620;
-}
-
-.ac__addr {
-  font-size: 12px;
-  color: var(--text-3);
-}
-
-.ac__msg {
-  padding: 9px 10px;
-  font-size: 13px;
-  color: var(--text-3);
-}
-
-/* 목록 끝 "더 찾기" — 후보와 헷갈리지 않게 선으로 나누고 강조색 글자 */
-.ac__more {
-  width: 100%;
-  text-align: left;
-  padding: 10px;
-  margin-top: 2px;
-  border-top: 1px dashed var(--border);
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--accent);
-}
-
-.ac__more:active {
-  background: var(--surface-3);
-}
-
-/* 선택된 장소 */
-.picked {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 9px 8px 9px 12px;
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-sm);
-  background: var(--surface);
-}
-
-.picked__name {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 14px;
-  font-weight: 620;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 /*
  * 목록 끝의 추가 버튼. 점선으로 두는 이유는 이게 일정 항목이 아니라
  * 빈자리라는 걸 보여주기 위해서다. 실선 카드로 만들면 마지막 일정처럼 읽힌다.
@@ -3171,9 +3055,62 @@ body:has(.offline-bar) .main {
   font-size: 13px;
 }
 
-/* ── 지도에서 위치 고르기 (MapPickSheet) ─────────────────────────── */
+/* ── 장소 칸 (PlaceField) — 누르면 검색·지도 화면 ─────────────────── */
 
-.mappick {
+.placefield {
+  position: relative;
+}
+
+.placefield__btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-align: left;
+  padding-right: 40px; /* 지우기 버튼 자리 */
+  cursor: pointer;
+}
+
+.placefield__btn--empty .placefield__text {
+  color: var(--text-3);
+}
+
+.placefield__text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.placefield__pin {
+  flex: none;
+  color: var(--text-3);
+}
+
+/* 좌표가 있으면 강조색 — 지도에 뜬다는 표시 */
+.placefield__pin--on {
+  color: var(--accent);
+}
+
+.placefield__clear {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  font-size: 20px;
+  line-height: 1;
+  color: var(--text-3);
+}
+
+.placefield__clear:active {
+  background: var(--surface-3);
+}
+
+/* ── 장소 검색·지도 화면 (PlaceSearchSheet) ────────────────────────── */
+
+.psearch {
   position: fixed;
   inset: 0;
   z-index: 60; /* 시트(41) 위 — 후보 추가 시트 안에서도 연다 */
@@ -3184,28 +3121,34 @@ body:has(.offline-bar) .main {
   background: var(--bg);
 }
 
-.mappick__search {
+.psearch__top {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   padding: 8px 16px 10px;
-  position: relative;
-  z-index: 2; /* 검색 후보 목록이 지도 위로 */
 }
 
-.mappick__map {
+/* .seg는 종류 5칸 기준이라 2칸으로 */
+.psearch__region {
+  grid-template-columns: 1fr 1fr;
+}
+
+.psearch__map {
   position: relative;
   flex: 1;
   min-height: 0;
   background: var(--surface-3);
 }
 
-.mappick__canvas {
+.psearch__canvas {
   position: absolute;
   inset: 0;
-  /* 지도 SDK가 안쪽 층에 z-index를 높게 준다 — 여기서 가둬야 핀이 위에 뜬다 */
+  /* 지도 SDK가 안쪽 층에 z-index를 높게 준다 — 여기서 가둬야 핀·목록이 위에 뜬다 */
   z-index: 0;
 }
 
 /* 핀 끝(아래 꼭짓점)이 지도 정가운데에 오게 — 좌표는 핀 끝이다 */
-.mappick__pin {
+.psearch__pin {
   position: absolute;
   left: 50%;
   top: 50%;
@@ -3215,59 +3158,148 @@ body:has(.offline-bar) .main {
   filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.35));
 }
 
-.mappick__pin-body {
+.psearch__pin-body {
   fill: var(--accent);
   stroke: #fff;
   stroke-width: 2;
 }
 
-.mappick__pin-hole {
+.psearch__pin-hole {
   fill: #fff;
 }
 
-.mappick__msg {
+.psearch__msg {
   position: absolute;
   inset: 0;
+  z-index: 1;
   display: grid;
   place-items: center;
   padding: 24px;
   text-align: center;
   font-size: 14px;
   color: var(--text-3);
-  z-index: 1;
 }
 
-.mappick__foot {
+/*
+ * 검색 결과는 지도 위에 겹친다(지도 칸 크기를 바꾸면 카카오 지도가 비어 보인다).
+ * 지도 윗부분만 덮고, 넘치면 목록 안에서 스크롤.
+ */
+.psearch__list {
+  position: absolute;
+  top: 0;
+  left: 12px;
+  right: 12px;
+  z-index: 2;
+  max-height: 55%;
+  overflow-y: auto;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+}
+
+.psearch__item {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 9px 8px;
+  border-radius: 6px;
+  text-align: left;
+}
+
+.psearch__item:active {
+  background: var(--surface-3);
+}
+
+/* 지도 핀과 같은 번호 */
+.psearch__num {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  margin-top: 1px;
+  background: var(--accent);
+  color: var(--accent-text);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.psearch__text {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 12px 16px calc(14px + env(safe-area-inset-bottom));
+  gap: 2px;
+  min-width: 0;
+}
+
+.psearch__name {
+  font-size: 14px;
+  font-weight: 620;
+  color: var(--text);
+}
+
+.psearch__addr {
+  font-size: 12px;
+  color: var(--text-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.psearch__msg-row {
+  padding: 10px 8px;
+  font-size: 13px;
+  color: var(--text-3);
+}
+
+/* 목록 끝 "더 찾기" — 결과와 헷갈리지 않게 선으로 나누고 강조색 글자 */
+.psearch__more {
+  width: 100%;
+  text-align: left;
+  padding: 10px 8px;
+  border-top: 1px dashed var(--border);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.psearch__foot {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 16px calc(12px + env(safe-area-inset-bottom));
   border-top: 1px solid var(--border);
   background: var(--surface);
 }
 
-.mappick__hint {
+.psearch__picked {
+  margin: 0;
   font-size: 13px;
   color: var(--text-2);
   text-align: center;
+  /* 좁은 폰에서 안내문이 한 줄에 안 들어간다 — 두 줄까지, 넘치면 … */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
 }
 
-/* 장소 칸 오른쪽 핀 — 누르면 지도에서 고르기. 좌표가 있으면 강조색 */
-.ac__pinbtn {
-  pointer-events: auto;
-  right: 4px;
-  width: 34px;
-  height: 34px;
-  display: grid;
-  place-items: center;
-  border-radius: 8px;
-  color: var(--text-3);
+.psearch__picked b {
+  color: var(--text);
+  font-weight: 650;
 }
 
-.ac__pinbtn--on {
-  color: var(--accent);
-}
-
-.ac__pinbtn:active {
-  background: var(--surface-3);
+.psearch__nameonly {
+  align-self: center;
+  padding: 6px 10px;
+  font-size: 13px;
+  color: var(--text-2);
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }

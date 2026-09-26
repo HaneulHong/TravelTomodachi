@@ -256,7 +256,6 @@ function AddIdeaSheet({
           placeholder={t.ideas.wherePlaceholder}
           name={name}
           coord={coord}
-          autoFocus
           onChange={(next, nextCoord) => {
             setName(next);
             setCoord(nextCoord);

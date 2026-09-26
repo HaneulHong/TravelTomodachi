@@ -303,22 +303,25 @@ export const ja: Messages = {
     searchHttpFailed: (status) =>
       `場所の検索に失敗しました (${status})。しばらくしてからもう一度お試しください。`,
     searching: '検索中…',
-    noResults: '候補がありません。現地の言葉か英語で入力してみてください (例: 東京スカイツリー → Tokyo Skytree)。',
     noCoord: '座標がないため、地図には表示されません。',
     searchMore: '名所を名前でさらに探す',
     moreNone: 'これ以上見つかりませんでした。英語か現地の言葉で入力してみてください。',
-    pickOnMap: '📍 地図で直接選ぶ',
-    adjustOnMap: '地図で位置を直す',
     pinnedName: '地図で選んだ場所',
   },
 
-  mapPick: {
-    title: '場所を選ぶ',
-    search: '場所・エリアへ移動',
-    searchPlaceholder: '例: 新宿、海雲台',
-    hint: '地図を動かして、ピンの先を目的の場所に合わせてください',
+  placeSearch: {
+    region: '地域',
+    domestic: '韓国国内',
+    overseas: '海外',
+    domesticPlaceholder: '例: 景福宮、ソウル駅',
+    overseasPlaceholder: '例: 東京スカイツリー, Shinjuku',
+    hint: '検索して選ぶか、地図を動かして中央のピンで指定してください',
     confirm: 'この場所にする',
-    unavailable: '地図を読み込めませんでした。検索から選んでください。',
+    nameOnly: '場所なしで名前だけ入れる',
+    mapUnavailable: '地図を読み込めませんでした。検索結果から選ぶか、名前だけ入れてください。',
+    noResultsKr: '検索結果がありません。地図を動かして中央のピンで指定できます。',
+    noResultsGlobal: '検索結果がありません。英語か現地の言葉で入力するか、地図を動かしてピンで指定してください。',
+    clear: '場所を消す',
   },
 
   credits: {
