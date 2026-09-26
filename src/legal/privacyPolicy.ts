@@ -23,11 +23,14 @@ export const OPERATOR = {
   contact: 'https://github.com/HaneulHong/TravelTomodachi/issues',
 };
 
-/** Supabase 프로젝트의 서버 지역 (대시보드 → Project Settings → General) */
+/**
+ * Supabase 프로젝트의 서버 지역. 대시보드 → Project Settings → General → Region.
+ * 2026-09-26 확인: DB 서버 주소가 AWS ap-northeast-2(서울) 대역이다.
+ */
 export const SUPABASE_REGION = {
-  ko: '확인 중',
-  en: 'to be confirmed',
-  ja: '確認中',
+  ko: '대한민국 서울',
+  en: 'Seoul, South Korea',
+  ja: '韓国・ソウル',
 } satisfies Record<Locale, string>;
 
 export interface PolicySection {
@@ -88,7 +91,7 @@ const ko: PolicySection[] = [
     table: {
       head: ['받는 곳 (국가)', '맡기는 일', '보내는 정보'],
       rows: [
-        [`Supabase Inc. (서버 지역: ${SUPABASE_REGION.ko})`, '데이터 저장, 로그인, 실시간 동기화', '2번의 모든 항목'],
+        [`Supabase Inc. (미국 법인, 서버: ${SUPABASE_REGION.ko})`, '데이터 저장, 로그인, 실시간 동기화', '2번의 모든 항목'],
         ['Cloudflare, Inc. (미국, 전 세계 서버)', '웹사이트 전송', '접속 IP·브라우저 정보'],
         ['Google LLC (미국)', 'Google 로그인, 해외 지도 표시', '로그인 정보, 지도에 표시할 좌표, 접속 IP'],
         ['㈜카카오 (대한민국)', '국내 지도 표시', '지도에 표시할 좌표, 접속 IP'],
@@ -193,7 +196,7 @@ const en: PolicySection[] = [
     table: {
       head: ['Recipient (country)', 'Purpose', 'Data sent'],
       rows: [
-        [`Supabase Inc. (server region: ${SUPABASE_REGION.en})`, 'Storage, sign-in, real-time sync', 'Everything in section 2'],
+        [`Supabase Inc. (US company, servers in ${SUPABASE_REGION.en})`, 'Storage, sign-in, real-time sync', 'Everything in section 2'],
         ['Cloudflare, Inc. (USA, global servers)', 'Delivering the website', 'IP address, browser details'],
         ['Google LLC (USA)', 'Google sign-in, maps outside Korea', 'Sign-in details, map coordinates, IP address'],
         ['Kakao Corp. (Korea)', 'Maps in Korea', 'Map coordinates, IP address'],
@@ -287,7 +290,7 @@ const ja: PolicySection[] = [
     table: {
       head: ['受け取る者（国）', '委託する業務', '送る情報'],
       rows: [
-        [`Supabase Inc.（サーバー地域：${SUPABASE_REGION.ja}）`, 'データ保存、ログイン、リアルタイム同期', '2. のすべての項目'],
+        [`Supabase Inc.（米国法人、サーバー：${SUPABASE_REGION.ja}）`, 'データ保存、ログイン、リアルタイム同期', '2. のすべての項目'],
         ['Cloudflare, Inc.（米国、世界各地のサーバー）', 'ウェブサイトの配信', '接続 IP、ブラウザ情報'],
         ['Google LLC（米国）', 'Google ログイン、海外の地図表示', 'ログイン情報、地図に表示する座標、接続 IP'],
         ['Kakao Corp.（韓国）', '韓国国内の地図表示', '地図に表示する座標、接続 IP'],
