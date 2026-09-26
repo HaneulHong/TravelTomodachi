@@ -134,6 +134,11 @@ export const ja: Messages = {
       `前日との時差は**${delta}**です。以下の時刻はすべて**${city}の現地時刻**です。`,
     emptyDay: 'この日はまだ予定がありません。',
     addItem: '予定を追加',
+    /** 일정 화면 위의 바로가기 — 메뉴 속 자주 쓰는 기능을 상태와 함께 */
+    shortcuts: '旅行のショートカット',
+    shortcutChecklist: (done: number, total: number) => total ? `持ち物 ${done}/${total}` : '持ち物',
+    shortcutLedger: (n: number) => n ? `家計簿 ${n}件` : '家計簿',
+    shortcutIdeas: (n: number) => n ? `候補 ${n}` : '候補地',
     menuChecklist: 'チェックリスト',
     timeConflict:
       '前の予定より早い時刻があります。日付をまたぐ予定でなければ、順番を確認してください。',

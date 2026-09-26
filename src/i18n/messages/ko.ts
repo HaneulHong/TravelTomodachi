@@ -144,6 +144,11 @@ export const ko = {
       `어제와 시차가 **${delta}** 있습니다. 아래 시간은 모두 **${city} 현지 시각**입니다.`,
     emptyDay: '이 날은 아직 비어 있습니다.',
     addItem: '일정 추가',
+    /** 일정 화면 위의 바로가기 — 메뉴 속 자주 쓰는 기능을 상태와 함께 */
+    shortcuts: '여행 바로가기',
+    shortcutChecklist: (done: number, total: number) => total ? `준비물 ${done}/${total}` : '준비물',
+    shortcutLedger: (n: number) => n ? `가계부 ${n}건` : '가계부',
+    shortcutIdeas: (n: number) => n ? `후보 ${n}` : '후보 장소',
     menuChecklist: '체크리스트',
     timeConflict:
       '앞 일정보다 이른 시각이 있습니다. 자정을 넘기는 일정이 아니라면 순서를 확인해 보세요.',

@@ -134,6 +134,11 @@ export const en: Messages = {
       `Time difference from yesterday: **${delta}**. All times below are **local time in ${city}**.`,
     emptyDay: 'Nothing planned for this day yet.',
     addItem: 'Add to plan',
+    /** 일정 화면 위의 바로가기 — 메뉴 속 자주 쓰는 기능을 상태와 함께 */
+    shortcuts: 'Trip shortcuts',
+    shortcutChecklist: (done: number, total: number) => total ? `Packing ${done}/${total}` : 'Packing',
+    shortcutLedger: (n: number) => n ? `Expenses · ${n}` : 'Expenses',
+    shortcutIdeas: (n: number) => n ? `Ideas · ${n}` : 'Ideas',
     menuChecklist: 'Checklist',
     timeConflict:
       "Some times are earlier than the plan before them. Unless it's past midnight, check the order.",

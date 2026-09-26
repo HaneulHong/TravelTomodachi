@@ -125,6 +125,10 @@ export function TripScreen() {
   const moveItem = useTripStore((s) => s.moveItem);
   const setDayOrder = useTripStore((s) => s.setDayOrder);
   const ideaCount = useTripStore((s) => s.places.filter((p) => p.tripId === tripId).length);
+  const checklist = useTripStore((s) => s.checklist);
+  const expenseCount = useTripStore((s) => s.expenses.filter((e) => e.tripId === tripId).length);
+  const packing = checklist.filter((c) => c.tripId === tripId);
+  const packed = packing.filter((c) => c.checked).length;
   const allComments = useTripStore((s) => s.comments);
   /** 일정별 댓글 수 — 타임라인 카드에 💬 N */
   const commentCount = useMemo(() => {
@@ -228,6 +232,37 @@ export function TripScreen() {
       {/* 가로 스와이프로 날짜 전환. 세로 스크롤은 그대로 동작한다. */}
       {/* 순서 바꾸기 중에는 끌기와 헷갈리지 않게 날짜 스와이프를 끈다 */}
       <main className="main" {...(reorder ? {} : swipe)} style={{ touchAction: 'pan-y' }}>
+        {/*
+          메뉴 속에 숨어 있던 자주 쓰는 기능을 상태와 함께 바로 보이게 한다.
+          여행 중에 "돈 누가 냈지", "뭐 챙겼지"를 보려고 메뉴를 열 필요가 없다.
+          메뉴에도 그대로 남아 있다.
+        */}
+        {!reorder && (
+          <nav className="shortcuts" aria-label={t.trip.shortcuts}>
+            <button
+              className="shortcut"
+              onClick={() => navigate(`/trip/${trip.id}/checklist`)}
+            >
+              <ListIcon size={15} />
+              {t.trip.shortcutChecklist(packed, packing.length)}
+            </button>
+            <button
+              className="shortcut"
+              onClick={() => navigate(`/trip/${trip.id}/expenses?date=${activeDate}`)}
+            >
+              <WalletIcon size={15} />
+              {t.trip.shortcutLedger(expenseCount)}
+            </button>
+            <button
+              className="shortcut"
+              onClick={() => navigate(`/trip/${trip.id}/ideas?date=${activeDate}`)}
+            >
+              <IdeaIcon size={15} />
+              {t.trip.shortcutIdeas(ideaCount)}
+            </button>
+          </nav>
+        )}
+
         {/*
           도시·타임존은 머리를 눌러 고친다. 도시를 옮기는 날만 고치는 값이라
           화면에 따로 버튼을 두기보다 그 값이 보이는 자리를 누르게 한다.
