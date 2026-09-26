@@ -63,6 +63,7 @@ export const en: Messages = {
   region: { KR: 'Korea', GLOBAL: 'Abroad' },
 
   leg: {
+    late: (d: string) => `Not enough time · ${d} late`,
     transitMissing: 'No transit data',
     transitNoRoute: 'No line',
     crossBorder: 'International · enter manually',

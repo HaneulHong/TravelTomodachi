@@ -45,6 +45,7 @@ import {
   timezoneShift,
   tzShortLabel,
 } from '@/domain/time';
+import { slackMinutes } from '@/domain/schedule';
 import { zoneLabel } from '@/domain/timezones';
 import { isSegmentKind, type Item } from '@/domain/types';
 import { useLocale, useT } from '@/i18n';
@@ -71,8 +72,16 @@ function KindIcon({ kind }: { kind: Item['kind'] }) {
 }
 
 /** 구간 한 줄. 상태별로 다르게 보여준다 — 특히 '모름'을 숨기지 않는다. */
-function LegRow({ info }: { info?: LegInfo }) {
+/** 늦으면 몇 분(양수), 아니면 undefined */
+function lateByOf(prev: Item, next: Item, travel: number | undefined): number | undefined {
+  const slack = slackMinutes(prev, next, travel);
+  return slack !== null && slack < 0 ? -slack : undefined;
+}
+
+/** lateBy: 앞 일정을 마치고 이동하면 다음 일정에 몇 분 늦는지(늦지 않으면 없음) */
+function LegRow({ info, lateBy }: { info?: LegInfo; lateBy?: number }) {
   const t = useT();
+  const locale = useLocale();
   return (
     <div className="tl-leg">
       <div className="tl-leg__rail">
@@ -108,6 +117,13 @@ function LegRow({ info }: { info?: LegInfo }) {
 
         {info?.status === 'unavailable' && (
           <span className="chip">{info.missingPlace ? t.leg.needsPlace : t.leg.unknownTap}</span>
+        )}
+        {/* 늦는 구간 — 여행 당일이 아니라 계획할 때 알게 */}
+        {lateBy !== undefined && (
+          <span className="chip chip--warn">
+            <AlertIcon size={11} />
+            {t.leg.late(formatMinutes(lateBy, locale))}
+          </span>
         )}
       </div>
     </div>
@@ -353,7 +369,12 @@ export function TripScreen() {
 
           {!reorder && items.map((item, i) => (
             <div key={item.id}>
-              {i > 0 && <LegRow info={legs.get(item.id)} />}
+              {i > 0 && (
+                <LegRow
+                  info={legs.get(item.id)}
+                  lateBy={lateByOf(items[i - 1]!, item, legs.get(item.id)?.minutes)}
+                />
+              )}
 
               <div className="tl-row">
                 <div

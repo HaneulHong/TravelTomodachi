@@ -63,6 +63,7 @@ export const ja: Messages = {
   region: { KR: '韓国', GLOBAL: '海外' },
 
   leg: {
+    late: (d: string) => `移動時間が足りません · ${d}遅れ`,
     transitMissing: '公共交通の情報なし',
     transitNoRoute: '路線なし',
     crossBorder: '国際区間 · 手入力',

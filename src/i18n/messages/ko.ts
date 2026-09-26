@@ -73,6 +73,8 @@ export const ko = {
 
   /** 일정 사이 이동 구간 칩 */
   leg: {
+    /** 앞 일정을 마치고 이동하면 다음 일정에 늦는다 — domain/schedule.ts */
+    late: (d: string) => `이동 시간 부족 · ${d} 늦음`,
     transitMissing: '대중교통 정보 없음',
     transitNoRoute: '노선 없음',
     crossBorder: '국제 구간 · 직접 입력',

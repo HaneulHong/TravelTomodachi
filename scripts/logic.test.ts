@@ -4,6 +4,7 @@
  * 프레임워크 없이도 반드시 검증한다.
  */
 
+import { slackMinutes } from '../src/domain/schedule';
 import {
   keyBetween,
   firstKey,
@@ -759,6 +760,19 @@ console.log('\n── 언어 ──');
   };
   eq('en에 빈 번역 없음', emptyWhereKoIsNot(ko, en, 'en').join(','), '');
   eq('ja에 빈 번역 없음', emptyWhereKoIsNot(ko, ja, 'ja').join(','), '');
+}
+
+console.log('\n── 이동 시간 여유 ──');
+{
+  const it = (localTime?: string, durationMin?: number) =>
+    ({ id: 'x', tripId: 't', date: '2026-10-01', sortKey: 'a', kind: 'place', title: 'x', localTime, durationMin }) as never;
+  eq('넉넉함: 10:00+90분+43분 → 12:30까지 17분 남음', slackMinutes(it('10:00', 90), it('12:30'), 43), 17);
+  eq('늦음: 14:30 끝 + 40분 → 15:00 시작이면 10분 늦음', slackMinutes(it('12:30', 120), it('15:00'), 40), -10);
+  eq('딱 맞음', slackMinutes(it('10:00', 60), it('11:30'), 30), 0);
+  eq('머무는 시간 모르면 모름', slackMinutes(it('10:00'), it('12:00'), 20), null);
+  eq('이동 시간 아직 모르면 모름', slackMinutes(it('10:00', 60), it('12:00'), undefined), null);
+  eq('다음 일정 시각 없으면 모름', slackMinutes(it('10:00', 60), it(), 20), null);
+  eq('시각이 거꾸로면(따로 경고) 모름', slackMinutes(it('15:00', 60), it('09:00'), 20), null);
 }
 
 console.log(`\n${failed === 0 ? '✓ 전부 통과' : '✗ 실패 있음'} — ${passed} passed, ${failed} failed\n`);
