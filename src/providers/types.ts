@@ -104,6 +104,11 @@ export interface PlaceProvider {
   readonly id: string;
   readonly label: string;
   search(query: string, near?: Coord): Promise<Place[]>;
+  /**
+   * 사용자가 "더 찾기"를 눌렀을 때만 부르는 추가 검색 (해외 명소의 한글 이름 등).
+   * 자동완성으로 부르면 안 되는 서비스라 search와 나눴다.
+   */
+  searchMore?(query: string): Promise<Place[]>;
   /** 후보를 고른 뒤 좌표를 채워 돌려준다. 이미 있으면 그대로 돌려준다. */
   resolve(place: Place): Promise<Place>;
 }

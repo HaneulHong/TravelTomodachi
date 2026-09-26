@@ -11,11 +11,14 @@
  *
  * 한쪽이 실패하면(카카오 도메인 미등록, 하루 한도 초과 등) 다른 쪽만 보여 준다.
  * 둘 다 실패했을 때만 오류다.
+ *
+ * 그래도 못 찾으면 목록 아래 "더 찾기"로 Nominatim(한글 이름 검색)을 부른다.
  */
 
 import type { Coord } from '@/domain/types';
 import { isInKorea } from '../region';
 import type { Place, PlaceProvider } from '../types';
+import { searchByName } from './nominatimPlaceProvider';
 
 const LIMIT = 8;
 /** 카카오 SDK가 늦으면 기다리지 않는다 — Photon 결과까지 붙잡히지 않게 */
@@ -83,6 +86,9 @@ export function createCombinedPlaceProvider(
       }
       return mergePlaceResults(kakaoPlaces, osmPlaces, koreaFirst(query, near));
     },
+
+    // 해외 명소를 한글 이름으로 — 버튼을 눌렀을 때만 (nominatimPlaceProvider.ts)
+    searchMore: searchByName,
 
     async resolve(place: Place): Promise<Place> {
       return place;

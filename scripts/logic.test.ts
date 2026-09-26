@@ -51,6 +51,7 @@ import { ja } from '../src/i18n/messages/ja';
 import { parsePlan, type MotisLeg } from '../src/providers/route/transitousRouteProvider';
 import { decodePolyline } from '../src/providers/route/polyline';
 import { koreaFirst, mergePlaceResults } from '../src/providers/places/combinedPlaceProvider';
+import { nominatimToPlace } from '../src/providers/places/nominatimPlaceProvider';
 import { effectiveLeg, recommendMode } from '../src/domain/legChoice';
 
 let passed = 0;
@@ -859,6 +860,16 @@ console.log('\n── 장소 검색: 카카오 + Photon 합치기 ──');
   eq('카카오 0건이어도 Photon 국내 결과 그대로', ids(mergePlaceResults([], [osmSeoul], true)), 'o-서울');
   eq('Photon 실패면 카카오만', ids(mergePlaceResults([seoul], null, true)), 'k-서울');
   eq('개수 상한', mergePlaceResults([seoul, busan], [tokyo], true, 2).length, 2);
+}
+
+console.log('\n── 이름으로 더 찾기 (Nominatim) ──');
+{
+  const osaka = nominatimToPlace({ osm_type: 'way', osm_id: 1, name: '오사카성;오사카 성', display_name: '오사카성;오사카 성, 1, 大阪城, 中央区, 오사카시, 일본', lat: '34.687', lon: '135.525' });
+  eq('여러 이름이면 첫 이름', osaka?.name, '오사카성');
+  eq('주소는 이름 뒤 나머지', osaka?.address, '1, 大阪城, 中央区, 오사카시, 일본');
+  eq('좌표는 숫자로', osaka?.coord?.lng, 135.525);
+  eq('이름이 비면 display_name 첫 칸', nominatimToPlace({ name: '', display_name: 'Eiffel, Paris', lat: '1', lon: '2' })?.name, 'Eiffel');
+  eq('좌표 없으면 버림', nominatimToPlace({ name: 'x', display_name: 'x' }), null);
 }
 
 console.log(`\n${failed === 0 ? '✓ 전부 통과' : '✗ 실패 있음'} — ${passed} passed, ${failed} failed\n`);

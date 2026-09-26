@@ -305,6 +305,8 @@ export const ja: Messages = {
     searching: '検索中…',
     noResults: '候補がありません。現地の言葉か英語で入力してみてください (例: 東京スカイツリー → Tokyo Skytree)。',
     noCoord: '座標がないため、地図には表示されません。',
+    searchMore: '名所を名前でさらに探す',
+    moreNone: 'これ以上見つかりませんでした。英語か現地の言葉で入力してみてください。',
   },
 
   credits: {
