@@ -23,6 +23,7 @@ import type { Coord } from '@/domain/types';
 import type { Place, PlaceProvider } from '../types';
 
 const ENDPOINT = 'https://photon.komoot.io/api/';
+const REVERSE_ENDPOINT = 'https://photon.komoot.io/reverse';
 const LIMIT = 6;
 
 /** 한 번의 편집에서 치는 질의어는 많아야 수십 개라 이 정도면 전부 담긴다. */
@@ -43,6 +44,10 @@ interface PhotonFeature {
     country?: string;
     osm_id?: number;
     osm_type?: string;
+    /** 'house'(건물·가게) · 'street' · 'city' 등 — 역조회에서 고를 때 본다 */
+    type?: string;
+    /** 'postcode'면 이름이 우편번호다 */
+    osm_value?: string;
   };
   geometry?: {
     /** GeoJSON은 [경도, 위도] 순서다 — lat/lng과 뒤집혀 있으니 주의. */
@@ -52,6 +57,19 @@ interface PhotonFeature {
 
 function addressOf(p: NonNullable<PhotonFeature['properties']>): string {
   return [p.street, p.district, p.city, p.state, p.country].filter(Boolean).join(', ');
+}
+
+function toPlace(feature: PhotonFeature): Place | null {
+  const p = feature.properties ?? {};
+  const c = feature.geometry?.coordinates;
+  if (!p.name || !c) return null;
+  return {
+    id: `${p.osm_type ?? 'x'}${p.osm_id ?? p.name}`,
+    name: p.name,
+    address: addressOf(p),
+    // GeoJSON은 [lng, lat] 순서
+    coord: { lat: c[1], lng: c[0] },
+  };
 }
 
 function cacheKey(query: string, near?: Coord): string {
@@ -93,18 +111,7 @@ export function createPhotonPlaceProvider(): PlaceProvider {
 
       const data = (await res.json()) as { features?: PhotonFeature[] };
       const found: Place[] = (data.features ?? [])
-        .map((feature): Place | null => {
-          const p = feature.properties ?? {};
-          const c = feature.geometry?.coordinates;
-          if (!p.name || !c) return null;
-          return {
-            id: `${p.osm_type ?? 'x'}${p.osm_id ?? p.name}`,
-            name: p.name,
-            address: addressOf(p),
-            // GeoJSON은 [lng, lat] 순서
-            coord: { lat: c[1], lng: c[0] },
-          };
-        })
+        .map(toPlace)
         .filter((p): p is Place => p !== null);
 
       if (cache.size >= MAX_CACHE) {
@@ -115,6 +122,28 @@ export function createPhotonPlaceProvider(): PlaceProvider {
       cache.set(key, found);
 
       return found;
+    },
+
+    /**
+     * 좌표 → 가까운 곳 이름. 이름 없는 땅·도시·우편번호가 섞여 와서 몇 개 받아 고른다.
+     * 좌표는 사용자가 찍은 그대로 쓰고, 여기서는 이름만 빌린다(호출부).
+     */
+    async reverse(coord: Coord): Promise<Place | null> {
+      const params = new URLSearchParams({
+        lat: String(coord.lat),
+        lon: String(coord.lng),
+        limit: '5',
+      });
+      const res = await fetch(`${REVERSE_ENDPOINT}?${params.toString()}`);
+      if (!res.ok) return null;
+      const data = (await res.json()) as { features?: PhotonFeature[] };
+      // 건물·거리 수준만 — 도시 이름이나 우편번호("04524")는 장소 이름이 못 된다
+      const near = (data.features ?? []).filter(
+        (f) =>
+          (f.properties?.type === 'house' || f.properties?.type === 'street') &&
+          f.properties.osm_value !== 'postcode',
+      );
+      return near.map(toPlace).find((p) => p !== null) ?? null;
     },
 
     // Photon은 검색 응답에 좌표를 함께 준다. 따로 조회할 게 없다.

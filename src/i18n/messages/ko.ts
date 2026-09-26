@@ -327,6 +327,18 @@ export const ko = {
     noCoord: '좌표가 없어 지도에는 표시되지 않습니다.',
     searchMore: '해외 명소를 한글 이름으로 더 찾기',
     moreNone: '더 찾지 못했습니다. 영어나 현지어로 쳐 보세요.',
+    pickOnMap: '📍 지도에서 직접 찍기',
+    adjustOnMap: '지도에서 위치 고치기',
+    pinnedName: '지도에서 고른 위치',
+  },
+
+  mapPick: {
+    title: '위치 고르기',
+    search: '장소·동네로 이동',
+    searchPlaceholder: '예: 신주쿠, 해운대',
+    hint: '지도를 움직여 핀 끝을 원하는 곳에 맞추세요',
+    confirm: '이 위치로',
+    unavailable: '지도를 불러오지 못했습니다. 검색으로 골라 주세요.',
   },
 
   credits: {

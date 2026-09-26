@@ -94,6 +94,18 @@ export function ItemEditScreen() {
 
   const canSave = title.trim().length > 0;
 
+  /*
+   * 지도에서 고를 때 처음 보여 줄 곳 — 그 날 다른 일정들, 없으면 여행 전체.
+   * PlaceField는 마지막 것 근처에서 연다(보통 바로 앞 일정).
+   */
+  const coordsOf = (d: string): Coord[] =>
+    getDayItems(trip.id, d)
+      .filter((it) => it.id !== itemId)
+      .flatMap((it) => [it.coord, it.toCoord])
+      .filter((c): c is Coord => c !== undefined);
+  const dayCoords = coordsOf(date);
+  const nearCoords = dayCoords.length > 0 ? dayCoords : trip.days.flatMap((d) => coordsOf(d.date));
+
   const save = (): void => {
     if (!canSave) return;
 
@@ -211,6 +223,7 @@ export function ItemEditScreen() {
             }
             name={placeName}
             coord={coord}
+            near={nearCoords}
             onChange={(next, nextCoord) => {
               setPlaceName(next);
               setCoord(nextCoord);
@@ -232,6 +245,7 @@ export function ItemEditScreen() {
               placeholder={t.itemEdit.arrivePlaceholder}
               name={toPlaceName}
               coord={toCoord}
+              near={coord ? [...nearCoords, coord] : nearCoords}
               onChange={(next, nextCoord) => {
                 setToPlaceName(next);
                 setToCoord(nextCoord);

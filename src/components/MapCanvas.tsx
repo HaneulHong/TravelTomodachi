@@ -13,7 +13,7 @@ interface Props {
 
 type Status = 'loading' | 'ready' | 'error';
 
-function prefersDark(): boolean {
+export function prefersDark(): boolean {
   if (typeof window === 'undefined' || !window.matchMedia) return false;
   const attr = document.documentElement.getAttribute('data-theme');
   if (attr === 'dark') return true;

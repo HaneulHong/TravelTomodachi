@@ -109,6 +109,8 @@ export interface PlaceProvider {
    * 자동완성으로 부르면 안 되는 서비스라 search와 나눴다.
    */
   searchMore?(query: string): Promise<Place[]>;
+  /** 좌표 → 가장 가까운 이름 있는 곳. 지도에서 직접 찍었는데 이름칸이 비었을 때 채운다 */
+  reverse?(coord: Coord): Promise<Place | null>;
   /** 후보를 고른 뒤 좌표를 채워 돌려준다. 이미 있으면 그대로 돌려준다. */
   resolve(place: Place): Promise<Place>;
 }

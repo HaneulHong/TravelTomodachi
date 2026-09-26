@@ -161,6 +161,7 @@ export function IdeasScreen() {
 
       {adding && (
         <AddIdeaSheet
+          near={ranked.flatMap(({ place }) => (place.coord ? [place.coord] : []))}
           onClose={() => setAdding(false)}
           onSave={(draft) => {
             addPlace({ tripId: trip.id, ...draft });
@@ -217,9 +218,12 @@ export function IdeasScreen() {
 
 /** 후보 올리기 — 장소 검색 + 한마디. 검색 결과를 안 골라도(좌표 없이) 올릴 수 있다. */
 function AddIdeaSheet({
+  near,
   onClose,
   onSave,
 }: {
+  /** 지도에서 고를 때 처음 보여 줄 곳 — 다른 후보들 */
+  near: Coord[];
   onClose(): void;
   onSave(draft: { name: string; placeName?: string; coord?: Coord; note?: string }): void;
 }) {
@@ -258,6 +262,7 @@ function AddIdeaSheet({
             setCoord(nextCoord);
           }}
           onPicked={(place) => setPlaceName(place.name)}
+          near={near}
         />
         <label className="form__row">
           <span className="form__label">{t.ideas.note}</span>

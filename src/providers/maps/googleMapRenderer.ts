@@ -22,6 +22,8 @@ import {
   accentColor,
   createPinElement,
   FIT_PADDING_PX,
+  PICK_AREA_ZOOM,
+  PICK_CLOSE_ZOOM,
   SINGLE_STOP_ZOOM,
   type MapHandle,
   type MapRenderer,
@@ -62,6 +64,7 @@ export function createGoogleMapRenderer(apiKey: string, mapId?: string): MapRend
         zoomControl: true,
         clickableIcons: false,
         colorScheme: options?.dark ? 'DARK' : 'LIGHT',
+        ...(options?.greedy ? { gestureHandling: 'greedy' } : {}),
       });
 
       let markers: google.maps.marker.AdvancedMarkerElement[] = [];
@@ -167,6 +170,16 @@ export function createGoogleMapRenderer(apiKey: string, mapId?: string): MapRend
           for (const stop of stops) bounds.extend(stop.coord);
           for (const coord of pathCoords) bounds.extend(coord);
           if (!bounds.isEmpty()) map.fitBounds(bounds, FIT_PADDING_PX);
+        },
+
+        getCenter(): Coord | null {
+          const c = map.getCenter();
+          return c ? { lat: c.lat(), lng: c.lng() } : null;
+        },
+
+        setView(coord: Coord, closeUp: boolean): void {
+          map.setCenter(coord);
+          map.setZoom(closeUp ? PICK_CLOSE_ZOOM : PICK_AREA_ZOOM);
         },
 
         destroy(): void {

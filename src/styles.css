@@ -3170,3 +3170,104 @@ body:has(.offline-bar) .main {
 .inapp__copy .form__input {
   font-size: 13px;
 }
+
+/* ── 지도에서 위치 고르기 (MapPickSheet) ─────────────────────────── */
+
+.mappick {
+  position: fixed;
+  inset: 0;
+  z-index: 60; /* 시트(41) 위 — 후보 추가 시트 안에서도 연다 */
+  display: flex;
+  flex-direction: column;
+  max-width: 480px;
+  margin: 0 auto;
+  background: var(--bg);
+}
+
+.mappick__search {
+  padding: 8px 16px 10px;
+  position: relative;
+  z-index: 2; /* 검색 후보 목록이 지도 위로 */
+}
+
+.mappick__map {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  background: var(--surface-3);
+}
+
+.mappick__canvas {
+  position: absolute;
+  inset: 0;
+  /* 지도 SDK가 안쪽 층에 z-index를 높게 준다 — 여기서 가둬야 핀이 위에 뜬다 */
+  z-index: 0;
+}
+
+/* 핀 끝(아래 꼭짓점)이 지도 정가운데에 오게 — 좌표는 핀 끝이다 */
+.mappick__pin {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -100%);
+  z-index: 1;
+  pointer-events: none;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.35));
+}
+
+.mappick__pin-body {
+  fill: var(--accent);
+  stroke: #fff;
+  stroke-width: 2;
+}
+
+.mappick__pin-hole {
+  fill: #fff;
+}
+
+.mappick__msg {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  text-align: center;
+  font-size: 14px;
+  color: var(--text-3);
+  z-index: 1;
+}
+
+.mappick__foot {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 16px calc(14px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.mappick__hint {
+  font-size: 13px;
+  color: var(--text-2);
+  text-align: center;
+}
+
+/* 장소 칸 오른쪽 핀 — 누르면 지도에서 고르기. 좌표가 있으면 강조색 */
+.ac__pinbtn {
+  pointer-events: auto;
+  right: 4px;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  color: var(--text-3);
+}
+
+.ac__pinbtn--on {
+  color: var(--accent);
+}
+
+.ac__pinbtn:active {
+  background: var(--surface-3);
+}

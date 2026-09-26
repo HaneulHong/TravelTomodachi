@@ -43,6 +43,10 @@ export interface MapHandle {
   setPath(segments: PathSegment[]): void;
   /** 모든 지점이 보이도록 뷰포트 맞춤 */
   fit(): void;
+  /** 지금 화면 가운데 좌표 — 지도에서 위치 고르기(MapPickSheet)가 읽는다. 개략도에는 없다 */
+  getCenter?(): Coord | null;
+  /** 이 좌표를 가운데로. closeUp이면 가게를 고를 수 있을 만큼 확대, 아니면 동네 수준 */
+  setView?(coord: Coord, closeUp: boolean): void;
   destroy(): void;
 }
 
@@ -58,6 +62,11 @@ export interface MountOptions {
    * 아무것도 안 보이는" 상태가 된다. 이 콜백이 그 구멍을 메운다.
    */
   onFailure?(err: unknown): void;
+  /**
+   * 한 손가락으로 바로 움직인다. 기본값(Google 'auto')은 페이지가 스크롤되면 두 손가락을
+   * 요구하는데, 위치 고르기는 지도가 화면 전체라 한 손가락이 맞다.
+   */
+  greedy?: boolean;
 }
 
 export interface MapRenderer {
@@ -139,4 +148,7 @@ export function accentColor(): string {
 
 /** 지점이 하나뿐이면 fitBounds가 과도하게 확대되므로 이 줌으로 고정 */
 export const SINGLE_STOP_ZOOM = 15;
+/** 위치 고르기: 가게를 짚을 만큼 / 동네가 보일 만큼 (Google zoom) */
+export const PICK_CLOSE_ZOOM = 17;
+export const PICK_AREA_ZOOM = 14;
 export const FIT_PADDING_PX = 52;

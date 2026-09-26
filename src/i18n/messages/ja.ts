@@ -307,6 +307,18 @@ export const ja: Messages = {
     noCoord: '座標がないため、地図には表示されません。',
     searchMore: '名所を名前でさらに探す',
     moreNone: 'これ以上見つかりませんでした。英語か現地の言葉で入力してみてください。',
+    pickOnMap: '📍 地図で直接選ぶ',
+    adjustOnMap: '地図で位置を直す',
+    pinnedName: '地図で選んだ場所',
+  },
+
+  mapPick: {
+    title: '場所を選ぶ',
+    search: '場所・エリアへ移動',
+    searchPlaceholder: '例: 新宿、海雲台',
+    hint: '地図を動かして、ピンの先を目的の場所に合わせてください',
+    confirm: 'この場所にする',
+    unavailable: '地図を読み込めませんでした。検索から選んでください。',
   },
 
   credits: {

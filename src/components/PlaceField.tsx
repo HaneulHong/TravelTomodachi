@@ -12,6 +12,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { PinIcon } from '@/components/icons';
+import { canPickOnMap, MapPickSheet } from '@/components/MapPickSheet';
 import { LIMITS } from '@/domain/limits';
 import type { Coord } from '@/domain/types';
 import { getMessages, useT } from '@/i18n';
@@ -31,6 +32,15 @@ interface Props {
   autoFocus?: boolean;
   /** 글자 수 상한 (DB와 같게 — domain/limits.ts). 검색 결과를 골라도 이만큼만 넣는다. */
   maxLength?: number;
+  /**
+   * 지도에서 고를 때 처음 보여 줄 곳 — 같은 날 다른 일정의 좌표 등. 마지막 것 근처에서 연다
+   * (보통 바로 앞 일정이라 다음 장소도 그 근처다).
+   */
+  near?: Coord[];
+  /** 지도에서 직접 고르기를 끈다 — 지도 고르기 화면 안의 검색칸처럼 */
+  pickOnMap?: boolean;
+  /** "좌표가 없어 지도에 안 뜬다" 안내. 지도 고르기 화면의 검색칸은 저장할 칸이 아니라 끈다 */
+  coordHint?: boolean;
 }
 
 export function PlaceField({
@@ -42,6 +52,9 @@ export function PlaceField({
   onPicked,
   autoFocus,
   maxLength = LIMITS.placeName,
+  near,
+  pickOnMap = true,
+  coordHint = true,
 }: Props) {
   const t = useT();
   const [results, setResults] = useState<Place[]>([]);
@@ -57,6 +70,9 @@ export function PlaceField({
    * 같은 검색어로는 버튼을 다시 보이지 않는다 — 결과가 같고, 공개 서버에 부담만 준다.
    */
   const [more, setMore] = useState<{ q: string; count: number | null } | null>(null);
+  /** 지도에서 고르는 중 (MapPickSheet) */
+  const [picking, setPicking] = useState(false);
+  const mapPickable = pickOnMap && canPickOnMap();
 
   /**
    * 직전에 고른 장소의 이름. 입력값이 여기서 벗어나면 좌표를 버린다.
@@ -134,6 +150,26 @@ export function PlaceField({
       });
   }
 
+  /**
+   * 지도에서 찍은 곳. 적어 둔 이름은 그대로 두고 좌표만 붙인다 — 검색에 안 나와서
+   * 찍는 경우가 대부분이라 이름은 사용자가 친 게 맞다. 이름칸이 비었으면 가까운
+   * 건물·거리 이름을 빌려 온다(좌표는 찍은 그대로).
+   */
+  async function pickedOnMap(point: Coord): Promise<void> {
+    setPicking(false);
+    setResults([]);
+    setOpen(false);
+    let label = name.trim();
+    if (label.length === 0) {
+      const nearest = await places.reverse?.(point).catch(() => null);
+      label = nearest?.name ?? t.place.pinnedName;
+    }
+    label = [...label].slice(0, maxLength).join('');
+    pickedNameRef.current = label;
+    onChange(label, point);
+    onPicked?.({ id: `pin:${point.lat},${point.lng}`, name: label, address: '', coord: point });
+  }
+
   /** 버튼을 눌렀을 때만 — 입력할 때마다 부르면 안 되는 서비스다 (nominatimPlaceProvider.ts) */
   function findMore(): void {
     const q = name.trim();
@@ -209,10 +245,22 @@ export function PlaceField({
             aria-expanded={open && results.length > 0}
             aria-autocomplete="list"
           />
-          {coord && <PinIcon className="ac__pin" />}
+          {mapPickable ? (
+            <button
+              type="button"
+              className={`ac__pin ac__pinbtn${coord ? ' ac__pinbtn--on' : ''}`}
+              onClick={() => setPicking(true)}
+              aria-label={coord ? t.place.adjustOnMap : t.place.pickOnMap}
+              title={coord ? t.place.adjustOnMap : t.place.pickOnMap}
+            >
+              <PinIcon size={17} />
+            </button>
+          ) : (
+            coord && <PinIcon className="ac__pin" />
+          )}
         </span>
 
-        {open && (searching || results.length > 0 || canFindMore || moreHere) && (
+        {open && (searching || results.length > 0 || canFindMore || moreHere || (mapPickable && typedSomethingNew)) && (
           /*
            * 목록은 흐름에서 띄운다(absolute). 흐름 안에 두면 글자를 칠 때마다
            * 아래 입력칸들이 밀려 내려가서, 시각을 넣으려고 겨눈 자리가 움직인다.
@@ -227,6 +275,8 @@ export function PlaceField({
               results.map((place, i) => (
                 <li key={place.id}>
                   <button
+                    // 후보 추가 시트는 <form>이다 — type이 없으면 고르는 순간 폼이 제출된다
+                    type="button"
                     className={`ac__item${i === active ? ' ac__item--on' : ''}`}
                     onClick={() => pick(place)}
                     onMouseEnter={() => setActive(i)}
@@ -250,8 +300,17 @@ export function PlaceField({
 
             {!searching && canFindMore && (
               <li>
-                <button className="ac__more" onClick={findMore}>
+                <button type="button" className="ac__more" onClick={findMore}>
                   {t.place.searchMore}
+                </button>
+              </li>
+            )}
+
+            {/* 그래도 없으면 직접 — 검색에 안 나오는 골목 가게·숙소 입구 */}
+            {!searching && mapPickable && typedSomethingNew && (
+              <li>
+                <button type="button" className="ac__more ac__more--map" onClick={() => setPicking(true)}>
+                  {t.place.pickOnMap}
                 </button>
               </li>
             )}
@@ -261,8 +320,16 @@ export function PlaceField({
 
       {searchError && <p className="form__hint">{searchError}</p>}
 
-      {name.trim().length > 0 && !coord && (
+      {coordHint && name.trim().length > 0 && !coord && (
         <p className="form__hint">{t.place.noCoord}</p>
+      )}
+      {picking && (
+        <MapPickSheet
+          start={coord}
+          near={near?.[near.length - 1]}
+          onPick={(point) => void pickedOnMap(point)}
+          onClose={() => setPicking(false)}
+        />
       )}
     </div>
   );
