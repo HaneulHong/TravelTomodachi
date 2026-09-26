@@ -172,6 +172,9 @@ export const ja: Messages = {
     menuIdeas: '行きたい場所',
     menuCalendar: 'カレンダーに書き出す',
     menuShareDay: 'この日の予定を送る',
+    menuActivity: '変更履歴',
+    newBadge: 'NEW',
+    newBadgeAria: (who: string) => `${who}さんが変更`,
     menuShare: '友だちに共有',
     menuMembers: 'メンバー · 招待コード',
     menuDelete: '旅行を削除',
@@ -308,6 +311,29 @@ export const ja: Messages = {
     searchMore: '名所を名前でさらに探す',
     moreNone: 'これ以上見つかりませんでした。英語か現地の言葉で入力してみてください。',
     pinnedName: '地図で選んだ場所',
+  },
+
+  activity: {
+    title: '変更履歴',
+    needsDb: '変更履歴はまだ使えません。しばらくしてからもう一度開いてください。',
+    offline: '接続が戻ったら見られます。',
+    empty: 'まだ履歴がありません。予定を追加・変更するとここに残ります。',
+    today: '今日',
+    yesterday: '昨日',
+    line: (
+      who: string | null,
+      target: 'item' | 'expense' | 'place',
+      action: 'add' | 'update' | 'delete',
+      title: string,
+      day: number | null,
+    ) => {
+      const verb = {
+        item: { add: 'を予定に追加しました', update: 'の予定を変更しました', delete: 'の予定を削除しました' },
+        expense: { add: 'の支出を記録しました', update: 'の支出を変更しました', delete: 'の支出を削除しました' },
+        place: { add: 'を候補に挙げました', update: 'の候補を変更しました', delete: 'の候補を削除しました' },
+      }[target][action];
+      return `${who ? `${who}さんが` : 'あなたが'}${day ? `${day}日目の` : ''}「${title}」${verb}`;
+    },
   },
 
   shareDay: {

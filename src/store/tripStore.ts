@@ -29,6 +29,7 @@ import {
 import { bySortKey, keyBetween, keyForMove } from '@/domain/fractionalIndex';
 import { moved, predecessorsChanged } from '@/domain/order';
 import type {
+  Activity,
   ChecklistItem,
   Comment,
   Expense,
@@ -164,6 +165,9 @@ interface TripState {
 
   addComment(itemId: string, body: string): void;
   removeComment(id: string): void;
+
+  /** 변경 기록을 읽는다(화면을 열 때). 표가 없는 DB면 null. */
+  loadActivity(tripId: string): Promise<Activity[] | null>;
 }
 
 /**
@@ -819,6 +823,8 @@ export const useTripStore = create<TripState>()((set, get) => {
       set((state) => ({ comments: state.comments.filter((c) => c.id !== id) }));
       rollbackOn(send('removeComment', id), previous);
     },
+
+    loadActivity: (tripId) => repository.loadActivity(tripId),
   };
 });
 

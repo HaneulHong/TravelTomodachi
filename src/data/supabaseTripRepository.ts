@@ -18,6 +18,7 @@
 
 import { colorOf, initialOf } from '@/auth';
 import type {
+  Activity,
   ChecklistItem,
   Comment,
   Coord,
@@ -235,6 +236,32 @@ function toItemRow(patch: Partial<Item>): Record<string, unknown> {
   }
 
   return row;
+}
+
+interface ActivityRow {
+  id: number;
+  trip_id: string;
+  actor_id: string | null;
+  action: Activity['action'];
+  target: Activity['target'];
+  target_id: string | null;
+  title: string | null;
+  item_date: string | null;
+  created_at: string;
+}
+
+function toActivity(row: ActivityRow): Activity {
+  return {
+    id: row.id,
+    tripId: row.trip_id,
+    actorId: row.actor_id ?? undefined,
+    action: row.action,
+    target: row.target,
+    targetId: row.target_id ?? undefined,
+    title: row.title ?? undefined,
+    date: row.item_date ?? undefined,
+    createdAt: row.created_at,
+  };
 }
 
 function toPlace(row: PlaceRow): Place {
@@ -639,6 +666,22 @@ export function createSupabaseTripRepository(): TripRepository {
     async removeComment(id: string): Promise<void> {
       const { error } = await client.from('comments').delete().eq('id', id);
       if (error) throw new Error(`${getMessages().errors.deleteComment}: ${error.message}`);
+    },
+
+    async loadActivity(tripId: string): Promise<Activity[] | null> {
+      // select('*') — 칸을 이름으로 부르면 SQL 실행 전 DB에서 요청 자체가 깨진다
+      const { data, error } = await client
+        .from('trip_activity')
+        .select('*')
+        .eq('trip_id', tripId)
+        .order('id', { ascending: false })
+        .limit(200);
+      if (error) {
+        // activity.sql을 아직 안 돌린 DB — 표가 없다
+        if (/PGRST205|42P01|does not exist|schema cache/i.test(`${error.code} ${error.message}`)) return null;
+        throw new Error(`${getMessages().errors.readTrips}: ${error.message}`);
+      }
+      return ((data ?? []) as ActivityRow[]).map(toActivity);
     },
 
     subscribe(onChange: (change: RemoteChange) => void): () => void {

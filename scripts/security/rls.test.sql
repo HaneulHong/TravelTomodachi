@@ -275,6 +275,46 @@ begin;
 set local role authenticated;
 select set_config('request.jwt.claim.sub', :B, true);
 select t.allowed('B: 상한 전에는 체크리스트 추가됨', format('insert into public.checklist (trip_id, title) values (%L, ''하나 더'')', :T));
+rollback;
+
+\echo '── 변경 기록 (supabase/activity.sql) ──────────────────'
+begin;
+set local role authenticated;
+select set_config('request.jwt.claim.sub', :C, true);
+select t.sees('C: 남의 여행 변경 기록 안 보임', 'select * from public.trip_activity', 0);
+rollback;
+
+begin;
+set local role authenticated;
+select set_config('request.jwt.claim.sub', :B, true);
+select t.sees('B: 같은 여행 기록 보임 (A가 넣은 일정·지출·후보 3줄)',
+  format('select * from public.trip_activity where trip_id = %L and actor_id = %L and action = ''add''', :T, :A), 3);
+select t.denied('B: 기록 꾸미기(직접 넣기)',
+  format('insert into public.trip_activity (trip_id, actor_id, action, target) values (%L, %L, ''delete'', ''item'')', :T, :A));
+select t.denied('B: 기록 지우기', format('delete from public.trip_activity where trip_id = %L', :T));
+select t.denied('B: 기록 고치기', format('update public.trip_activity set actor_id = %L where trip_id = %L', :B, :T));
+select t.denied('B: 기록 트리거 함수 직접 호출', 'select public.log_trip_activity()');
+
+-- 아래는 실제로 고친 뒤 기록을 본다 (probe는 되돌리므로 직접 실행)
+update public.items set title = '점심' where id = :I;
+update public.items set title = '점심 · 분짜' where id = :I;
+select t.sees('B: 10분 안에 두 번 고치면 한 줄',
+  format('select * from public.trip_activity where target_id = %L and actor_id = %L and action = ''update''', :I, :B), 1);
+select t.value_is('B: 그 줄은 마지막 제목',
+  format('select title from public.trip_activity where target_id = %L and actor_id = %L', :I, :B), '점심 · 분짜');
+update public.items set sort_key = 'z9' where id = :I;
+select t.sees('B: 순서만 바꾸면 안 적음',
+  format('select * from public.trip_activity where target_id = %L and actor_id = %L', :I, :B), 1);
+insert into public.items (id, trip_id, date, sort_key, title)
+  values ('33333333-0000-0000-0000-000000000033', :T, '2026-10-01', 'c', '잠깐 넣은 일정');
+delete from public.items where id = '33333333-0000-0000-0000-000000000033';
+select t.sees('B: 넣자마자 지운 건 흔적 없음',
+  'select * from public.trip_activity where target_id = ''33333333-0000-0000-0000-000000000033''', 0);
+delete from public.items where id = :I;
+select t.sees('B: 지운 일정은 제목과 함께 남음',
+  format('select * from public.trip_activity where target_id = %L and action = ''delete'' and title = ''점심 · 분짜''', :I), 1);
+rollback;
+
 \echo '── 회원 탈퇴 ─────────────────────────────────────────'
 begin;
 set local role anon;
