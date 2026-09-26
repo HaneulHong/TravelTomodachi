@@ -214,6 +214,8 @@ export const ko = {
   },
 
   itemEdit: {
+    deleteTitle: "이 일정을 지울까요?",
+    deleteBody: ["같은 여행 친구들 화면에서도 사라집니다.", "달린 댓글도 함께 지워지고, 되돌릴 수 없습니다."],
     titleNew: '일정 추가',
     titleEdit: '일정 수정',
     date: '날짜',

@@ -203,6 +203,8 @@ export const ja: Messages = {
   },
 
   itemEdit: {
+    deleteTitle: "この予定を削除しますか？",
+    deleteBody: ["同じ旅行のメンバーの画面からも消えます。", "付いているコメントも一緒に削除され、元に戻せません。"],
     titleNew: '予定を追加',
     titleEdit: '予定を編集',
     date: '日付',

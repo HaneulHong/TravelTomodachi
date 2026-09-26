@@ -207,6 +207,8 @@ export const en: Messages = {
   },
 
   itemEdit: {
+    deleteTitle: "Delete this plan?",
+    deleteBody: ["It disappears for everyone on this trip.", "Its comments are deleted too. This can’t be undone."],
     titleNew: 'Add to plan',
     titleEdit: 'Edit plan',
     date: 'Day',

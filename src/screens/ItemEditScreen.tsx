@@ -9,6 +9,7 @@
 import { useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { AppHeader } from '@/components/AppHeader';
+import { ConfirmSheet } from '@/components/ConfirmSheet';
 import { PlaceField } from '@/components/PlaceField';
 import { LIMITS } from '@/domain/limits';
 import { isSegmentKind, type Coord, type ItemKind } from '@/domain/types';
@@ -50,6 +51,8 @@ export function ItemEditScreen() {
   const [toPlaceName, setToPlaceName] = useState(existing?.toPlaceName ?? '');
   const [toCoord, setToCoord] = useState<Coord | undefined>(existing?.toCoord);
   const [description, setDescription] = useState(existing?.description ?? '');
+  // 지우기 전에 한 번 묻는다 — 친구들과 같이 쓰는 일정이라 잘못 누르면 모두의 화면에서 사라진다
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [bookingRef, setBookingRef] = useState(existing?.bookingRef ?? '');
 
   if (!trip) {
@@ -282,13 +285,27 @@ export function ItemEditScreen() {
             </button>
 
             {isEdit && (
-              <button className="btn btn--danger" onClick={destroy}>
+              <button className="btn btn--danger" onClick={() => setConfirmDelete(true)}>
                 {t.common.delete}
               </button>
             )}
           </div>
         </div>
       </main>
+
+      {confirmDelete && (
+        <ConfirmSheet
+          title={t.itemEdit.deleteTitle}
+          confirmLabel={t.common.delete}
+          danger
+          onClose={() => setConfirmDelete(false)}
+          onConfirm={async () => destroy()}
+        >
+          {t.itemEdit.deleteBody.map((line) => (
+            <p key={line}>{line}</p>
+          ))}
+        </ConfirmSheet>
+      )}
     </div>
   );
 }
