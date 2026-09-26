@@ -79,15 +79,17 @@ Supabase가 직접 RLS 누락·함수 설정 문제를 찾아 준다. 결과를 
 
 **⑤ 백업** — `npm run backup` ([BACKUP.md](./BACKUP.md)). 큰 SQL 실행 전에 꼭.
 
-### 콘텐츠 보안 정책(CSP) — 2026-09-26
-`public/_headers`에 **보고 모드**(`Content-Security-Policy-Report-Only`)로 넣었다.
-- 로컬에서 **실제 적용 상태로** 시험: 카카오·Google 지도, 이동 시간(도보·대중교통), 장소 검색, 날씨,
-  환율, 실시간 동기화 모두 동작. 목록에 없는 주소(example.com)는 막힘
-- 카카오 지도 SDK가 `eval`을 쓰지만 막아도 지도가 정상으로 뜬다 → `'unsafe-eval'`은 넣지 않는다
-- 적용 순서: 배포 후 운영 주소(https)에서 브라우저 콘솔에 `[Report Only]` 경고가 없는지 확인 →
-  `public/_headers`의 이름을 `Content-Security-Policy`로 바꾼다
-- 로컬 확인: `npm run build && npx vite preview` — `vite.config.ts`가 `_headers`를 읽어 같은 헤더를 붙인다.
-  주의: 헤더만 바꾸고 index.html이 그대로면 브라우저가 옛 헤더를 재사용한다(304) — 주소에 `?v=2` 등을 붙여 연다
+### 콘텐츠 보안 정책(CSP) — 2026-09-26 적용
+`public/_headers`의 `Content-Security-Policy`. 앱이 쓰는 외부 주소만 허용한다.
+- 보고 모드로 먼저 배포 → **최종 정책을 실제 적용 상태로** 로컬에서 시험: 카카오·Google 지도, 이동 시간
+  (도보·대중교통), 장소 검색, 날씨, 환율, 실시간, 전 화면 동작. 목록에 없는 주소(example.com)는 막힘
+- 카카오 SDK는 요청 방식(http/https)을 페이지에 맞춘다 — https 배포본에서 쓰는 `t1.daumcdn.net`(스크립트),
+  `mts.daumcdn.net`(지도 조각)이 모두 허용 목록 안인 것을 SDK 코드로 확인
+- 카카오 SDK가 `eval`을 쓰지만 막아도 지도가 뜬다 → `'unsafe-eval'`은 넣지 않는다(콘솔에 경고 한 줄은 남는다)
+- 외부 서비스를 새로 붙이면 `_headers`에 도메인을 더한다 — 빠뜨리면 그 기능이 조용히 막힌다.
+  확인: `npm run build && npx vite preview`(같은 헤더를 붙인다). 헤더만 바꾸고 index.html이 그대로면
+  브라우저가 옛 헤더를 재사용한다(304) — 주소에 `?v=2` 등을 붙여 연다
+- 문제가 생기면: 이름을 `Content-Security-Policy-Report-Only`로 되돌리면 즉시 막지 않게 된다
 
 ### 알고 두는 것 (고치지 않음)
 - **실시간 삭제 이벤트의 식별자**: `trip_members`(여행 id·사용자 id)와 `trip_days`(여행 id·날짜)의
