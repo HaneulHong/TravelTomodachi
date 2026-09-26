@@ -7,6 +7,8 @@
 -- 숫자는 앱 입력칸과 같다 — src/domain/limits.ts. 한쪽을 바꾸면 다른 쪽도 바꾼다.
 -- 상한은 평소 쓰임으로는 닿지 않을 만큼 넉넉하게 잡았다(막으려는 건 공격이지 긴 여행이 아니다).
 --
+-- 도우미 함수 없이 평범한 문장만 쓴다 — Supabase SQL Editor에서 그대로 돌아가게.
+--
 -- 글자 수 제약은 NOT VALID로 건다 — 이미 있는 행은 검사하지 않고 새로 쓰는 값부터 막는다.
 -- 혹시 기존 값이 넘어도 이 스크립트가 실패하지 않는다.
 
@@ -14,26 +16,41 @@
 -- 1. 글자 수
 -- ═══════════════════════════════════════════════════════════════════
 
-create or replace function pg_temp.add_len(tbl text, col text, max int)
-returns void language plpgsql as $$
-declare cname text := format('%s_%s_len', tbl, col);
-begin
-  execute format('alter table public.%I drop constraint if exists %I', tbl, cname);
-  execute format(
-    'alter table public.%I add constraint %I check (%I is null or char_length(%I) <= %s) not valid',
-    tbl, cname, col, col, max);
-end;
-$$;
+alter table public.items drop constraint if exists items_place_name_len;
+alter table public.items
+  add constraint items_place_name_len check (place_name is null or char_length(place_name) <= 200) not valid;
 
-select pg_temp.add_len('items', 'place_name', 200);
-select pg_temp.add_len('items', 'to_place_name', 200);
-select pg_temp.add_len('items', 'description', 2000);
-select pg_temp.add_len('items', 'carrier_code', 40);
-select pg_temp.add_len('items', 'sort_key', 200);
-select pg_temp.add_len('trip_days', 'city_label', 30);
-select pg_temp.add_len('trip_days', 'timezone', 64);
-select pg_temp.add_len('trips', 'cover_emoji', 16);
-select pg_temp.add_len('places', 'place_name', 200);
+alter table public.items drop constraint if exists items_to_place_name_len;
+alter table public.items
+  add constraint items_to_place_name_len check (to_place_name is null or char_length(to_place_name) <= 200) not valid;
+
+alter table public.items drop constraint if exists items_description_len;
+alter table public.items
+  add constraint items_description_len check (description is null or char_length(description) <= 2000) not valid;
+
+alter table public.items drop constraint if exists items_carrier_code_len;
+alter table public.items
+  add constraint items_carrier_code_len check (carrier_code is null or char_length(carrier_code) <= 40) not valid;
+
+alter table public.items drop constraint if exists items_sort_key_len;
+alter table public.items
+  add constraint items_sort_key_len check (sort_key is null or char_length(sort_key) <= 200) not valid;
+
+alter table public.trip_days drop constraint if exists trip_days_city_label_len;
+alter table public.trip_days
+  add constraint trip_days_city_label_len check (city_label is null or char_length(city_label) <= 30) not valid;
+
+alter table public.trip_days drop constraint if exists trip_days_timezone_len;
+alter table public.trip_days
+  add constraint trip_days_timezone_len check (timezone is null or char_length(timezone) <= 64) not valid;
+
+alter table public.trips drop constraint if exists trips_cover_emoji_len;
+alter table public.trips
+  add constraint trips_cover_emoji_len check (cover_emoji is null or char_length(cover_emoji) <= 16) not valid;
+
+alter table public.places drop constraint if exists places_place_name_len;
+alter table public.places
+  add constraint places_place_name_len check (place_name is null or char_length(place_name) <= 200) not valid;
 
 -- 나눠 낼 사람 목록 (배열 길이)
 alter table public.expenses drop constraint if exists expenses_split_among_len;
@@ -70,23 +87,40 @@ $$;
 create index if not exists checklist_trip_idx on public.checklist (trip_id);
 create index if not exists comments_trip_idx on public.comments (trip_id);
 
-create or replace function pg_temp.add_cap(tbl text, cap int)
-returns void language plpgsql as $$
-begin
-  execute format('drop trigger if exists %I on public.%I', tbl || '_row_cap', tbl);
-  execute format(
-    'create trigger %I before insert on public.%I for each row execute procedure public.enforce_trip_row_cap(%s)',
-    tbl || '_row_cap', tbl, cap);
-end;
-$$;
+drop trigger if exists items_row_cap on public.items;
+create trigger items_row_cap
+  before insert on public.items
+  for each row execute procedure public.enforce_trip_row_cap(3000);
 
-select pg_temp.add_cap('items', 3000);
-select pg_temp.add_cap('checklist', 500);
-select pg_temp.add_cap('expenses', 3000);
-select pg_temp.add_cap('places', 500);
-select pg_temp.add_cap('comments', 5000);
-select pg_temp.add_cap('trip_days', 400);
-select pg_temp.add_cap('trip_members', 100);
+drop trigger if exists checklist_row_cap on public.checklist;
+create trigger checklist_row_cap
+  before insert on public.checklist
+  for each row execute procedure public.enforce_trip_row_cap(500);
+
+drop trigger if exists expenses_row_cap on public.expenses;
+create trigger expenses_row_cap
+  before insert on public.expenses
+  for each row execute procedure public.enforce_trip_row_cap(3000);
+
+drop trigger if exists places_row_cap on public.places;
+create trigger places_row_cap
+  before insert on public.places
+  for each row execute procedure public.enforce_trip_row_cap(500);
+
+drop trigger if exists comments_row_cap on public.comments;
+create trigger comments_row_cap
+  before insert on public.comments
+  for each row execute procedure public.enforce_trip_row_cap(5000);
+
+drop trigger if exists trip_days_row_cap on public.trip_days;
+create trigger trip_days_row_cap
+  before insert on public.trip_days
+  for each row execute procedure public.enforce_trip_row_cap(400);
+
+drop trigger if exists trip_members_row_cap on public.trip_members;
+create trigger trip_members_row_cap
+  before insert on public.trip_members
+  for each row execute procedure public.enforce_trip_row_cap(100);
 
 -- ── 한 사람이 만들 수 있는 여행 수 ─────────────────────────────────
 create or replace function public.enforce_trips_per_owner()
