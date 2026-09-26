@@ -59,6 +59,14 @@ export const PinIcon = ({ size = 13, className }: IconProps) => (
   </svg>
 );
 
+/** 메신저로 보내기 — 말풍선 */
+export const ChatIcon = ({ size = 19, className }: IconProps) => (
+  <svg {...base(size, className)}>
+    <path d="M4 5.5h16v10H9l-5 4v-14z" />
+    <path d="M8 9.5h8M8 12.5h5" />
+  </svg>
+);
+
 /** 길찾기 — 비스듬한 화살표(내비게이션) */
 export const NavigateIcon = ({ size = 16, className }: IconProps) => (
   <svg {...base(size, className)}>

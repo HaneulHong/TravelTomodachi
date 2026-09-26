@@ -185,6 +185,7 @@ export const ko = {
     menuLedger: '가계부',
     menuIdeas: '후보 장소',
     menuCalendar: '캘린더로 내보내기',
+    menuShareDay: '이 날 일정 보내기',
     menuShare: '친구에게 공유',
     menuMembers: '멤버 · 초대 코드',
     menuDelete: '여행 삭제',
@@ -326,6 +327,14 @@ export const ko = {
     searchMore: '해외 명소를 한글 이름으로 더 찾기',
     moreNone: '더 찾지 못했습니다. 영어나 현지어로 쳐 보세요.',
     pinnedName: '지도에서 고른 위치',
+  },
+
+  shareDay: {
+    heading: (emoji: string, trip: string, n: number, date: string, city: string) =>
+      `${emoji} ${trip} · ${n}일차 ${date} · ${city}`,
+    empty: '아직 일정이 없습니다.',
+    copied: '이 날 일정을 복사했습니다 — 카톡에 붙여 넣으세요',
+    failed: '보내지 못했습니다. 다시 시도해 주세요.',
   },
 
   directions: {
