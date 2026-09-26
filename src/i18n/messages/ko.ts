@@ -120,6 +120,9 @@ export const ko = {
   },
 
   today: {
+    /** 지금 하고 있는 일정 — 오늘 카드와 일정 목록 */
+    now: "지금",
+    until: (end: string) => `${end}까지`,
     label: '오늘',
     dayCity: (n: number, city: string) => `${n}일차 · ${city}`,
     localTime: (time: string) => `현지 ${time}`,

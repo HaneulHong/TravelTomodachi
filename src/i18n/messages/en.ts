@@ -109,6 +109,9 @@ export const en: Messages = {
   },
 
   today: {
+    /** 지금 하고 있는 일정 — 오늘 카드와 일정 목록 */
+    now: "Now",
+    until: (end: string) => `until ${end}`,
     label: 'Today',
     dayCity: (n, city) => `Day ${n} · ${city}`,
     localTime: (time) => `Local ${time}`,

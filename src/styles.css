@@ -3098,3 +3098,46 @@ body:has(.offline-bar) .main {
 .shortcut:active {
   background: var(--surface-3);
 }
+
+/* ── 여행 중 "지금" ───────────────────────────────────────────── */
+
+/* 살아 있는 점 — 지금 진행 중이라는 표시 */
+.now-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--accent);
+  vertical-align: 1px;
+  animation: now-pulse 2s ease-in-out infinite;
+}
+
+@keyframes now-pulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .now-dot {
+    animation: none;
+  }
+}
+
+.now-chip {
+  flex: none;
+}
+
+.tl-item--now {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-soft), var(--shadow-sm);
+}
+
+/* 지나간 일정은 흐리게 — 지우지 않는다(돌아보거나 고칠 수 있게) */
+.tl-item--past {
+  opacity: 0.55;
+}
+
+.today-card__now {
+  margin-bottom: 6px;
+}

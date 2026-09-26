@@ -109,6 +109,9 @@ export const ja: Messages = {
   },
 
   today: {
+    /** 지금 하고 있는 일정 — 오늘 카드와 일정 목록 */
+    now: "いま",
+    until: (end: string) => `${end}まで`,
     label: '今日',
     dayCity: (n, city) => `${n}日目 · ${city}`,
     localTime: (time) => `現地 ${time}`,

@@ -4,6 +4,7 @@
  * 프레임워크 없이도 반드시 검증한다.
  */
 
+import { currentItem, endTimeOf } from '../src/domain/today';
 import { slackMinutes } from '../src/domain/schedule';
 import {
   keyBetween,
@@ -773,6 +774,21 @@ console.log('\n── 이동 시간 여유 ──');
   eq('이동 시간 아직 모르면 모름', slackMinutes(it('10:00', 60), it('12:00'), undefined), null);
   eq('다음 일정 시각 없으면 모름', slackMinutes(it('10:00', 60), it(), 20), null);
   eq('시각이 거꾸로면(따로 경고) 모름', slackMinutes(it('15:00', 60), it('09:00'), 20), null);
+}
+
+console.log('\n── 지금 하고 있는 일정 ──');
+{
+  const it = (id: string, localTime?: string, durationMin?: number) =>
+    ({ id, tripId: 't', date: '2026-10-01', sortKey: id, kind: 'place', title: id, localTime, durationMin }) as never;
+  const day = [it('a', '10:00', 90), it('b', '12:30', 120), it('c', '15:00', 90), it('d', '17:30')];
+  eq('진행 중', (currentItem(day, '13:27') as { id: string } | null)?.id, 'b');
+  eq('시작 시각 정각은 진행 중', (currentItem(day, '12:30') as { id: string } | null)?.id, 'b');
+  eq('끝난 시각 정각은 끝남', currentItem(day, '14:30'), null);
+  eq('일정 사이 빈 시간', currentItem(day, '11:45'), null);
+  eq('머무는 시간 없으면 고르지 않음', currentItem(day, '17:45'), null);
+  eq('끝나는 시각', endTimeOf(it('x', '12:30', 120)), '14:30');
+  eq('자정 넘기면 다음 날 시각', endTimeOf(it('x', '23:00', 90)), '00:30');
+  eq('머무는 시간 없으면 모름', endTimeOf(it('x', '12:30')), null);
 }
 
 console.log(`\n${failed === 0 ? '✓ 전부 통과' : '✗ 실패 있음'} — ${passed} passed, ${failed} failed\n`);

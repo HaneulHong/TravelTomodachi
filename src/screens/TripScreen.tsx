@@ -37,6 +37,7 @@ import { useInviteShare } from '@/hooks/useInviteShare';
 import { useReorderDrag } from '@/hooks/useReorderDrag';
 import { buildIcs } from '@/domain/ics';
 import { timeConflicts, timeSortedOrder } from '@/domain/order';
+import { useMinuteTick } from '@/hooks/useMinuteTick';
 import { useSwipe } from '@/hooks/useSwipe';
 import {
   formatDateLabel,
@@ -46,6 +47,7 @@ import {
   tzShortLabel,
 } from '@/domain/time';
 import { slackMinutes } from '@/domain/schedule';
+import { currentItem, endTimeOf, findToday } from '@/domain/today';
 import { zoneLabel } from '@/domain/timezones';
 import { isSegmentKind, type Item } from '@/domain/types';
 import { useLocale, useT } from '@/i18n';
@@ -181,6 +183,22 @@ export function TripScreen() {
   const legs = useDayLegs(items, day?.timezone);
   /** 앞 일정보다 이른 시각인 일정. 순서를 바꾸거나 다른 날에서 옮겨 오면 생긴다. */
   const conflicts = useMemo(() => timeConflicts(items.map((i) => i.localTime)), [items]);
+
+  /*
+   * 여행 당일이면 "지금"을 보여 준다 — 하고 있는 일정에 표시, 지나간 일정은 흐리게.
+   * 오늘인지는 그 날 도시의 현지 날짜로 판단한다(domain/today.ts).
+   */
+  const tick = useMinuteTick();
+  const nowLocal = useMemo(() => {
+    if (!trip) return null;
+    const today = findToday([trip], tick);
+    return today && today.day.date === activeDate ? today.localTime : null;
+  }, [trip, tick, activeDate]);
+  const nowItem = nowLocal ? currentItem(items, nowLocal) : null;
+  const isPast = (item: Item): boolean => {
+    if (!nowLocal || item === nowItem || !item.localTime) return false;
+    return (endTimeOf(item) ?? item.localTime) <= nowLocal;
+  };
   const hasConflict = conflicts.some(Boolean);
 
   function goToDay(offset: number) {
@@ -389,10 +407,15 @@ export function TripScreen() {
                 </div>
 
                 <button
-                  className="tl-item"
+                  className={`tl-item${item === nowItem ? ' tl-item--now' : ''}${isPast(item) ? ' tl-item--past' : ''}`}
                   onClick={() => navigate(`/trip/${trip.id}/item/${item.id}`)}
                 >
                   <div className="tl-item__head">
+                    {item === nowItem && (
+                      <span className="chip chip--accent now-chip">
+                        <span className="now-dot" aria-hidden /> {t.today.now}
+                      </span>
+                    )}
                     <span className="tl-item__title">{item.title}</span>
                     {isSegmentKind(item.kind) && (
                       <span className={`chip chip--${KIND_TONE[item.kind]}`}>
