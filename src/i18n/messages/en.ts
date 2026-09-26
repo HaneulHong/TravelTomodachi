@@ -87,6 +87,21 @@ export const en: Messages = {
     privacyLink: "Privacy policy",
   },
 
+  inApp: {
+    opening: "Opening in your browser…",
+    openedTitle: "Opened in your browser",
+    openedBody: (app: string) => `Google blocks sign-in inside ${app}, so we opened this page in your default browser (Safari, Chrome…). You can close this window. If nothing opened, use the steps below.`,
+    backToKakao: "Back to KakaoTalk",
+    retry: "Open again",
+    manualTitle: (app: string) => `You can’t sign in inside ${app}`,
+    manualBody: "Google blocks sign-in in in-app browsers. Please open this page in your default browser, like Safari or Chrome.",
+    steps: "Tap the ⋯ menu at the top or bottom and choose “Open in Safari” or “Open in browser”, or copy the link and paste it into your browser.",
+    linkLabel: "This page’s address",
+    copyLink: "Copy link",
+    copied: "Copied — paste it into your browser",
+    apps: { kakaotalk: "KakaoTalk", line: "LINE", instagram: "Instagram", facebook: "Facebook", naver: "the NAVER app", band: "BAND", daum: "the Daum app", everytime: "Everytime", webview: "this app" },
+  },
+
   unavailable: {
     title: 'The service is temporarily unavailable',
     body: "We're under maintenance or hit a temporary problem. Please try again in a moment.",

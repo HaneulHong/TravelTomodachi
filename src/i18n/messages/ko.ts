@@ -8,6 +8,7 @@
  * 이어 붙이면 번역이 안 된다. 문장 안의 굵은 글씨는 **이렇게** (Rich가 그린다).
  */
 
+import type { InAppKind } from '@/domain/inAppBrowser';
 import type { ItemKind, TransportMode } from '@/domain/types';
 
 type Region = 'KR' | 'GLOBAL';
@@ -95,6 +96,22 @@ export const ko = {
       '아직 백엔드가 연결되지 않아 **이 브라우저에만** 세션이 남습니다. 친구 초대와 공동 편집은 Supabase를 연결한 뒤에 동작합니다.',
     privacy: "앱에서 다른 사람에게 보이는 건 닉네임뿐입니다. 로그인에 쓰인 이메일은 보이지 않습니다.",
     privacyLink: "개인정보 처리방침",
+  },
+
+  /** 앱 안 브라우저(카카오톡 등)에서 열렸을 때 — OpenInBrowserScreen */
+  inApp: {
+    opening: "기본 브라우저에서 여는 중…",
+    openedTitle: "기본 브라우저에서 열었어요",
+    openedBody: (app: string) => `${app} 안에서는 Google 로그인이 막혀서, 사파리·크롬 같은 기본 브라우저로 같은 주소를 열었습니다. 이 창은 닫아도 됩니다. 새 창이 안 떴다면 아래 방법으로 열어 주세요.`,
+    backToKakao: "카카오톡으로 돌아가기",
+    retry: "다시 열기",
+    manualTitle: (app: string) => `${app} 안에서는 로그인이 안 돼요`,
+    manualBody: "Google은 앱 안 브라우저에서 로그인을 막습니다. 사파리·크롬 같은 기본 브라우저에서 열어 주세요.",
+    steps: "화면 위나 아래의 ⋯ 메뉴에서 「Safari로 열기」 또는 「다른 브라우저로 열기」를 누르거나, 링크를 복사해 브라우저 주소창에 붙여넣으세요.",
+    linkLabel: "이 페이지 주소",
+    copyLink: "링크 복사",
+    copied: "복사했어요 — 브라우저에 붙여넣으세요",
+    apps: { kakaotalk: "카카오톡", line: "라인", instagram: "인스타그램", facebook: "페이스북", naver: "네이버 앱", band: "밴드", daum: "다음 앱", everytime: "에브리타임", webview: "이 앱" } satisfies Record<InAppKind, string>,
   },
 
   unavailable: {
