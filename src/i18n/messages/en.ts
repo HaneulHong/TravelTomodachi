@@ -308,12 +308,16 @@ export const en: Messages = {
     searching: 'Searching…',
     noResults: 'No matches. Try the local language or English (e.g. Tokyo Skytree).',
     noCoord: "No coordinates, so it won't show on the map.",
+    searchMore: 'Search more landmarks by name',
+    moreNone: 'Nothing more found. Try English or the local language.',
   },
 
   credits: {
     title: 'Data sources',
     searchUse: 'Place search · routing',
     osm: '© OpenStreetMap contributors',
+    krSearchUse: 'Place search in Korea',
+    kakao: 'Kakao',
     ratesUse: 'Exchange rates',
     weatherUse: 'Weather',
     transitUse: 'Public transit',

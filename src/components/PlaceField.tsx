@@ -52,6 +52,11 @@ export function PlaceField({
   /** 검색이 실패한 이유. 결과 0건과 구분해서 보여줘야 원인을 알 수 있다. */
   const [searchError, setSearchError] = useState<string | null>(null);
   const places = useMemo(() => getPlaceProvider('GLOBAL'), []);
+  /**
+   * "더 찾기"(한글 이름 검색)를 어느 검색어로 했는지와 몇 건 나왔는지. null이면 찾는 중.
+   * 같은 검색어로는 버튼을 다시 보이지 않는다 — 결과가 같고, 공개 서버에 부담만 준다.
+   */
+  const [more, setMore] = useState<{ q: string; count: number | null } | null>(null);
 
   /**
    * 직전에 고른 장소의 이름. 입력값이 여기서 벗어나면 좌표를 버린다.
@@ -129,6 +134,32 @@ export function PlaceField({
       });
   }
 
+  /** 버튼을 눌렀을 때만 — 입력할 때마다 부르면 안 되는 서비스다 (nominatimPlaceProvider.ts) */
+  function findMore(): void {
+    const q = name.trim();
+    if (!places.searchMore || q.length === 0) return;
+    const seq = ++seqRef.current;
+    setMore({ q, count: null });
+    setSearching(true);
+    setSearchError(null);
+    void places
+      .searchMore(q)
+      .then((found) => {
+        if (seq !== seqRef.current) return;
+        // 새로 찾은 것을 위에, 이미 있던 후보는 아래에
+        setResults((prev) => [...found, ...prev.filter((p) => !found.some((f) => f.id === p.id))]);
+        setMore({ q, count: found.length });
+        setActive(-1);
+        setSearching(false);
+      })
+      .catch((err: unknown) => {
+        if (seq !== seqRef.current) return;
+        setSearchError(err instanceof Error ? err.message : getMessages().place.searchFailed);
+        setMore({ q, count: 0 });
+        setSearching(false);
+      });
+  }
+
   function onKeyDown(e: React.KeyboardEvent<HTMLInputElement>): void {
     if (!open || results.length === 0) return;
 
@@ -149,6 +180,8 @@ export function PlaceField({
   }
 
   const typedSomethingNew = name.trim().length > 0 && name.trim() !== pickedNameRef.current;
+  const moreHere = more?.q === name.trim() ? more : null;
+  const canFindMore = Boolean(places.searchMore) && typedSomethingNew && !moreHere;
 
   return (
     <div className="form__row">
@@ -179,7 +212,7 @@ export function PlaceField({
           {coord && <PinIcon className="ac__pin" />}
         </span>
 
-        {open && (searching || results.length > 0) && (
+        {open && (searching || results.length > 0 || canFindMore || moreHere) && (
           /*
            * 목록은 흐름에서 띄운다(absolute). 흐름 안에 두면 글자를 칠 때마다
            * 아래 입력칸들이 밀려 내려가서, 시각을 넣으려고 겨눈 자리가 움직인다.
@@ -203,20 +236,30 @@ export function PlaceField({
                   </button>
                 </li>
               ))}
+
+            {/*
+              한글로 해외 장소를 치면 대부분 여기로 온다. OSM에는 해외 지명의
+              한글 표기가 거의 없어서다. 그냥 "없음"이라고만 하면 검색이 고장난
+              줄 알고 같은 말을 계속 바꿔 치게 된다. 목록 안에 둔다 — 밖에 두면
+              목록(더 찾기 버튼)이 덮는다.
+            */}
+            {!searching && !searchError && results.length === 0 && !moreHere && (
+              <li className="ac__msg">{t.place.noResults}</li>
+            )}
+            {!searching && moreHere?.count === 0 && <li className="ac__msg">{t.place.moreNone}</li>}
+
+            {!searching && canFindMore && (
+              <li>
+                <button className="ac__more" onClick={findMore}>
+                  {t.place.searchMore}
+                </button>
+              </li>
+            )}
           </ul>
         )}
       </div>
 
       {searchError && <p className="form__hint">{searchError}</p>}
-
-      {!searchError && !searching && open && results.length === 0 && typedSomethingNew && (
-        /*
-          한글로 해외 장소를 치면 대부분 여기로 온다. OSM에는 해외 지명의
-          한글 표기가 거의 없어서다. 그냥 "없음"이라고만 하면 검색이 고장난
-          줄 알고 같은 말을 계속 바꿔 치게 된다.
-        */
-        <p className="form__hint">{t.place.noResults}</p>
-      )}
 
       {name.trim().length > 0 && !coord && (
         <p className="form__hint">{t.place.noCoord}</p>

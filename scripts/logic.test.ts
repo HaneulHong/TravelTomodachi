@@ -50,6 +50,8 @@ import { en } from '../src/i18n/messages/en';
 import { ja } from '../src/i18n/messages/ja';
 import { parsePlan, type MotisLeg } from '../src/providers/route/transitousRouteProvider';
 import { decodePolyline } from '../src/providers/route/polyline';
+import { koreaFirst, mergePlaceResults } from '../src/providers/places/combinedPlaceProvider';
+import { nominatimToPlace } from '../src/providers/places/nominatimPlaceProvider';
 import { effectiveLeg, recommendMode } from '../src/domain/legChoice';
 
 let passed = 0;
@@ -835,6 +837,39 @@ console.log('\n── 앱 안 브라우저 → 기본 브라우저 ──');
   eq('되살릴 것 없으면 null', restoreHashFromQuery(invite), null);
 
   eq('iOS 인스타그램은 강제할 방법 없음', externalOpenUrl('instagram', invite, UA.instaIos), null);
+}
+
+console.log('\n── 장소 검색: 카카오 + Photon 합치기 ──');
+{
+  const P = (id: string, lat: number, lng: number) => ({ id, name: id, address: '', coord: { lat, lng } });
+  const seoul = P('k-서울', 37.57, 126.98);
+  const busan = P('k-부산', 35.16, 129.16);
+  const osmSeoul = P('o-서울', 37.57, 126.98);
+  const tokyo = P('o-도쿄', 35.71, 139.81);
+  const ids = (ps: { id: string }[]) => ps.map((p) => p.id).join(',');
+
+  eq('한글 검색어는 한국 먼저', koreaFirst('을지로 노가리골목'), true);
+  eq('영어 검색어는 해외 먼저', koreaFirst('Tokyo Skytree'), false);
+  eq('고른 장소가 해외면 한글이어도 해외 먼저', koreaFirst('스카이트리', { lat: 35.71, lng: 139.81 }), false);
+  eq('고른 장소가 국내면 국내 먼저', koreaFirst('Lotte', { lat: 37.51, lng: 127.1 }), true);
+
+  eq('카카오 결과가 있으면 Photon 국내 결과는 뺀다',
+    ids(mergePlaceResults([seoul, busan], [osmSeoul, tokyo], true)), 'k-서울,k-부산,o-도쿄');
+  eq('해외 먼저면 Photon이 앞', ids(mergePlaceResults([seoul], [tokyo], false)), 'o-도쿄,k-서울');
+  eq('카카오 실패면 Photon 국내 결과 그대로', ids(mergePlaceResults(null, [osmSeoul, tokyo], true)), 'o-서울,o-도쿄');
+  eq('카카오 0건이어도 Photon 국내 결과 그대로', ids(mergePlaceResults([], [osmSeoul], true)), 'o-서울');
+  eq('Photon 실패면 카카오만', ids(mergePlaceResults([seoul], null, true)), 'k-서울');
+  eq('개수 상한', mergePlaceResults([seoul, busan], [tokyo], true, 2).length, 2);
+}
+
+console.log('\n── 이름으로 더 찾기 (Nominatim) ──');
+{
+  const osaka = nominatimToPlace({ osm_type: 'way', osm_id: 1, name: '오사카성;오사카 성', display_name: '오사카성;오사카 성, 1, 大阪城, 中央区, 오사카시, 일본', lat: '34.687', lon: '135.525' });
+  eq('여러 이름이면 첫 이름', osaka?.name, '오사카성');
+  eq('주소는 이름 뒤 나머지', osaka?.address, '1, 大阪城, 中央区, 오사카시, 일본');
+  eq('좌표는 숫자로', osaka?.coord?.lng, 135.525);
+  eq('이름이 비면 display_name 첫 칸', nominatimToPlace({ name: '', display_name: 'Eiffel, Paris', lat: '1', lon: '2' })?.name, 'Eiffel');
+  eq('좌표 없으면 버림', nominatimToPlace({ name: 'x', display_name: 'x' }), null);
 }
 
 console.log(`\n${failed === 0 ? '✓ 전부 통과' : '✗ 실패 있음'} — ${passed} passed, ${failed} failed\n`);

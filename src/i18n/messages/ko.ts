@@ -325,12 +325,16 @@ export const ko = {
     noResults:
       '후보가 없습니다. 해외 장소는 현지어나 영어로 쳐보세요 (예: 도쿄 스카이트리 → Tokyo Skytree).',
     noCoord: '좌표가 없어 지도에는 표시되지 않습니다.',
+    searchMore: '해외 명소를 한글 이름으로 더 찾기',
+    moreNone: '더 찾지 못했습니다. 영어나 현지어로 쳐 보세요.',
   },
 
   credits: {
     title: '데이터 출처',
     searchUse: '장소 검색 · 길찾기',
     osm: '© OpenStreetMap 기여자',
+    krSearchUse: '국내 장소 검색',
+    kakao: '카카오',
     ratesUse: '환율',
     weatherUse: '날씨',
     transitUse: '대중교통',

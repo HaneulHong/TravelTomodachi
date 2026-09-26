@@ -32,6 +32,12 @@ export function DataCredits() {
       url: 'https://www.openstreetmap.org/copyright',
     },
     {
+      // 국내 장소 검색은 카카오 로컬 (providers/places/kakaoPlaceProvider.ts)
+      use: t.credits.krSearchUse,
+      name: t.credits.kakao,
+      url: 'https://map.kakao.com',
+    },
+    {
       // Open-Meteo는 CC BY 4.0 — 출처 표시가 조건이다 (providers/weather.ts)
       use: t.credits.weatherUse,
       name: WEATHER_ATTRIBUTION.name,

@@ -1733,6 +1733,22 @@ select.form__input {
   color: var(--text-3);
 }
 
+/* 목록 끝 "더 찾기" — 후보와 헷갈리지 않게 선으로 나누고 강조색 글자 */
+.ac__more {
+  width: 100%;
+  text-align: left;
+  padding: 10px;
+  margin-top: 2px;
+  border-top: 1px dashed var(--border);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.ac__more:active {
+  background: var(--surface-3);
+}
+
 /* 선택된 장소 */
 .picked {
   display: flex;

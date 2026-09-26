@@ -305,12 +305,16 @@ export const ja: Messages = {
     searching: '検索中…',
     noResults: '候補がありません。現地の言葉か英語で入力してみてください (例: 東京スカイツリー → Tokyo Skytree)。',
     noCoord: '座標がないため、地図には表示されません。',
+    searchMore: '名所を名前でさらに探す',
+    moreNone: 'これ以上見つかりませんでした。英語か現地の言葉で入力してみてください。',
   },
 
   credits: {
     title: 'データの出典',
     searchUse: '場所検索 · ルート検索',
     osm: '© OpenStreetMap 貢献者',
+    krSearchUse: '韓国国内の場所検索',
+    kakao: 'Kakao',
     ratesUse: '為替レート',
     weatherUse: '天気',
     transitUse: '公共交通',

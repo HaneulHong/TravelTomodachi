@@ -71,7 +71,8 @@ cp .env.example .env.local
 |---|---|---|
 | 해외 지도 | Google Maps JS | 필요 ([docs/MAP_SETUP.md](./docs/MAP_SETUP.md)) |
 | 국내 지도 | 카카오맵 | 필요 (같은 문서) |
-| 장소 검색 | Photon (OSM) | 불필요 |
+| 국내 장소 검색 | 카카오 로컬 | 카카오맵과 같은 키 |
+| 해외 장소 검색 | Photon (OSM) + 한글 이름은 Nominatim (OSM, 버튼으로만) | 불필요 |
 | 도보·차량 길찾기 | Valhalla (OSM) | 불필요 |
 | 대중교통 | Transitous | 불필요 |
 
@@ -95,7 +96,7 @@ src/
     region.ts         KR / GLOBAL 판별 (길찾기용)
     index.ts          지역별 구현체 선택 (팩토리)
     routeCache.ts     조회 캐시 + 동시 요청 제한
-    places/           장소 검색 (Photon)
+    places/           장소 검색 (국내 카카오 + 해외 Photon + 한글 이름 Nominatim)
     route/            길찾기 (Valhalla · Transitous)
     maps/             지도 렌더러 (실제 SDK)
       types.ts          MapRenderer / MapHandle, 공용 마커 DOM

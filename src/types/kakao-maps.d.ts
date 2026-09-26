@@ -77,6 +77,42 @@ declare namespace kakao.maps {
   }
 }
 
+/** 장소 검색 — SDK에 `libraries=services`를 붙여야 생긴다 (providers/kakaoSdk.ts) */
+declare namespace kakao.maps.services {
+  /** 실제 값은 'OK' · 'ZERO_RESULT' · 'ERROR' 문자열이다 */
+  type StatusValue = 'OK' | 'ZERO_RESULT' | 'ERROR';
+  const Status: { OK: StatusValue; ZERO_RESULT: StatusValue; ERROR: StatusValue };
+
+  interface PlaceResult {
+    id: string;
+    place_name: string;
+    /** 지번 주소 */
+    address_name: string;
+    /** 도로명 주소. 없으면 빈 문자열 */
+    road_address_name: string;
+    /** 좌표가 **문자열**로 온다 — x가 경도, y가 위도 */
+    x: string;
+    y: string;
+    category_group_name: string;
+  }
+
+  interface KeywordSearchOptions {
+    /** 이 근처를 우선한다(정렬이 거리순이 아니면 가중치) */
+    location?: LatLng;
+    /** 한 번에 받을 개수, 1~15 */
+    size?: number;
+  }
+
+  class Places {
+    constructor();
+    keywordSearch(
+      keyword: string,
+      callback: (data: PlaceResult[], status: StatusValue) => void,
+      options?: KeywordSearchOptions,
+    ): void;
+  }
+}
+
 interface Window {
   kakao?: typeof kakao;
 }
