@@ -225,6 +225,7 @@ export const ko = {
   },
 
   itemEdit: {
+    timeSuggested: (title: string) => `앞 일정(${title})이 끝나는 시각으로 채웠어요. 이동 시간만큼 늦춰 주세요.`,
     deleteTitle: "이 일정을 지울까요?",
     deleteBody: ["같은 여행 친구들 화면에서도 사라집니다.", "달린 댓글도 함께 지워지고, 되돌릴 수 없습니다."],
     titleNew: '일정 추가',

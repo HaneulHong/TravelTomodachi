@@ -216,6 +216,7 @@ export const en: Messages = {
   },
 
   itemEdit: {
+    timeSuggested: (title: string) => `Filled in with when the previous plan (${title}) ends. Add travel time as needed.`,
     deleteTitle: "Delete this plan?",
     deleteBody: ["It disappears for everyone on this trip.", "Its comments are deleted too. This can’t be undone."],
     titleNew: 'Add to plan',

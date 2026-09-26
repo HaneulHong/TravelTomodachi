@@ -14,6 +14,7 @@ import { PlaceField } from '@/components/PlaceField';
 import { LIMITS } from '@/domain/limits';
 import { isSegmentKind, type Coord, type ItemKind } from '@/domain/types';
 import { formatDateLabel } from '@/domain/time';
+import { endTimeOf } from '@/domain/today';
 import { useLocale, useT } from '@/i18n';
 import { useTripStore } from '@/store/tripStore';
 
@@ -29,6 +30,7 @@ export function ItemEditScreen() {
   const addItem = useTripStore((s) => s.addItem);
   const updateItem = useTripStore((s) => s.updateItem);
   const removeItem = useTripStore((s) => s.removeItem);
+  const getDayItems = useTripStore((s) => s.getDayItems);
   const moveItemToDate = useTripStore((s) => s.moveItemToDate);
   const t = useT();
   const locale = useLocale();
@@ -43,7 +45,20 @@ export function ItemEditScreen() {
   const [title, setTitle] = useState(existing?.title ?? '');
   const [placeName, setPlaceName] = useState(existing?.placeName ?? '');
   const [coord, setCoord] = useState<Coord | undefined>(existing?.coord);
-  const [localTime, setLocalTime] = useState(existing?.localTime ?? '');
+  /*
+   * 새 일정의 시각은 그 날 마지막 일정이 끝나는 시각으로 채워 둔다. 대개 그 뒤에 이어서
+   * 가니 빈칸보다 빠르다. 날짜를 바꾸면 그 날 기준으로 다시 채우되, 사람이 고친 시각은 그대로 둔다.
+   */
+  const suggestFor = (d: string): { time: string; after: string } | null => {
+    if (!trip) return null;
+    // 시각이 없는 일정(예: "서울역")은 건너뛰고, 시각이 있는 마지막 일정이 끝나는 때.
+    // 그 일정에 머무는 시간이 없으면 끝을 몰라 채우지 않는다.
+    const last = [...getDayItems(trip.id, d)].reverse().find((it) => it.localTime);
+    const end = last ? endTimeOf(last) : null;
+    return last && end ? { time: end, after: last.title } : null;
+  };
+  const [suggested, setSuggested] = useState(() => (isEdit ? null : suggestFor(originalDate)));
+  const [localTime, setLocalTime] = useState(existing?.localTime ?? suggested?.time ?? '');
   const [duration, setDuration] = useState(
     existing?.durationMin !== undefined ? String(existing.durationMin) : '',
   );
@@ -164,7 +179,20 @@ export function ItemEditScreen() {
 
           <label className="form__row">
             <span className="form__label">{t.itemEdit.date}</span>
-            <select className="form__input" value={date} onChange={(e) => setDate(e.target.value)}>
+            <select
+              className="form__input"
+              value={date}
+              onChange={(e) => {
+                const next = e.target.value;
+                setDate(next);
+                // 사람이 아직 안 고쳤으면(제안값 그대로거나 비었으면) 새 날짜 기준으로 다시 채운다
+                if (!isEdit && (localTime === '' || localTime === suggested?.time)) {
+                  const s = suggestFor(next);
+                  setSuggested(s);
+                  setLocalTime(s?.time ?? '');
+                }
+              }}
+            >
               {trip.days.map((d, i) => (
                 <option key={d.date} value={d.date}>
                   {t.common.dayWithDate(i + 1, formatDateLabel(d.date, locale))}
@@ -239,6 +267,10 @@ export function ItemEditScreen() {
               </span>
             </label>
           </div>
+
+          {suggested && localTime === suggested.time && (
+            <p className="form__hint">{t.itemEdit.timeSuggested(suggested.after)}</p>
+          )}
 
           {isSegmentKind(kind) && (
             <label className="form__row">
