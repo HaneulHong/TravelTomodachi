@@ -123,7 +123,7 @@ export const ja: Messages = {
       snow: '雪',
       storm: '雷雨',
     },
-    rainChance: (n) => `降水 ${n}%`,
+    rainChance: (n) => `今日の降水確率 ${n}%`,
     rate: (from, to) => `1 ${from} ≈ ${to}`,
   },
 

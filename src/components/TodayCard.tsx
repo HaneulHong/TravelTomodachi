@@ -130,9 +130,15 @@ export function TodayCard() {
             <span className="chip">
               {WEATHER_EMOJI[weatherKind(weather.code)]} {t.today.weather[weatherKind(weather.code)]}{' '}
               {Math.round(weather.temp)}° · {Math.round(weather.min)}°/{Math.round(weather.max)}°
-              {weather.rainChance !== undefined && weather.rainChance > 0
-                ? ` · ${t.today.rainChance(weather.rainChance)}`
-                : ''}
+            </span>
+          )}
+          {/*
+            비 확률은 따로 적는다. "맑음 · 강수 94%"처럼 한 칩에 붙이면 지금 날씨(맑음)와
+            오늘 중 가장 높은 확률(94%)이 섞여 앞뒤가 안 맞아 보였다. 높으면 우산을 챙기라고.
+          */}
+          {weather && weather.rainChance !== undefined && weather.rainChance >= 20 && (
+            <span className={`chip${weather.rainChance >= 50 ? ' chip--warn' : ''}`}>
+              {weather.rainChance >= 50 ? '☂️' : '💧'} {t.today.rainChance(weather.rainChance)}
             </span>
           )}
           {rate !== null && localCurrency && (

@@ -133,7 +133,8 @@ export const ko = {
       snow: '눈',
       storm: '뇌우',
     },
-    rainChance: (n: number) => `강수 ${n}%`,
+    /** 오늘 중 가장 높은 강수 확률 — '지금 날씨'와 헷갈리지 않게 '오늘'을 붙인다 */
+    rainChance: (n: number) => `오늘 비 올 확률 ${n}%`,
     rate: (from: string, to: string) => `1 ${from} ≈ ${to}`,
   },
 

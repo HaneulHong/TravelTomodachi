@@ -123,7 +123,7 @@ export const en: Messages = {
       snow: 'Snow',
       storm: 'Storm',
     },
-    rainChance: (n) => `${n}% rain`,
+    rainChance: (n) => `${n}% chance of rain today`,
     rate: (from, to) => `1 ${from} ≈ ${to}`,
   },
 
