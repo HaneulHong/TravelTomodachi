@@ -449,6 +449,16 @@ export const ja: Messages = {
   checklist: {
     title: 'チェックリスト',
     empty: 'まだ項目がありません。',
+    fromTemplate: '基本リストから選ぶ',
+    templateTitle: '基本の持ち物',
+    groupCommon: 'どこでも',
+    groupAbroad: '海外旅行',
+    already: '追加済み',
+    addSome: (n: number) => (n > 0 ? `${n}件追加` : '選んだ項目がありません'),
+    templates: {
+      common: ['スマホの充電器', 'モバイルバッテリー', '身分証', 'カード・現金', '常備薬', '洗面用具', '着替え', '傘'],
+      abroad: ['パスポート', 'パスポートのコピー', '航空券（eチケット）', '宿の予約確認', 'SIM・eSIM', '海外旅行保険', '両替', '海外で使えるカード', '変換プラグ'],
+    },
     addPlaceholder: '項目を追加',
   },
 

@@ -56,6 +56,7 @@ import { formatDayText } from '../src/domain/dayText';
 import { alreadyApplied, encodeArgs, enqueue, flushOutbox, pendingOps } from '../src/data/outbox';
 import type { TripRepository } from '../src/data/tripRepository';
 import { changedSince } from '../src/data/seen';
+import { isAbroad, missingItems } from '../src/domain/packing';
 import { nominatimToPlace } from '../src/providers/places/nominatimPlaceProvider';
 import { effectiveLeg, recommendMode } from '../src/domain/legChoice';
 
@@ -958,6 +959,16 @@ console.log('\n── 마지막으로 본 뒤 바뀐 일정 ──');
   eq('내가 고친 건 아님', changedSince({ updatedBy: 'a', updatedAt: '2026-09-27T11:00:00.000Z' }, 'a', seen), false);
   eq('본 뒤에 안 바뀜', changedSince({ updatedBy: 'b', updatedAt: '2026-09-27T09:00:00.000Z' }, 'a', seen), false);
   eq('처음 여는 여행이면 표시 안 함', changedSince({ updatedBy: 'b', updatedAt: '2026-09-27T11:00:00.000Z' }, 'a', null), false);
+}
+
+console.log('\n── 준비물 기본 목록 ──');
+{
+  eq('이미 있는 건 뺌(띄어쓰기·대소문자 무시)',
+    missingItems(['보조 배터리', 'PASSPORT'], ['보조배터리', 'passport', '우산']).join(','), '우산');
+  eq('후보 안 중복도 한 번만', missingItems([], ['여권', '여권 ']).join(','), '여권');
+  const day = (timezone: string) => ({ date: '2026-10-01', timezone, cityLabel: '' });
+  eq('서울만이면 국내', isAbroad([day('Asia/Seoul'), day('Asia/Seoul')]), false);
+  eq('하루라도 다른 시간대면 해외', isAbroad([day('Asia/Seoul'), day('Asia/Tokyo')]), true);
 }
 
 console.log(`\n${failed === 0 ? '✓ 전부 통과' : '✗ 실패 있음'} — ${passed} passed, ${failed} failed\n`);

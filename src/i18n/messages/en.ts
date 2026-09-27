@@ -452,6 +452,16 @@ export const en: Messages = {
   checklist: {
     title: 'Checklist',
     empty: 'No items yet.',
+    fromTemplate: 'Pick from a starter list',
+    templateTitle: 'Packing basics',
+    groupCommon: 'Any trip',
+    groupAbroad: 'Going abroad',
+    already: 'Already added',
+    addSome: (n: number) => (n > 0 ? `Add ${n}` : 'Nothing selected'),
+    templates: {
+      common: ['Phone charger', 'Power bank', 'ID card', 'Cards & cash', 'Basic medicine', 'Toiletries', 'Change of clothes', 'Umbrella'],
+      abroad: ['Passport', 'Passport copy', 'Flight e-ticket', 'Hotel booking', 'SIM / eSIM', 'Travel insurance', 'Local currency', 'Card for overseas payments', 'Plug adapter'],
+    },
     addPlaceholder: 'Add item',
   },
 
