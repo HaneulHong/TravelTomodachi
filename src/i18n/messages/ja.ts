@@ -199,6 +199,8 @@ export const ja: Messages = {
     saving: (pct) => `${pct}%短くなります(直線距離)`,
     noGain: '今の順番がすでに最短です。',
     note: '最初の予定、電車・飛行機などの区間、位置情報のない予定は動かしません。入力した時刻は変わりません。',
+    noteLodging:
+      '宿を出発・到着地点として計算しました。列車・飛行機などの区間と位置のない予定は動かさず、書いた時刻はそのままです。',
     timesOff: '⚠ 入力した時刻と順番が合わない予定が出ます。変更後に時刻を直してください。',
     apply: 'この順番にする',
     close: '閉じる',
@@ -504,6 +506,8 @@ export const ja: Messages = {
   },
 
   profile: {
+    contact: 'お問い合わせ・不具合の報告',
+    contactSubject: '[TravelTomodachi] お問い合わせ',
     signOutPendingTitle: (n: number) => `まだ送っていない変更が ${n} 件あります`,
     signOutPendingBody: '今ログアウトすると、オフラインで変更した内容はサーバーに届かず失われます。インターネットにつないで送ってからログアウトしてください。',
     title: 'プロフィール',

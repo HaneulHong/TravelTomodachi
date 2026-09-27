@@ -17,10 +17,18 @@ import type { Locale } from '@/i18n';
 /** 시행일 */
 export const EFFECTIVE_DATE = '2026-09-27';
 
-/** 개인정보 보호책임자 — 운영자. 연락처는 실제로 답을 받는 곳이어야 한다. */
+/**
+ * 개인정보 보호책임자 — 운영자. 연락처는 실제로 답을 받는 곳이어야 한다.
+ * 문의·문제 제보도 이 메일로 받는다(프로필 화면). 저장소 주소는 앱 어디에도 보이지 않게 한다.
+ */
+export const CONTACT_EMAIL = 'hongha303@naver.com';
+
 export const OPERATOR = {
-  name: 'TravelTomodachi 운영자 (GitHub: HaneulHong)',
-  contact: 'https://github.com/HaneulHong/TravelTomodachi/issues',
+  name: { ko: 'TravelTomodachi 운영자', en: 'TravelTomodachi operator', ja: 'TravelTomodachi 運営者' } satisfies Record<
+    Locale,
+    string
+  >,
+  contact: CONTACT_EMAIL,
 };
 
 /**
@@ -138,7 +146,7 @@ const ko: PolicySection[] = [
   },
   {
     title: '11. 개인정보 보호책임자',
-    items: [`책임자: ${OPERATOR.name}`, `연락처: ${OPERATOR.contact}`],
+    items: [`책임자: ${OPERATOR.name.ko}`, `연락처(이메일): ${OPERATOR.contact}`],
   },
   {
     title: '12. 권익침해 구제 방법',
@@ -238,7 +246,7 @@ const en: PolicySection[] = [
       'Regular security checks with automated permission tests.',
     ],
   },
-  { title: '11. Privacy officer', items: [`Officer: ${OPERATOR.name}`, `Contact: ${OPERATOR.contact}`] },
+  { title: '11. Privacy officer', items: [`Officer: ${OPERATOR.name.en}`, `Contact (email): ${OPERATOR.contact}`] },
   {
     title: '12. Remedies',
     paragraphs: ['You can report or get advice on privacy violations from:'],
@@ -334,7 +342,7 @@ const ja: PolicySection[] = [
       '権限のシナリオを自動で試すセキュリティ点検を定期的に行います。',
     ],
   },
-  { title: '11. 個人情報保護責任者', items: [`責任者：${OPERATOR.name}`, `連絡先：${OPERATOR.contact}`] },
+  { title: '11. 個人情報保護責任者', items: [`責任者：${OPERATOR.name.ja}`, `連絡先（メール）：${OPERATOR.contact}`] },
   {
     title: '12. 権利侵害の救済',
     paragraphs: ['個人情報の侵害に関する申告や相談は、次の韓国の機関で受け付けています。'],

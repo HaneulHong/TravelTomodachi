@@ -7,7 +7,22 @@
 
 import { AppHeader } from '@/components/AppHeader';
 import { useLocale, useT } from '@/i18n';
-import { EFFECTIVE_DATE, PRIVACY_POLICY } from '@/legal/privacyPolicy';
+import { CONTACT_EMAIL, EFFECTIVE_DATE, PRIVACY_POLICY } from '@/legal/privacyPolicy';
+
+/** 문장 속 연락처 메일을 누를 수 있게 — 누르면 메일 앱이 받는 사람이 채워진 채로 열린다 */
+function withMailLink(text: string) {
+  const i = text.indexOf(CONTACT_EMAIL);
+  if (i < 0) return text;
+  return (
+    <>
+      {text.slice(0, i)}
+      <a className="signin__link" href={`mailto:${CONTACT_EMAIL}`}>
+        {CONTACT_EMAIL}
+      </a>
+      {text.slice(i + CONTACT_EMAIL.length)}
+    </>
+  );
+}
 
 export function PrivacyScreen() {
   const t = useT();
@@ -30,11 +45,11 @@ export function PrivacyScreen() {
           {sections.map((s) => (
             <section key={s.title} className="policy__section">
               <h2 className="policy__title">{s.title}</h2>
-              {s.paragraphs?.map((p) => <p key={p}>{p}</p>)}
+              {s.paragraphs?.map((p) => <p key={p}>{withMailLink(p)}</p>)}
               {s.items && (
                 <ul>
                   {s.items.map((i) => (
-                    <li key={i}>{i}</li>
+                    <li key={i}>{withMailLink(i)}</li>
                   ))}
                 </ul>
               )}
