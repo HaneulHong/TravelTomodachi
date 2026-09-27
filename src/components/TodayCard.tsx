@@ -148,7 +148,19 @@ export function TodayCard() {
             )}
           </>
         ) : (
-          <span className="today-card__muted">{t.today.allDone}</span>
+          <>
+            <span className="today-card__muted">{t.today.allDone}</span>
+            {/* 오늘 일정이 끝나면 다음 목적지는 숙소 */}
+            {(day.lodgingCoord || day.lodgingName) && (
+              <>
+                <span className="today-card__nextline">🏨 {day.lodgingName}</span>
+                <DirectionsButton
+                  target={{ name: day.lodgingName ?? '', coord: day.lodgingCoord }}
+                  compact
+                />
+              </>
+            )}
+          </>
         )}
       </div>
 

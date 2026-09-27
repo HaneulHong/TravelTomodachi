@@ -10,7 +10,7 @@ import { AlertIcon, PencilIcon, PinIcon } from '@/components/icons';
 import { useDayLegs } from '@/hooks/useDayLegs';
 import { useSegmentRoutes } from '@/hooks/useSegmentRoutes';
 import { formatDistance } from '@/domain/geo';
-import { formatMinutes, tzShortLabel } from '@/domain/time';
+import { formatMinutes, sameOffsetAsDevice, tzShortLabel } from '@/domain/time';
 import { isSegmentKind, type Coord, type TransportMode } from '@/domain/types';
 import { useLocale, useT } from '@/i18n';
 import {
@@ -126,7 +126,8 @@ export function ItemDetailScreen() {
               {item.localTime && (
                 <span className="chip chip--accent">
                   {item.localTime}
-                  {day && ` · ${tzShortLabel(day.timezone, day.date)}`}
+                  {/* 기기와 시차가 같으면 "GMT+9"는 빼고 시각만 */}
+                  {day && !sameOffsetAsDevice(day.timezone, day.date) && ` · ${tzShortLabel(day.timezone, day.date)}`}
                 </span>
               )}
               {item.durationMin !== undefined && (

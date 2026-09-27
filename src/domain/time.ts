@@ -79,6 +79,20 @@ export function formatWeekday(date: string, locale: Locale = 'ko'): string {
   return new Intl.DateTimeFormat(INTL_TAG[locale], { weekday: 'short', timeZone: 'UTC' }).format(d);
 }
 
+/**
+ * 그 날짜에 이 기기와 같은 시차인지. 같으면 시각 옆의 "GMT+9"는 소음이다 —
+ * 서울에서 서울 일정을 보는 사람에게는 "16:00"이면 충분하다.
+ */
+export function sameOffsetAsDevice(timezone: string, onDate?: string, deviceZone?: string): boolean {
+  let device = deviceZone;
+  try {
+    device ??= Intl.DateTimeFormat().resolvedOptions().timeZone;
+  } catch {
+    return false;
+  }
+  return !!device && tzShortLabel(timezone, onDate) === tzShortLabel(device, onDate);
+}
+
 /** 'Asia/Bangkok' → 'GMT+7' */
 export function tzShortLabel(timezone: string, onDate?: string): string {
   const d = onDate ? new Date(`${onDate}T12:00:00Z`) : new Date();

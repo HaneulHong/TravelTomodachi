@@ -526,6 +526,8 @@ export const ko = {
   },
 
   profile: {
+    signOutPendingTitle: (n: number) => `아직 못 보낸 변경이 ${n}개 있습니다`,
+    signOutPendingBody: '지금 로그아웃하면 오프라인에서 고친 내용이 서버에 가지 못하고 사라집니다. 인터넷에 연결해 보낸 뒤 로그아웃하세요.',
     title: '프로필',
     notSignedIn: '로그인 상태가 아닙니다.',
     via: {

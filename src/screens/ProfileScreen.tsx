@@ -9,6 +9,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AppHeader } from '@/components/AppHeader';
 import { ConfirmSheet } from '@/components/ConfirmSheet';
+import { useTripStore } from '@/store/tripStore';
 import { initialOf, NICKNAME_MAX, nicknameMessage, nicknameProblem } from '@/auth';
 import { versionLabel } from '@/config';
 import { LOCALE_NAME, LOCALES, useLocaleSettings, useT } from '@/i18n';
@@ -75,6 +76,9 @@ export function ProfileScreen() {
   const [draft, setDraft] = useState(account?.nickname ?? '');
   const [saved, setSaved] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  /** 오프라인에서 고쳐 아직 못 보낸 변경 — 로그아웃하면 사라진다(data/outbox.ts) */
+  const pending = useTripStore((s) => s.pending);
+  const [confirmSignOut, setConfirmSignOut] = useState(false);
 
   if (!account) {
     return (
@@ -142,7 +146,10 @@ export function ProfileScreen() {
             <button className="btn btn--primary" onClick={() => void save()} disabled={!changed}>
               {saved ? t.profile.saved : t.profile.saveNickname}
             </button>
-            <button className="btn" onClick={() => void signOut()}>
+            <button
+              className="btn"
+              onClick={() => (pending > 0 ? setConfirmSignOut(true) : void signOut())}
+            >
               {t.profile.signOut}
             </button>
           </div>
@@ -167,6 +174,18 @@ export function ProfileScreen() {
           <p className="signin__version">TravelTomodachi {versionLabel(t.common.beta)}</p>
         </div>
       </main>
+
+      {confirmSignOut && (
+        <ConfirmSheet
+          title={t.profile.signOutPendingTitle(pending)}
+          confirmLabel={t.profile.signOut}
+          danger
+          onConfirm={signOut}
+          onClose={() => setConfirmSignOut(false)}
+        >
+          <p>{t.profile.signOutPendingBody}</p>
+        </ConfirmSheet>
+      )}
 
       {confirmDelete && (
         <ConfirmSheet

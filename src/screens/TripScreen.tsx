@@ -34,6 +34,7 @@ import {
   IdeaIcon,
 } from '@/components/icons';
 import { useDayLegs, type LegInfo } from '@/hooks/useDayLegs';
+import { useDayLodging } from '@/hooks/useDayLodging';
 import { useInviteShare } from '@/hooks/useInviteShare';
 import { useReorderDrag } from '@/hooks/useReorderDrag';
 import { buildIcs } from '@/domain/ics';
@@ -198,47 +199,11 @@ export function TripScreen() {
     [allItems, tripId, activeDate],
   );
 
-  /*
-   * 숙소 — 전날 묵은 곳에서 출발해 이 날 묵는 곳으로 끝난다. 이동 시간을 하루의 양 끝까지
-   * 계산하려고 일정 목록 앞뒤에 가짜 항목으로 끼워 useDayLegs에 넘긴다(화면에는 따로 그린다).
-   */
-  const lodgingStart = useMemo<Item | null>(
-    () =>
-      prevDay?.lodgingCoord
-        ? {
-            id: `lodging:${prevDay.date}`,
-            tripId,
-            date: activeDate,
-            sortKey: '',
-            kind: 'place',
-            title: prevDay.lodgingName ?? '',
-            coord: prevDay.lodgingCoord,
-          }
-        : null,
-    [prevDay, tripId, activeDate],
-  );
-  const lodgingEnd = useMemo<Item | null>(
-    () =>
-      day?.lodgingCoord
-        ? {
-            id: `lodging:${day.date}`,
-            tripId,
-            date: activeDate,
-            sortKey: '',
-            kind: 'place',
-            title: day.lodgingName ?? '',
-            coord: day.lodgingCoord,
-          }
-        : null,
-    [day, tripId, activeDate],
-  );
-  const legItems = useMemo(
-    () => [
-      ...(lodgingStart ? [lodgingStart] : []),
-      ...items,
-      ...(lodgingEnd && items.length > 0 ? [lodgingEnd] : []),
-    ],
-    [lodgingStart, items, lodgingEnd],
+  // 숙소 — 전날 묵은 곳에서 출발해 이 날 묵는 곳으로 끝난다(hooks/useDayLodging.ts)
+  const { start: lodgingStart, end: lodgingEnd, routeItems: legItems } = useDayLodging(
+    trip,
+    activeDate,
+    items,
   );
   const legs = useDayLegs(legItems, day?.timezone);
   /** 앞 일정보다 이른 시각인 일정. 순서를 바꾸거나 다른 날에서 옮겨 오면 생긴다. */

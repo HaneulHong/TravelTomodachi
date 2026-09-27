@@ -504,6 +504,8 @@ export const ja: Messages = {
   },
 
   profile: {
+    signOutPendingTitle: (n: number) => `まだ送っていない変更が ${n} 件あります`,
+    signOutPendingBody: '今ログアウトすると、オフラインで変更した内容はサーバーに届かず失われます。インターネットにつないで送ってからログアウトしてください。',
     title: 'プロフィール',
     notSignedIn: 'ログインしていません。',
     via: {

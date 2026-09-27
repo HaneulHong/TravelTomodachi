@@ -7,11 +7,12 @@ import { DateStrip } from '@/components/DateStrip';
 import { MapCanvas } from '@/components/MapCanvas';
 import { TransportChip, MODE_ICON } from '@/components/TransportChip';
 import { AlertIcon } from '@/components/icons';
-import { useDayLegs } from '@/hooks/useDayLegs';
+import { useDayLegs, type LegInfo } from '@/hooks/useDayLegs';
+import { isLodgingId, useDayLodging } from '@/hooks/useDayLodging';
 import { useSegmentRoutes } from '@/hooks/useSegmentRoutes';
 import { formatDistance } from '@/domain/geo';
 import { formatMinutes } from '@/domain/time';
-import type { Coord, TransportMode } from '@/domain/types';
+import type { Coord, Item, TransportMode } from '@/domain/types';
 import { useLocale, useT } from '@/i18n';
 import { getMapRenderer, resolveMapRegion, type MapStop, type PathSegment } from '@/providers';
 import { defaultDateFor } from '@/domain/today';
@@ -43,7 +44,9 @@ export function MapScreen() {
   // 대중교통 조회에 출발 시각이 필요하고, 벽시계 시각은 이 날의 타임존으로만
   // 실제 순간이 된다.
   const day = trip?.days.find((d) => d.date === activeDate);
-  const legs = useDayLegs(items, day?.timezone);
+  // 전날 숙소 → 일정들 → 이 날 숙소 (hooks/useDayLodging.ts) — 이동 시간과 선이 양 끝까지
+  const lodging = useDayLodging(trip, activeDate, items);
+  const legs = useDayLegs(lodging.routeItems, day?.timezone);
   /** 터미널 구간 자체의 경로선 (기차·버스·배편). 없으면 직선으로 잇는다. */
   const segmentShapes = useSegmentRoutes(items, day?.timezone);
 
@@ -52,7 +55,7 @@ export function MapScreen() {
    * useMemo가 필요한 이유: 이 배열이 MapCanvas의 effect 의존성이라
    * 매 렌더마다 새 배열이면 마커를 계속 다시 만든다.
    */
-  const stops: MapStop[] = useMemo(
+  const itemStops: MapStop[] = useMemo(
     () =>
       items
         .filter((i) => i.coord)
@@ -65,6 +68,18 @@ export function MapScreen() {
         })),
     [items],
   );
+  /** 숙소는 번호 대신 🏨 — 전날 숙소와 이 날 숙소가 같으면 하나만 */
+  const stops: MapStop[] = useMemo(() => {
+    const hotels = [lodging.start, lodging.end].filter(
+      (h, i, all): h is Item =>
+        h !== null &&
+        !all.slice(0, i).some((o) => o?.coord?.lat === h.coord?.lat && o?.coord?.lng === h.coord?.lng),
+    );
+    return [
+      ...itemStops,
+      ...hotels.map((h) => ({ id: h.id, coord: h.coord!, label: '🏨', title: h.title })),
+    ];
+  }, [itemStops, lodging.start, lodging.end]);
 
   /**
    * 지도에 그릴 선.
@@ -92,7 +107,7 @@ export function MapScreen() {
     /** 직전 항목이 우리를 내려준 곳. 구간 항목이면 도착 터미널이다. */
     let cursor: Coord | undefined;
 
-    for (const item of items) {
+    for (const item of lodging.routeItems) {
       if (!item.coord) continue;
 
       // 앞 지점에서 이 항목까지 — 조회된 경로가 있으면 실선, 없으면 점선
@@ -128,7 +143,7 @@ export function MapScreen() {
     }
 
     return segments;
-  }, [items, legs, segmentShapes]);
+  }, [lodging.routeItems, legs, segmentShapes]);
 
   /**
    * 지역 판정에는 지점 좌표만 쓴다. 경로 폴리라인까지 넣으면 점이 수백 개라
@@ -176,42 +191,25 @@ export function MapScreen() {
             renderer={renderer}
             stops={stops}
             path={path}
-            onStopClick={(id) => setOpenStop((cur) => (cur === id ? null : id))}
+            onStopClick={(id) => {
+              if (isLodgingId(id)) return; // 숙소 핀은 펼칠 내용이 없다
+              setOpenStop((cur) => (cur === id ? null : id));
+            }}
           />
         )}
 
         <div className="stop-list">
+          {lodging.startName && (
+            <LodgingStop label={t.trip.lodgingFrom(lodging.startName)} />
+          )}
           {items.map((item, i) => {
             const info = legs.get(item.id);
-            const stopNumber = stops.findIndex((s) => s.id === item.id);
+            const stopNumber = itemStops.findIndex((s) => s.id === item.id);
             const isOpen = openStop === item.id;
 
             return (
               <div key={item.id}>
-                {i > 0 && (
-                  <div className="stop-gap">
-                    <div className="stop-gap__rail">
-                      <div className="stop-gap__line" />
-                    </div>
-                    <div className="stop-gap__body">
-                      {info?.status === 'loading' && <span className="tl-leg__skel" />}
-                      {info?.status === 'manual' && info.mode && (
-                        <TransportChip mode={info.mode} minutes={info.minutes} manual />
-                      )}
-                      {info?.status === 'ready' && info.mode && (
-                        <TransportChip mode={info.mode} minutes={info.minutes} />
-                      )}
-                      {info?.status === 'cross_border' && (
-                        <span className="chip chip--warn">
-                          <AlertIcon size={11} /> {t.leg.crossBorderShort}
-                        </span>
-                      )}
-                      {info?.status === 'unavailable' && (
-                        <span className="chip">{t.leg.unknown}</span>
-                      )}
-                    </div>
-                  </div>
-                )}
+                {(i > 0 || lodging.start) && <LegGap info={info} />}
 
                 <div className="stop">
                   <span
@@ -276,6 +274,8 @@ export function MapScreen() {
               </div>
             );
           })}
+          {lodging.end && items.length > 0 && <LegGap info={legs.get(lodging.end.id)} />}
+          {lodging.endName && <LodgingStop label={t.trip.lodgingAt(lodging.endName)} />}
         </div>
 
         {/*
@@ -286,6 +286,47 @@ export function MapScreen() {
       </main>
 
       <BottomTabs tripId={trip.id} date={activeDate} />
+    </div>
+  );
+}
+
+/** 두 지점 사이 이동 — 수단과 시간 */
+function LegGap({ info }: { info?: LegInfo }) {
+  const t = useT();
+  return (
+    <div className="stop-gap">
+      <div className="stop-gap__rail">
+        <div className="stop-gap__line" />
+      </div>
+      <div className="stop-gap__body">
+        {info?.status === 'loading' && <span className="tl-leg__skel" />}
+        {info?.status === 'manual' && info.mode && (
+          <TransportChip mode={info.mode} minutes={info.minutes} manual />
+        )}
+        {info?.status === 'ready' && info.mode && (
+          <TransportChip mode={info.mode} minutes={info.minutes} />
+        )}
+        {info?.status === 'cross_border' && (
+          <span className="chip chip--warn">
+            <AlertIcon size={11} /> {t.leg.crossBorderShort}
+          </span>
+        )}
+        {info?.status === 'unavailable' && <span className="chip">{t.leg.unknown}</span>}
+      </div>
+    </div>
+  );
+}
+
+/** 하루의 시작·끝 숙소 줄 */
+function LodgingStop({ label }: { label: string }) {
+  return (
+    <div className="stop">
+      <span className="stop__dot stop__dot--plain" aria-hidden>
+        🏨
+      </span>
+      <div className="stop__body">
+        <div className="stop__name">{label}</div>
+      </div>
     </div>
   );
 }

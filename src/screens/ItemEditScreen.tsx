@@ -104,7 +104,17 @@ export function ItemEditScreen() {
       .flatMap((it) => [it.coord, it.toCoord])
       .filter((c): c is Coord => c !== undefined);
   const dayCoords = coordsOf(date);
-  const nearCoords = dayCoords.length > 0 ? dayCoords : trip.days.flatMap((d) => coordsOf(d.date));
+  // 그 날 일정이 아직 없으면 그 날 아침에 나서는 곳(전날 숙소)이나 그 날 숙소 근처에서
+  const dayIndex = trip.days.findIndex((d) => d.date === date);
+  const lodgingCoords = [trip.days[dayIndex - 1]?.lodgingCoord, trip.days[dayIndex]?.lodgingCoord]
+    .filter((c): c is Coord => c !== undefined)
+    .reverse();
+  const nearCoords =
+    dayCoords.length > 0
+      ? dayCoords
+      : lodgingCoords.length > 0
+        ? lodgingCoords
+        : trip.days.flatMap((d) => coordsOf(d.date));
 
   const save = (): void => {
     if (!canSave) return;
