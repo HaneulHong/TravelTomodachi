@@ -173,6 +173,9 @@ export const ja: Messages = {
     menuCalendar: 'カレンダーに書き出す',
     menuShareDay: 'この日の予定を送る',
     menuActivity: '変更履歴',
+    lodgingFrom: (name: string) => `${name}から出発`,
+    lodgingAt: (name: string) => `${name}に宿泊`,
+    addLodging: 'この日の宿を決める',
     newBadge: 'NEW',
     newBadgeAria: (who: string) => `${who}さんが変更`,
     menuShare: '友だちに共有',
@@ -210,6 +213,9 @@ export const ja: Messages = {
       `予定の時刻はそのままです。09:00の予定は${city}の現地時刻09:00になります。`,
     withFollowing: (n) => `続く${n}日間も一緒に変更`,
     until: (date, city) => `${date}まで · 現在 ${city}`,
+    lodging: '宿泊先',
+    lodgingPlaceholder: 'ホテル・宿を検索',
+    lodgingHint: '最後の予定 → 宿、宿 → 翌日最初の予定の移動時間を計算します。',
   },
 
   tripCreate: {

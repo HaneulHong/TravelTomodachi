@@ -173,6 +173,9 @@ export const en: Messages = {
     menuCalendar: 'Export to calendar',
     menuShareDay: "Send this day's plan",
     menuActivity: 'Change history',
+    lodgingFrom: (name: string) => `Leaving from ${name}`,
+    lodgingAt: (name: string) => `Staying at ${name}`,
+    addLodging: 'Set where you stay tonight',
     newBadge: 'New',
     newBadgeAria: (who: string) => `Recently changed by ${who}`,
     menuShare: 'Share with friends',
@@ -214,6 +217,9 @@ export const en: Messages = {
     withFollowing: (n) =>
       n === 1 ? 'Also change the next day' : `Also change the following ${n} days`,
     until: (date, city) => `Until ${date} · now ${city}`,
+    lodging: 'Where you stay',
+    lodgingPlaceholder: 'Search hotels or stays',
+    lodgingHint: 'Travel time is calculated from the last plan to here, and from here to the next day\'s first plan.',
   },
 
   tripCreate: {

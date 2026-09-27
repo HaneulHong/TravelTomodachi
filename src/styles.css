@@ -3407,3 +3407,43 @@ button.activity__row:active {
   color: var(--text-3);
   white-space: nowrap;
 }
+
+/* ── 숙소 — 하루의 시작(전날 숙소)과 끝 (TripScreen) ───────────────── */
+
+/* 일정 카드와 같은 칸(시간 칸 옆)에 맞춘다 — .tl-row의 54px + 10px */
+.tl-lodging {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 64px;
+  padding: 9px 12px;
+  border-radius: var(--radius);
+  background: var(--surface-2, var(--surface));
+  border: 1px solid var(--border);
+  font-size: 13.5px;
+  color: var(--text-2);
+  text-align: left;
+}
+
+.tl-lodging__text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tl-lodging--btn {
+  width: calc(100% - 64px);
+  margin-top: 4px;
+}
+
+.tl-lodging--btn:active {
+  background: var(--surface-3);
+}
+
+/* 아직 안 정한 숙소 — 일정처럼 보이지 않게 점선 */
+.tl-lodging--add {
+  border-style: dashed;
+  background: transparent;
+  color: var(--text-3);
+}

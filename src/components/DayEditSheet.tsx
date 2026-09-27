@@ -13,10 +13,12 @@
 
 import { useMemo, useState } from 'react';
 import { MenuSheet } from '@/components/MenuSheet';
+import { PlaceField } from '@/components/PlaceField';
+import type { DayPatch } from '@/data/tripRepository';
 import { LIMITS } from '@/domain/limits';
 import { followingSameDays, formatDateLabel, tzShortLabel } from '@/domain/time';
 import { isDefaultZoneLabel, zoneLabel, zoneOptions } from '@/domain/timezones';
-import type { TripDay } from '@/domain/types';
+import type { Coord, TripDay } from '@/domain/types';
 import { useLocale, useT } from '@/i18n';
 import { useTripStore } from '@/store/tripStore';
 
@@ -24,10 +26,12 @@ interface Props {
   tripId: string;
   days: TripDay[];
   date: string;
+  /** 숙소를 찾을 때 처음 보여 줄 곳 — 그 날 일정들의 좌표 */
+  near?: Coord[];
   onClose(): void;
 }
 
-export function DayEditSheet({ tripId, days, date, onClose }: Props) {
+export function DayEditSheet({ tripId, days, date, near, onClose }: Props) {
   const updateDays = useTripStore((s) => s.updateDays);
   const t = useT();
   const locale = useLocale();
@@ -38,6 +42,8 @@ export function DayEditSheet({ tripId, days, date, onClose }: Props) {
   const [timezone, setTimezone] = useState(day?.timezone ?? 'Asia/Seoul');
   const [city, setCity] = useState(day?.cityLabel ?? '');
   const [withFollowing, setWithFollowing] = useState(false);
+  const [lodgingName, setLodgingName] = useState(day?.lodgingName ?? '');
+  const [lodgingCoord, setLodgingCoord] = useState<Coord | undefined>(day?.lodgingCoord);
 
   const following = useMemo(() => followingSameDays(days, date), [days, date]);
   const zones = useMemo(() => zoneOptions(locale, day?.timezone ?? ''), [locale, day?.timezone]);
@@ -55,7 +61,12 @@ export function DayEditSheet({ tripId, days, date, onClose }: Props) {
   };
 
   const cityLabel = city.trim() || zoneLabel(timezone, locale);
-  const changed = timezone !== day.timezone || cityLabel !== day.cityLabel;
+  const placeChanged = timezone !== day.timezone || cityLabel !== day.cityLabel;
+  const lodgingChanged =
+    lodgingName.trim() !== (day.lodgingName ?? '') ||
+    lodgingCoord?.lat !== day.lodgingCoord?.lat ||
+    lodgingCoord?.lng !== day.lodgingCoord?.lng;
+  const changed = placeChanged || lodgingChanged;
   const lastFollowing = following[following.length - 1];
 
   const save = (): void => {
@@ -64,7 +75,15 @@ export function DayEditSheet({ tripId, days, date, onClose }: Props) {
       return;
     }
     const dates = withFollowing ? [date, ...following] : [date];
-    updateDays(tripId, dates, { timezone, cityLabel });
+    // 바뀐 것만 보낸다 — 숙소만 바꿨는데 도시까지 덮어쓰지 않게(뒤 날짜에 같이 적용할 때 특히)
+    const patch: DayPatch = {};
+    if (placeChanged) Object.assign(patch, { timezone, cityLabel });
+    if (lodgingChanged) {
+      const name = lodgingName.trim();
+      patch.lodgingName = name || null;
+      patch.lodgingCoord = name && lodgingCoord ? lodgingCoord : null;
+    }
+    updateDays(tripId, dates, patch);
     onClose();
   };
 
@@ -103,6 +122,19 @@ export function DayEditSheet({ tripId, days, date, onClose }: Props) {
             <p className="form__hint">{t.dayEdit.keepTimes(cityLabel)}</p>
           )}
         </label>
+
+        <PlaceField
+          label={t.dayEdit.lodging}
+          placeholder={t.dayEdit.lodgingPlaceholder}
+          name={lodgingName}
+          coord={lodgingCoord}
+          near={near}
+          onChange={(name, coord) => {
+            setLodgingName(name);
+            setLodgingCoord(coord);
+          }}
+        />
+        <p className="form__hint dayedit__lodging-hint">{t.dayEdit.lodgingHint}</p>
 
         {/*
           뒤로 이어지는 같은 도시 날짜가 있을 때만 묻는다. 기본은 꺼둔다 —

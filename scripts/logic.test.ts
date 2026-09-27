@@ -905,6 +905,9 @@ console.log('\n── 하루 일정 글로 (메신저 공유) ──');
   eq('제목과 장소가 같으면 한 번만', text.split('\n')[4], '13:00 경복궁');
   eq('구간: 편명과 출발 → 도착, 시각 없으면 —', text.split('\n')[5], '— 🚆 KTX KTX 101 — 서울역 → 부산역');
   eq('빈 날', formatDayText({ heading: 'h', items: [], legOf: () => undefined, labels }), 'h\n\n일정 없음');
+  eq('숙소는 마지막 줄',
+    formatDayText({ heading: 'h', items: [it({ id: 'x', title: '경복궁' })], lodging: '신라호텔에서 묵음', legOf: () => undefined, labels }).split('\n').slice(-1)[0],
+    '🏨 신라호텔에서 묵음');
 }
 
 console.log('\n── 오프라인에서 고친 것 모아 보내기 ──');

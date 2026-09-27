@@ -49,8 +49,27 @@ export interface ItemDraft {
   bookingRef?: string;
 }
 
-/** 날짜에서 고칠 수 있는 것. 날짜 자체는 여행 기간이 정한다. */
-export type DayPatch = Partial<Pick<TripDay, 'timezone' | 'cityLabel'>>;
+/**
+ * 날짜에서 고칠 수 있는 것. 날짜 자체는 여행 기간이 정한다.
+ * undefined는 "안 바꿈", 숙소의 null은 "지움"이다 — 둘을 가르려고 숙소만 null을 받는다
+ * (오프라인 보낼 목록에 JSON으로 저장해도 null은 남는다, data/outbox.ts).
+ */
+export interface DayPatch {
+  timezone?: string;
+  cityLabel?: string;
+  lodgingName?: string | null;
+  lodgingCoord?: Coord | null;
+}
+
+/** 날짜에 변경을 입힌다 — 스토어(화면)와 목 저장소가 같이 쓴다 */
+export function applyDayPatch(day: TripDay, patch: DayPatch): TripDay {
+  const next = { ...day };
+  if (patch.timezone !== undefined) next.timezone = patch.timezone;
+  if (patch.cityLabel !== undefined) next.cityLabel = patch.cityLabel;
+  if (patch.lodgingName !== undefined) next.lodgingName = patch.lodgingName ?? undefined;
+  if (patch.lodgingCoord !== undefined) next.lodgingCoord = patch.lodgingCoord ?? undefined;
+  return next;
+}
 
 export interface TripSnapshot {
   trips: Trip[];
