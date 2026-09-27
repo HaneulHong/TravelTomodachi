@@ -17,6 +17,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useTripStore } from '@/store/tripStore';
 import { HomeScreen } from '@/screens/HomeScreen';
 import {
+  ActivityScreen,
   ChecklistScreen,
   ExpensesScreen,
   IdeasScreen,
@@ -266,6 +267,7 @@ export function App() {
         <Route path="/trip/:tripId/expenses" element={<ExpensesScreen />} />
         <Route path="/trip/:tripId/ideas" element={<IdeasScreen />} />
         <Route path="/trip/:tripId/members" element={<MembersScreen />} />
+        <Route path="/trip/:tripId/activity" element={<ActivityScreen />} />
         <Route path="/profile" element={<ProfileScreen />} />
         <Route path="/privacy" element={<PrivacyScreen />} />
         <Route path="/invite" element={<InviteRoute />} />

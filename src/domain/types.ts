@@ -182,6 +182,24 @@ export interface Comment {
   createdAt: string;
 }
 
+/**
+ * 변경 기록 한 줄 — "민수가 3일차 점심을 고쳤어요". DB 트리거가 쓰고 앱은 읽기만 한다
+ * (supabase/activity.sql). 지운 일정은 행이 없으니 제목을 여기 들고 있다.
+ */
+export interface Activity {
+  id: number;
+  tripId: string;
+  /** 한 사람. 탈퇴했으면 없다. */
+  actorId?: string;
+  action: 'add' | 'update' | 'delete';
+  target: 'item' | 'expense' | 'place';
+  targetId?: string;
+  title?: string;
+  /** 일정의 날짜 / 지출을 쓴 날 'YYYY-MM-DD' */
+  date?: string;
+  createdAt: string;
+}
+
 export interface ChecklistItem {
   id: string;
   tripId: string;

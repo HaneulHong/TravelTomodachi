@@ -3344,3 +3344,66 @@ body:has(.offline-bar) .main {
   background: rgba(255, 255, 255, 0.92);
   color: var(--accent);
 }
+
+/* ── 변경 기록 (ActivityScreen) · "새로" 표시 ──────────────────────── */
+
+/* 지난번에 본 뒤 친구가 바꾼 일정 — 눈에 띄되 "지금" 표시(강조색 테두리)와 겹치지 않게 채운 색 */
+.chip--new {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+
+.activity {
+  margin: 0;
+  padding: 8px 16px 24px;
+  list-style: none;
+}
+
+.activity__day {
+  margin: 16px 0 6px;
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--text-3);
+}
+
+.activity__row {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  margin-bottom: 6px;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  text-align: left;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--text);
+}
+
+.activity__row .avatar {
+  flex: none;
+  margin-top: 1px;
+}
+
+button.activity__row:active {
+  background: var(--surface-3);
+}
+
+/* 지워진 일정 등 갈 곳이 없는 줄 — 눌리지 않는다는 걸 흐리게 */
+.activity__row--static {
+  color: var(--text-2);
+}
+
+.activity__text {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.activity__time {
+  margin-left: 6px;
+  font-size: 12px;
+  color: var(--text-3);
+  white-space: nowrap;
+}

@@ -55,6 +55,7 @@ import { directionsApp, directionsUrl } from '../src/providers/directions';
 import { formatDayText } from '../src/domain/dayText';
 import { alreadyApplied, encodeArgs, enqueue, flushOutbox, pendingOps } from '../src/data/outbox';
 import type { TripRepository } from '../src/data/tripRepository';
+import { changedSince } from '../src/data/seen';
 import { nominatimToPlace } from '../src/providers/places/nominatimPlaceProvider';
 import { effectiveLeg, recommendMode } from '../src/domain/legChoice';
 
@@ -945,6 +946,15 @@ console.log('\n── 오프라인에서 고친 것 모아 보내기 ──');
   eq('서버가 안 받은 건 버림', r.dropped, 1);
   eq('끊겨서 멈춤', r.stalled, true);
   eq('남은 것: 끊긴 것부터', pendingOps(u).map((o) => o.args[0]).join(','), 'offline,later');
+}
+
+console.log('\n── 마지막으로 본 뒤 바뀐 일정 ──');
+{
+  const seen = '2026-09-27T10:00:00.000Z';
+  eq('친구가 본 뒤에 고침 → 새로', changedSince({ updatedBy: 'b', updatedAt: '2026-09-27T11:00:00.000Z' }, 'a', seen), true);
+  eq('내가 고친 건 아님', changedSince({ updatedBy: 'a', updatedAt: '2026-09-27T11:00:00.000Z' }, 'a', seen), false);
+  eq('본 뒤에 안 바뀜', changedSince({ updatedBy: 'b', updatedAt: '2026-09-27T09:00:00.000Z' }, 'a', seen), false);
+  eq('처음 여는 여행이면 표시 안 함', changedSince({ updatedBy: 'b', updatedAt: '2026-09-27T11:00:00.000Z' }, 'a', null), false);
 }
 
 console.log(`\n${failed === 0 ? '✓ 전부 통과' : '✗ 실패 있음'} — ${passed} passed, ${failed} failed\n`);

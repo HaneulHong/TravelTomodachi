@@ -12,6 +12,7 @@
  */
 
 import type {
+  Activity,
   ChecklistItem,
   Comment,
   Coord,
@@ -155,6 +156,12 @@ export interface TripRepository {
   /** 일정 댓글. 글쓴이는 서버가 로그인한 사람으로 정한다. */
   addComment(comment: Comment): Promise<void>;
   removeComment(id: string): Promise<void>;
+
+  /**
+   * 변경 기록(최근 것부터). 화면을 열 때 한 번 읽는다 — 늘 들고 다닐 만큼 쓸모 있지 않다.
+   * activity.sql을 돌리기 전 DB면 null (화면이 안내한다).
+   */
+  loadActivity(tripId: string): Promise<Activity[] | null>;
 
   /**
    * 다른 사람의 변경을 받는다. 돌려준 함수를 부르면 구독을 끊는다.

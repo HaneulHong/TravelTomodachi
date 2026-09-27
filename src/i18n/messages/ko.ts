@@ -186,6 +186,9 @@ export const ko = {
     menuIdeas: '후보 장소',
     menuCalendar: '캘린더로 내보내기',
     menuShareDay: '이 날 일정 보내기',
+    menuActivity: '변경 기록',
+    newBadge: '새로',
+    newBadgeAria: (who: string) => `${who}님이 새로 바꿈`,
     menuShare: '친구에게 공유',
     menuMembers: '멤버 · 초대 코드',
     menuDelete: '여행 삭제',
@@ -327,6 +330,29 @@ export const ko = {
     searchMore: '해외 명소를 한글 이름으로 더 찾기',
     moreNone: '더 찾지 못했습니다. 영어나 현지어로 쳐 보세요.',
     pinnedName: '지도에서 고른 위치',
+  },
+
+  activity: {
+    title: '변경 기록',
+    needsDb: '변경 기록을 아직 쓸 수 없습니다. 잠시 후 다시 열어 주세요.',
+    offline: '연결되면 볼 수 있습니다.',
+    empty: '아직 기록이 없습니다. 일정을 넣거나 고치면 여기에 남습니다.',
+    today: '오늘',
+    yesterday: '어제',
+    line: (
+      who: string | null,
+      target: 'item' | 'expense' | 'place',
+      action: 'add' | 'update' | 'delete',
+      title: string,
+      day: number | null,
+    ) => {
+      const verb = {
+        item: { add: '일정을 넣었어요', update: '일정을 고쳤어요', delete: '일정을 지웠어요' },
+        expense: { add: '지출을 적었어요', update: '지출을 고쳤어요', delete: '지출을 지웠어요' },
+        place: { add: '후보로 올렸어요', update: '후보를 고쳤어요', delete: '후보를 지웠어요' },
+      }[target][action];
+      return `${who ? `${who}님이` : '내가'} ${day ? `${day}일차 ` : ''}「${title}」 ${verb}`;
+    },
   },
 
   shareDay: {

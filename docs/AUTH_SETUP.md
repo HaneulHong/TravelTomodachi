@@ -262,6 +262,7 @@ create trigger on_auth_user_created
 > "자기와 같은 여행 멤버만"으로 좁힌다. 보안 시나리오 테스트: `npm run test:rls`
 | [`supabase/expenses.sql`](../supabase/expenses.sql) | 공동 가계부 + 예약 번호 칸 (새 DB면 schema.sql에 이미 있음 — 돌려도 무해) |
 | [`supabase/collab.sql`](../supabase/collab.sql) | 후보 장소 투표 + 일정 댓글 (새 DB면 schema.sql에 이미 있음 — 돌려도 무해) |
+| [`supabase/activity.sql`](../supabase/activity.sql) | 변경 기록 — 누가 무엇을 넣고·고치고·지웠는지 (새 DB면 schema.sql에 이미 있음 — 돌려도 무해) |
 
 ---
 

@@ -23,6 +23,7 @@ const loaders = {
   profile: () => import('./ProfileScreen'),
   privacy: () => import('./PrivacyScreen'),
   tripCreate: () => import('./TripCreateScreen'),
+  activity: () => import('./ActivityScreen'),
 };
 
 export const ItemDetailScreen = lazy(() => loaders.itemDetail().then((m) => ({ default: m.ItemDetailScreen })));
@@ -36,6 +37,7 @@ export const InviteScreen = lazy(() => loaders.invite().then((m) => ({ default: 
 export const ProfileScreen = lazy(() => loaders.profile().then((m) => ({ default: m.ProfileScreen })));
 export const PrivacyScreen = lazy(() => loaders.privacy().then((m) => ({ default: m.PrivacyScreen })));
 export const TripCreateScreen = lazy(() => loaders.tripCreate().then((m) => ({ default: m.TripCreateScreen })));
+export const ActivityScreen = lazy(() => loaders.activity().then((m) => ({ default: m.ActivityScreen })));
 
 /** 나머지 화면을 미리 받는다. 하나가 실패해도(오프라인 등) 나머지는 계속. */
 export function preloadScreens(): Promise<void> {

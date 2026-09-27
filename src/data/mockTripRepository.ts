@@ -159,6 +159,11 @@ export const mockTripRepository: TripRepository = {
     comments = comments.filter((c) => c.id !== id);
   },
 
+  // 목은 혼자 쓰는 저장소라 "누가 바꿨는지"가 의미 없다 — 빈 기록
+  async loadActivity(): Promise<[]> {
+    return [];
+  },
+
   // 혼자 쓰는 메모리 저장소라 다른 사람의 변경이 올 일이 없다
   subscribe(): () => void {
     return () => {};

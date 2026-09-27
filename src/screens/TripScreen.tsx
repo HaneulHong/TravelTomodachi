@@ -37,6 +37,7 @@ import { useDayLegs, type LegInfo } from '@/hooks/useDayLegs';
 import { useInviteShare } from '@/hooks/useInviteShare';
 import { useReorderDrag } from '@/hooks/useReorderDrag';
 import { buildIcs } from '@/domain/ics';
+import { changedSince, markSeen, readSeen } from '@/data/seen';
 import { formatDayText } from '@/domain/dayText';
 import { timeConflicts, timeSortedOrder } from '@/domain/order';
 import { useMinuteTick } from '@/hooks/useMinuteTick';
@@ -171,6 +172,17 @@ export function TripScreen() {
 
   const trip = useTripStore((s) => s.getTrip(tripId));
   const allItems = useTripStore((s) => s.items);
+
+  /*
+   * 지난번에 이 여행을 본 때. 그 뒤에 친구가 바꾼 일정에 "새로"를 단다(data/seen.ts).
+   * 열 때 읽어 두고 지금으로 적는다 — 다음에 열면 이번 방문 이후 것만 표시된다.
+   */
+  const [seenAt, setSeenAt] = useState<string | null>(null);
+  useEffect(() => {
+    if (!me || !tripId) return;
+    setSeenAt(readSeen(me, tripId));
+    markSeen(me, tripId);
+  }, [me, tripId]);
 
   // 날짜가 주소에 없으면 여행 중엔 오늘, 아니면 첫날
   const activeDate = search.get('date') ?? (trip ? defaultDateFor(trip) : '');
@@ -459,6 +471,16 @@ export function TripScreen() {
                       </span>
                     )}
                     <span className="tl-item__title">{item.title}</span>
+                    {changedSince(item, me, seenAt) && (
+                      <span
+                        className="chip chip--new"
+                        aria-label={t.trip.newBadgeAria(
+                          trip.members.find((m) => m.id === item.updatedBy)?.name ?? t.edited.leftMember,
+                        )}
+                      >
+                        {t.trip.newBadge}
+                      </span>
+                    )}
                     {isSegmentKind(item.kind) && (
                       <span className={`chip chip--${KIND_TONE[item.kind]}`}>
                         <KindIcon kind={item.kind} />
@@ -593,6 +615,16 @@ export function TripScreen() {
         <button className="sheet__item" onClick={onShare}>
           <ShareIcon />
           {t.trip.menuShare}
+        </button>
+        <button
+          className="sheet__item"
+          onClick={() => {
+            setMenuOpen(false);
+            navigate(`/trip/${trip.id}/activity`);
+          }}
+        >
+          <ClockIcon size={19} />
+          {t.trip.menuActivity}
         </button>
         <button
           className="sheet__item"

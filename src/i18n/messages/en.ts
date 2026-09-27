@@ -172,6 +172,9 @@ export const en: Messages = {
     menuIdeas: 'Ideas',
     menuCalendar: 'Export to calendar',
     menuShareDay: "Send this day's plan",
+    menuActivity: 'Change history',
+    newBadge: 'New',
+    newBadgeAria: (who: string) => `Recently changed by ${who}`,
     menuShare: 'Share with friends',
     menuMembers: 'Members · invite code',
     menuDelete: 'Delete trip',
@@ -311,6 +314,29 @@ export const en: Messages = {
     searchMore: 'Search more landmarks by name',
     moreNone: 'Nothing more found. Try English or the local language.',
     pinnedName: 'Pinned location',
+  },
+
+  activity: {
+    title: 'Change history',
+    needsDb: "Change history isn't available yet. Please try again later.",
+    offline: 'Available when you reconnect.',
+    empty: 'No history yet. Adding or editing plans will show up here.',
+    today: 'Today',
+    yesterday: 'Yesterday',
+    line: (
+      who: string | null,
+      target: 'item' | 'expense' | 'place',
+      action: 'add' | 'update' | 'delete',
+      title: string,
+      day: number | null,
+    ) => {
+      const verb = {
+        item: { add: 'added', update: 'edited', delete: 'deleted' },
+        expense: { add: 'logged the expense', update: 'edited the expense', delete: 'deleted the expense' },
+        place: { add: 'suggested', update: 'edited the idea', delete: 'removed the idea' },
+      }[target][action];
+      return `${who ?? 'You'} ${verb} “${title}”${day ? ` (Day ${day})` : ''}`;
+    },
   },
 
   shareDay: {
