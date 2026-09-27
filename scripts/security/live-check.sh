@@ -28,7 +28,7 @@ warn() { echo "  ! $1"; }
 req() { curl -s -o /tmp/tt-live-body -w "%{http_code}" -H "apikey: $KEY" -H "Content-Type: application/json" "$@"; }
 
 echo "── 로그인 없이 읽기 (빈 목록이어야) ──"
-for t in trips trip_members trip_days items checklist expenses places place_votes comments profiles; do
+for t in trips trip_members trip_days items checklist expenses places place_votes comments profiles trip_activity; do
   code=$(req "$API/rest/v1/$t?select=*&limit=1")
   body=$(cat /tmp/tt-live-body)
   if [ "$code" = "200" ] && [ "$body" = "[]" ] || [ "$code" = "401" ]; then ok "$t"; else bad "$t" "$code $body"; fi
@@ -44,11 +44,13 @@ try_insert trips "{\"name\":\"x\",\"start_date\":\"2026-01-01\",\"end_date\":\"2
 try_insert profiles "{\"id\":\"$Z\",\"nickname\":\"x\"}"
 try_insert trip_members "{\"trip_id\":\"$Z\",\"user_id\":\"$Z\"}"
 try_insert items "{\"trip_id\":\"$Z\",\"date\":\"2026-01-01\",\"sort_key\":\"a0\",\"title\":\"x\"}"
+# 변경 기록은 DB 트리거만 쓴다 — 남의 이름으로 꾸미지 못해야 한다 (activity.sql)
+try_insert trip_activity "{\"trip_id\":\"$Z\",\"actor_id\":\"$Z\",\"action\":\"delete\",\"target\":\"item\"}"
 
 echo "── 로그인 없이 함수 호출 (막혀야) ──"
 for f in "join_trip_by_code:{\"code\":\"AAAAAAAA\"}" "regenerate_invite_code:{\"trip\":\"$Z\"}" \
          "is_trip_member:{\"trip\":\"$Z\"}" "is_trip_owner:{\"trip\":\"$Z\"}" "new_invite_code:{}" \
-         "shares_trip_with:{\"other\":\"$Z\"}"; do
+         "shares_trip_with:{\"other\":\"$Z\"}" "log_trip_activity:{}"; do
   name=${f%%:*}; body=${f#*:}
   code=$(req -X POST -d "$body" "$API/rest/v1/rpc/$name")
   case "$code" in

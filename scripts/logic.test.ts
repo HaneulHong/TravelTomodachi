@@ -44,7 +44,7 @@ import {
 } from '../src/domain/order';
 import { detectLocale, isLocalePreference } from '../src/i18n/locales';
 import { isDefaultZoneLabel, zoneLabel, zoneOptions } from '../src/domain/timezones';
-import { formatDateLabel, formatWeekday } from '../src/domain/time';
+import { formatDateLabel, formatWeekday, sameOffsetAsDevice } from '../src/domain/time';
 import { ko } from '../src/i18n/messages/ko';
 import { en } from '../src/i18n/messages/en';
 import { ja } from '../src/i18n/messages/ja';
@@ -969,6 +969,13 @@ console.log('\n── 준비물 기본 목록 ──');
   const day = (timezone: string) => ({ date: '2026-10-01', timezone, cityLabel: '' });
   eq('서울만이면 국내', isAbroad([day('Asia/Seoul'), day('Asia/Seoul')]), false);
   eq('하루라도 다른 시간대면 해외', isAbroad([day('Asia/Seoul'), day('Asia/Tokyo')]), true);
+}
+
+console.log('\n── 시각 옆 시간대 표시 ──');
+{
+  eq('서울 일정을 서울 기기로 → 같음(표시 안 함)', sameOffsetAsDevice('Asia/Seoul', '2026-10-01', 'Asia/Seoul'), true);
+  eq('도쿄도 같은 시차(+9)', sameOffsetAsDevice('Asia/Tokyo', '2026-10-01', 'Asia/Seoul'), true);
+  eq('방콕 일정을 서울 기기로 → 다름(표시)', sameOffsetAsDevice('Asia/Bangkok', '2026-10-01', 'Asia/Seoul'), false);
 }
 
 console.log(`\n${failed === 0 ? '✓ 전부 통과' : '✗ 실패 있음'} — ${passed} passed, ${failed} failed\n`);

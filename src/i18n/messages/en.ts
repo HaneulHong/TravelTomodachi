@@ -508,6 +508,8 @@ export const en: Messages = {
   },
 
   profile: {
+    signOutPendingTitle: (n: number) => `${n} change${n === 1 ? '' : 's'} not sent yet`,
+    signOutPendingBody: "If you sign out now, changes you made offline won't reach the server and will be lost. Connect to the internet first, then sign out.",
     title: 'Profile',
     notSignedIn: "You're not signed in.",
     via: {

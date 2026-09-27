@@ -879,6 +879,19 @@ a {
   margin-top: 12px;
 }
 
+/*
+ * 상세 화면의 길찾기 — 아래 예약 번호 칸처럼 카드 폭을 다 쓰는 한 줄.
+ * 알약 모양 그대로 두면 칩 바로 밑에 붙어 떠 보였다(간격 없이, 왼쪽에만 걸쳐서).
+ */
+.detail__hero .directions {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-top: 14px;
+  padding: 11px 14px;
+  border-radius: var(--radius-sm);
+}
+
 .field {
   padding: 14px 16px;
 }

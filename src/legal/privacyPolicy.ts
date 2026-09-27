@@ -15,7 +15,7 @@
 import type { Locale } from '@/i18n';
 
 /** 시행일 */
-export const EFFECTIVE_DATE = '2026-09-26';
+export const EFFECTIVE_DATE = '2026-09-27';
 
 /** 개인정보 보호책임자 — 운영자. 연락처는 실제로 답을 받는 곳이어야 한다. */
 export const OPERATOR = {
@@ -63,7 +63,8 @@ const ko: PolicySection[] = [
       rows: [
         ['가입·로그인 (필수)', 'Google 계정 식별자, 이메일 주소, 이름, 프로필 사진 주소 — Google이 로그인할 때 보내는 정보', 'Supabase 인증 시스템. 서비스 화면과 다른 이용자에게는 보이지 않습니다'],
         ['프로필 (필수)', '닉네임, 닉네임 번호(#1234)', '서비스 DB. 같은 여행 멤버에게 보입니다'],
-        ['이용 중 입력', '여행 이름·기간, 일정(장소·좌표·시각·메모·예약 번호), 체크리스트, 지출, 후보 장소, 투표, 댓글', '서비스 DB. 같은 여행 멤버에게 보입니다'],
+        ['이용 중 입력', '여행 이름·기간, 날마다 묵는 숙소, 일정(장소·좌표·시각·메모·예약 번호), 체크리스트, 지출, 후보 장소, 투표, 댓글', '서비스 DB. 같은 여행 멤버에게 보입니다'],
+        ['변경 기록 (자동)', '누가 언제 일정·지출을 넣고·고치고·지웠는지와 그때의 제목, 후보 장소를 올린 기록', '서비스 DB. 같은 여행 멤버에게 보입니다'],
         ['자동 생성', '접속 IP 주소, 브라우저 정보, 접속 시각 (서버 기록)', 'Supabase·Cloudflare 서버 기록'],
       ],
     },
@@ -74,6 +75,7 @@ const ko: PolicySection[] = [
     items: [
       '회원 정보(로그인 정보·닉네임): 회원 탈퇴 시까지. 탈퇴하면 바로 지웁니다.',
       '이용 중 입력한 내용: 그 여행이 지워질 때까지. 탈퇴해도 다른 멤버와 같이 쓰던 여행에 남긴 일정·댓글·지출은 남고, 작성자 표시는 지워집니다(「나간 멤버」로 표시).',
+      '변경 기록: 여행마다 최근 300건만 두고 오래된 것부터 지웁니다. 여행이 지워지면 함께 지워지고, 탈퇴하면 작성자 표시가 지워집니다.',
       '서버 기록: 각 서비스 제공자(Supabase·Cloudflare)의 보관 기간에 따릅니다.',
     ],
   },
@@ -104,7 +106,7 @@ const ko: PolicySection[] = [
     title: '6. 파기 절차와 방법',
     items: [
       '회원 탈퇴를 누르면 로그인 정보와 프로필을 DB에서 즉시 지웁니다. 지운 정보는 되살릴 수 없습니다.',
-      '이용자 기기에 저장된 정보(로그인 상태, 오프라인용 일정 사본)는 로그아웃하거나 탈퇴하면 지웁니다.',
+      '이용자 기기에 저장된 정보(로그인 상태, 오프라인용 일정 사본, 아직 보내지 못한 변경, 여행을 마지막으로 본 시각)는 로그아웃하거나 탈퇴하면 지웁니다.',
     ],
   },
   {
@@ -122,7 +124,7 @@ const ko: PolicySection[] = [
   {
     title: '9. 자동 수집 장치',
     paragraphs: [
-      '서비스는 광고·추적용 쿠키를 쓰지 않습니다. 로그인 상태, 언어 설정, 오프라인에서 볼 일정 사본을 이용자 기기의 브라우저 저장소에 둡니다. 브라우저 설정에서 지울 수 있으며, 지우면 다시 로그인해야 합니다.',
+      '서비스는 광고·추적용 쿠키를 쓰지 않습니다. 로그인 상태, 언어 설정, 오프라인에서 볼 일정 사본, 오프라인에서 고쳐 아직 보내지 못한 변경, 여행을 마지막으로 본 시각("새로" 표시용)을 이용자 기기의 브라우저 저장소에 둡니다. 브라우저 설정에서 지울 수 있으며, 지우면 다시 로그인해야 하고 보내지 못한 변경은 사라집니다.',
     ],
   },
   {
@@ -172,7 +174,8 @@ const en: PolicySection[] = [
       rows: [
         ['Sign-up & sign-in (required)', 'Google account ID, email, name, profile photo URL — sent by Google when you sign in', 'Supabase authentication. Not shown in the app or to other users'],
         ['Profile (required)', 'Nickname and its number (#1234)', 'Service database. Visible to members of your trips'],
-        ['What you enter', 'Trip names and dates, plans (places, coordinates, times, notes, booking numbers), checklists, expenses, suggested places, votes, comments', 'Service database. Visible to members of that trip'],
+        ['What you enter', 'Trip names and dates, where you stay each night, plans (places, coordinates, times, notes, booking numbers), checklists, expenses, suggested places, votes, comments', 'Service database. Visible to members of that trip'],
+        ['Change history (automatic)', 'Who added, edited or deleted which plan or expense and when, with its title at the time; who suggested which place', 'Service database. Visible to members of that trip'],
         ['Generated automatically', 'IP address, browser details, access time (server logs)', 'Supabase and Cloudflare server logs'],
       ],
     },
@@ -183,6 +186,7 @@ const en: PolicySection[] = [
     items: [
       'Account data (sign-in details, nickname): until you delete your account, then immediately deleted.',
       'What you enter: until the trip is deleted. If you delete your account, plans, comments and expenses you added to shared trips remain without your name (shown as “former member”).',
+      'Change history: only the latest 300 entries per trip are kept; older ones are deleted. Deleted with the trip; your name is removed if you delete your account.',
       'Server logs: per each provider’s (Supabase, Cloudflare) retention period.',
     ],
   },
@@ -209,7 +213,7 @@ const en: PolicySection[] = [
     title: '6. Deletion',
     items: [
       'Deleting your account removes your sign-in details and profile from the database immediately. This can’t be undone.',
-      'Data on your device (sign-in state, offline copy of trips) is removed when you sign out or delete your account.',
+      'Data on your device (sign-in state, offline copy of trips, changes not yet sent, when you last viewed each trip) is removed when you sign out or delete your account.',
     ],
   },
   {
@@ -223,7 +227,7 @@ const en: PolicySection[] = [
   { title: '8. Children under 14', paragraphs: ['Children under 14 may not sign up.'] },
   {
     title: '9. Cookies and local storage',
-    paragraphs: ['We don’t use advertising or tracking cookies. Your sign-in state, language setting and an offline copy of your trips are kept in your browser’s storage. You can clear them in your browser; you’ll need to sign in again.'],
+    paragraphs: ['We don’t use advertising or tracking cookies. Your sign-in state, language setting, an offline copy of your trips, changes made offline that haven’t been sent yet, and when you last viewed each trip (for “New” labels) are kept in your browser’s storage. You can clear them in your browser; you’ll need to sign in again and unsent changes will be lost.'],
   },
   {
     title: '10. Security measures',
@@ -266,7 +270,8 @@ const ja: PolicySection[] = [
       rows: [
         ['登録・ログイン（必須）', 'Google アカウント識別子、メールアドレス、名前、プロフィール写真の URL — ログイン時に Google から送られる情報', 'Supabase の認証システム。画面やほかの利用者には表示されません'],
         ['プロフィール（必須）', 'ニックネーム、ニックネーム番号（#1234）', '本サービスのデータベース。同じ旅行のメンバーに表示されます'],
-        ['利用中の入力', '旅行名・期間、予定（場所・座標・時刻・メモ・予約番号）、チェックリスト、支出、候補地、投票、コメント', '本サービスのデータベース。その旅行のメンバーに表示されます'],
+        ['利用中の入力', '旅行名・期間、毎日の宿泊先、予定（場所・座標・時刻・メモ・予約番号）、チェックリスト、支出、候補地、投票、コメント', '本サービスのデータベース。その旅行のメンバーに表示されます'],
+        ['変更履歴（自動）', '誰がいつ予定・支出を追加・変更・削除したかと当時のタイトル、候補地を挙げた記録', '本サービスのデータベース。その旅行のメンバーに表示されます'],
         ['自動生成', '接続 IP アドレス、ブラウザ情報、接続時刻（サーバーの記録）', 'Supabase・Cloudflare のサーバー記録'],
       ],
     },
@@ -277,6 +282,7 @@ const ja: PolicySection[] = [
     items: [
       '会員情報（ログイン情報・ニックネーム）：退会まで。退会するとすぐに削除します。',
       '利用中に入力した内容：その旅行が削除されるまで。退会しても、共有していた旅行に残した予定・コメント・支出は残り、作成者の表示は消えます（「退出したメンバー」と表示）。',
+      '変更履歴：旅行ごとに最新 300 件のみを残し、古いものから削除します。旅行を削除すると一緒に削除され、退会すると作成者の表示が消えます。',
       'サーバーの記録：各提供者（Supabase・Cloudflare）の保管期間に従います。',
     ],
   },
@@ -303,7 +309,7 @@ const ja: PolicySection[] = [
     title: '6. 破棄の手続きと方法',
     items: [
       '退会すると、ログイン情報とプロフィールをデータベースからすぐに削除します。削除した情報は元に戻せません。',
-      '端末に保存された情報（ログイン状態、オフライン用の予定のコピー）は、ログアウトまたは退会時に削除します。',
+      '端末に保存された情報（ログイン状態、オフライン用の予定のコピー、まだ送っていない変更、旅行を最後に見た時刻）は、ログアウトまたは退会時に削除します。',
     ],
   },
   {
@@ -317,7 +323,7 @@ const ja: PolicySection[] = [
   { title: '8. 14歳未満の児童', paragraphs: ['本サービスは14歳未満の方の登録を受け付けません。'] },
   {
     title: '9. 自動収集の仕組み',
-    paragraphs: ['広告や追跡のための Cookie は使いません。ログイン状態、言語設定、オフラインで見る予定のコピーを端末のブラウザ保存領域に置きます。ブラウザの設定で削除でき、削除すると再ログインが必要です。'],
+    paragraphs: ['広告や追跡のための Cookie は使いません。ログイン状態、言語設定、オフラインで見る予定のコピー、オフラインで変更してまだ送っていない内容、旅行を最後に見た時刻（「NEW」表示用）を端末のブラウザ保存領域に置きます。ブラウザの設定で削除でき、削除すると再ログインが必要で、送っていない変更は失われます。'],
   },
   {
     title: '10. 安全管理措置',
