@@ -222,6 +222,15 @@ export const AppleIcon = ({ size = 17, className }: IconProps) => (
   </svg>
 );
 
+/** 물음표 동그라미 — 사용법 */
+export const HelpIcon = ({ size = 21, className }: IconProps) => (
+  <svg {...base(size, className)}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M9.6 9.3a2.5 2.5 0 014.8 1c0 1.7-2.4 2.2-2.4 3.7" />
+    <path d="M12 17.2v.1" />
+  </svg>
+);
+
 export const UserIcon = ({ size = 19, className }: IconProps) => (
   <svg {...base(size, className)}>
     <circle cx="12" cy="8" r="3.4" />

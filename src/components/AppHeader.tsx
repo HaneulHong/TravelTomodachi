@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useT } from '@/i18n';
-import { ChevronLeft, Menu, UserIcon } from './icons';
+import { ChevronLeft, HelpIcon, Menu, UserIcon } from './icons';
 
 interface Props {
   title: string;
@@ -18,9 +18,14 @@ interface Props {
    * '여행자'면 '여' 한 글자만 떠서 무슨 버튼인지 알 수 없었다.
    */
   onProfile?: () => void;
+  /**
+   * 왼쪽 사용법(?) 버튼. 뒤로가기가 없는 화면(홈 등)의 빈 왼쪽 칸에 둔다 — 쓰다가 막히면
+   * 바로 찾을 수 있게. 프로필 맨 아래 링크만으로는 아무도 못 찾는다.
+   */
+  onHelp?: () => void;
 }
 
-export function AppHeader({ title, back = false, onMenu, action, onProfile }: Props) {
+export function AppHeader({ title, back = false, onMenu, action, onProfile, onHelp }: Props) {
   const navigate = useNavigate();
   const t = useT();
 
@@ -42,6 +47,10 @@ export function AppHeader({ title, back = false, onMenu, action, onProfile }: Pr
       {back ? (
         <button className="header__btn" onClick={goBack} aria-label={t.common.back}>
           <ChevronLeft />
+        </button>
+      ) : onHelp ? (
+        <button className="header__btn" onClick={onHelp} aria-label={t.guide.title}>
+          <HelpIcon />
         </button>
       ) : (
         <span />

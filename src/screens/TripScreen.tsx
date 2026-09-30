@@ -17,6 +17,7 @@ import {
   ClockIcon,
   FerryIcon,
   GripIcon,
+  HelpIcon,
   LeaveIcon,
   ListIcon,
   PencilIcon,
@@ -667,6 +668,17 @@ export function TripScreen() {
         >
           <UsersIcon />
           {t.trip.menuMembers}
+        </button>
+        {/* 쓰다가 막혔을 때 — 홈 왼쪽 위 ?와 같은 곳 */}
+        <button
+          className="sheet__item"
+          onClick={() => {
+            setMenuOpen(false);
+            navigate('/guide');
+          }}
+        >
+          <HelpIcon size={19} />
+          {t.guide.title}
         </button>
 
         <div className="sheet__sep" />

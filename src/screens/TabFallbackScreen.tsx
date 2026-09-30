@@ -6,7 +6,7 @@
  * 누른 경우다. 여행이 없으면 탭을 막는 대신 왜 비었는지와 할 일을 보여준다.
  */
 
-import { Navigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { AppHeader } from '@/components/AppHeader';
 import { BottomTabs, tabTrip } from '@/components/BottomTabs';
 import { StartCard } from '@/components/StartCard';
@@ -16,6 +16,7 @@ import { useTripStore } from '@/store/tripStore';
 
 export function TabFallbackScreen({ kind }: { kind: 'schedule' | 'map' }) {
   const t = useT();
+  const navigate = useNavigate();
   const trips = useTripStore((s) => s.trips);
   const loading = useTripStore((s) => s.loading);
 
@@ -28,7 +29,10 @@ export function TabFallbackScreen({ kind }: { kind: 'schedule' | 'map' }) {
 
   return (
     <div className="app">
-      <AppHeader title={kind === 'map' ? t.map.title : t.trip.title} />
+      <AppHeader
+        title={kind === 'map' ? t.map.title : t.trip.title}
+        onHelp={() => navigate('/guide')}
+      />
       <main className="main">
         {loading ? (
           <p className="empty">{t.common.loading}</p>
