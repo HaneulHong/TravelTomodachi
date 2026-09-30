@@ -22,6 +22,7 @@ const loaders = {
   invite: () => import('./InviteScreen'),
   profile: () => import('./ProfileScreen'),
   privacy: () => import('./PrivacyScreen'),
+  guide: () => import('./GuideScreen'),
   tripCreate: () => import('./TripCreateScreen'),
   activity: () => import('./ActivityScreen'),
 };
@@ -36,6 +37,7 @@ export const IdeasScreen = lazy(() => loaders.ideas().then((m) => ({ default: m.
 export const InviteScreen = lazy(() => loaders.invite().then((m) => ({ default: m.InviteScreen })));
 export const ProfileScreen = lazy(() => loaders.profile().then((m) => ({ default: m.ProfileScreen })));
 export const PrivacyScreen = lazy(() => loaders.privacy().then((m) => ({ default: m.PrivacyScreen })));
+export const GuideScreen = lazy(() => loaders.guide().then((m) => ({ default: m.GuideScreen })));
 export const TripCreateScreen = lazy(() => loaders.tripCreate().then((m) => ({ default: m.TripCreateScreen })));
 export const ActivityScreen = lazy(() => loaders.activity().then((m) => ({ default: m.ActivityScreen })));
 

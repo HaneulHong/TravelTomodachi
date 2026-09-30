@@ -35,6 +35,8 @@ const SECTION: Record<keyof Messages, [ko: string, en: string, ja: string]> = {
   signIn: ['로그인 화면', 'Sign-in screen', 'ログイン画面'],
   unavailable: ['점검 화면', 'Maintenance screen', 'メンテナンス画面'],
   home: ['홈', 'Home', 'ホーム'],
+  guide: ['사용법', 'How to use', '使い方'],
+  start: ['여행이 없을 때 첫 카드', 'First card (no trips yet)', '旅行がないときのカード'],
   today: ['홈의 오늘 카드 (여행 중)', 'Today card', '今日のカード'],
   trip: ['일정 화면', 'Plan screen', '予定画面'],
   optimize: ['동선 최적화', 'Optimize route', 'ルート最適化'],
@@ -59,6 +61,12 @@ const SECTION: Record<keyof Messages, [ko: string, en: string, ja: string]> = {
   nickname: ['닉네임 오류', 'Nickname errors', 'ニックネームのエラー'],
   errors: ['오류 메시지', 'Error messages', 'エラーメッセージ'],
   serverErrors: ['서버 오류 메시지', 'Server errors', 'サーバーエラー'],
+  inApp: ['카카오톡 등 앱 안 브라우저 안내', 'In-app browser notice', 'アプリ内ブラウザの案内'],
+  activity: ['변경 기록', 'Change history', '変更履歴'],
+  shareDay: ['하루 일정 보내기', 'Send a day’s plan', '1日の予定を送る'],
+  directions: ['길찾기', 'Directions', '経路'],
+  placeSearch: ['장소 검색 (지도 화면)', 'Place search (map)', '場所検索(地図)'],
+  privacyPage: ['개인정보 처리방침 화면', 'Privacy policy screen', 'プライバシーポリシー画面'],
 };
 
 /** 개발 서버에서만 보이는 문구 — 검토할 필요가 없다 */
@@ -78,7 +86,14 @@ function sample(fn: (...args: unknown[]) => unknown): string {
 
 function text(v: unknown): string | null {
   if (typeof v === 'string') return v;
-  if (typeof v === 'function') return sample(v as (...args: unknown[]) => unknown);
+  if (typeof v === 'function') {
+    // 경우에 따라 문장이 갈리는 문구(변경 기록 등)는 자리표시로 부를 수 없다 — 화면에서 본다
+    try {
+      return sample(v as (...args: unknown[]) => unknown);
+    } catch {
+      return '(경우에 따라 달라지는 문장 — 앱 화면에서 확인)';
+    }
+  }
   return null;
 }
 

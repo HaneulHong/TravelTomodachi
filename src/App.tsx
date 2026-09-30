@@ -20,6 +20,7 @@ import {
   ActivityScreen,
   ChecklistScreen,
   ExpensesScreen,
+  GuideScreen,
   IdeasScreen,
   InviteScreen,
   ItemDetailScreen,
@@ -220,13 +221,14 @@ export function App() {
   if (!account) {
     /*
      * 처리방침은 로그인 전에도 읽을 수 있어야 한다 — 가입하기 전에 읽는 문서다.
+     * 사용법도 — 초대받은 친구가 로그인하기 전에 무슨 앱인지 본다.
      * 로그인 전 화면은 라우터 밖이라, 이 경우만 라우터로 감싸 띄운다.
      */
-    if (hash.startsWith('#/privacy')) {
+    if (hash.startsWith('#/privacy') || hash.startsWith('#/guide')) {
       return (
         <HashRouter>
           <Suspense fallback={<ScreenLoading />}>
-            <PrivacyScreen />
+            {hash.startsWith('#/guide') ? <GuideScreen /> : <PrivacyScreen />}
           </Suspense>
         </HashRouter>
       );
@@ -274,6 +276,7 @@ export function App() {
         <Route path="/trip/:tripId/activity" element={<ActivityScreen />} />
         <Route path="/profile" element={<ProfileScreen />} />
         <Route path="/privacy" element={<PrivacyScreen />} />
+        <Route path="/guide" element={<GuideScreen />} />
         <Route path="/invite" element={<InviteRoute />} />
         <Route path="/invite/:code" element={<InviteRoute />} />
         <Route path="*" element={<Navigate to="/" replace />} />

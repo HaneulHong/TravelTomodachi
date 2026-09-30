@@ -157,6 +157,12 @@ export function ProfileScreen() {
           <LanguageSetting />
 
           <p className="signin__privacy">
+            <Link to="/guide" className="signin__link">
+              {t.guide.title}
+            </Link>
+          </p>
+
+          <p className="signin__privacy">
             {t.profile.privacy}{' '}
             <Link to="/privacy" className="signin__link">
               {t.profile.privacyLink}

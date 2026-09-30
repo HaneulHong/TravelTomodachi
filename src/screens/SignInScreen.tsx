@@ -61,6 +61,11 @@ export function SignInScreen({ methods, invited = false }: Props) {
 
         {error && <p className="signin__error">{error}</p>}
 
+        {/* 로그인 전이라 라우터 밖이다 — 주소만 바꾸면 App이 사용법을 띄운다 */}
+        <a href="#/guide" className="signin__guide">
+          {t.guide.link}
+        </a>
+
         {/*
           이게 진짜 로그인이 아니라는 걸 숨기지 않는다. 진짜처럼 보이면
           친구를 초대했는데 아무 일도 안 일어나는 이유를 못 찾게 된다.

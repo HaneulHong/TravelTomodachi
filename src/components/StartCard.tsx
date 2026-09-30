@@ -45,6 +45,10 @@ export function StartCard({ title, body, steps = false }: Props) {
           {t.home.joinByCode}
         </button>
       </div>
+
+      <button className="start-card__guide" onClick={() => navigate('/guide')}>
+        {t.guide.link}
+      </button>
     </div>
   );
 }
