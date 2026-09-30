@@ -86,6 +86,12 @@ export const en: Messages = {
       'No backend is connected yet, so the session stays **in this browser only**. Invites and shared editing work once Supabase is connected.',
     privacy: "Other people only ever see your nickname. The email you sign in with stays hidden.",
     privacyLink: "Privacy policy",
+    features: [
+      { title: 'Edit together', body: 'Friends’ edits show up right away, no refresh. You can see who changed what, and when.' },
+      { title: 'Maps & travel times', body: 'Add places and get walking and transit times to the next plan. Kakao Map in Korea, Google Maps elsewhere.' },
+      { title: 'Shared expenses', body: 'Log who paid and it works out who owes whom. Mixed currencies are fine.' },
+    ],
+    shotAlt: 'A day’s plan, with travel times between plans',
   },
 
   inApp: {

@@ -3774,6 +3774,86 @@ button.activity__row:active {
   text-align: center;
 }
 
+/* .signin의 간격(22px)이 이미 있어 버튼에 붙여 둔다 — 버튼에 딸린 안내로 읽히게 */
 .signin__guide {
-  margin: 0 auto;
+  margin: -10px auto 0;
+}
+
+/* ── 표지 (로그인 화면) ─────────────────────────────────────────── */
+
+/*
+ * 가운데 정렬(.signin)이면 내용이 길어질 때 위가 잘려 보이지 않는다. 위에서부터 쌓고,
+ * 버튼까지가 첫 화면에 들어오게 위 여백만 넉넉히 둔다. 기능 카드는 그 아래로 살짝 보여
+ * 내려 보게 한다.
+ */
+.signin--cover {
+  justify-content: flex-start;
+  padding-top: max(48px, 9dvh);
+}
+
+.signin--cover .signin__mark {
+  font-size: 52px;
+}
+
+.signin--cover .signin__title {
+  font-size: 26px;
+}
+
+.signin--cover .signin__sub {
+  font-size: 15px;
+}
+
+.cover__features {
+  display: grid;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.cover-feature {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px;
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+}
+
+.cover-feature__icon {
+  flex: none;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: var(--accent-soft);
+  font-size: 20px;
+  line-height: 1;
+}
+
+.cover-feature__title {
+  margin: 1px 0 3px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.cover-feature__body {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--text-2);
+}
+
+/* 사용법의 그림과 같은 모양 — 폰을 손에 든 크기 */
+.cover__shot {
+  display: block;
+  width: 100%;
+  max-width: 230px;
+  height: auto;
+  margin: 4px auto 0;
+  border-radius: 14px;
+  border: 1px solid var(--border-strong);
+  box-shadow: var(--shadow);
+  background: var(--surface-2);
 }

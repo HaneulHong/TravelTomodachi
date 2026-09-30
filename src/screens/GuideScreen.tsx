@@ -6,23 +6,10 @@
  * docs/GUIDE.md. 스크린샷은 언어마다 따로(src/assets/guide — scripts/guide-shots.mjs로 만든다).
  */
 
+import { guideShot } from '@/assets/guide';
 import { AppHeader } from '@/components/AppHeader';
 import { useLocale, useT } from '@/i18n';
 import { useAuthStore } from '@/store/authStore';
-
-/*
- * 빌드가 파일마다 해시 붙은 주소를 준다 — /assets/ 아래라 서비스 워커가 본 것을 저장해
- * 오프라인에서도 한 번 본 사용법은 그림까지 뜬다(public/sw.js).
- */
-const SHOTS = import.meta.glob<string>('../assets/guide/*/*.jpg', {
-  eager: true,
-  query: '?url',
-  import: 'default',
-});
-
-function shotUrl(locale: string, n: number): string | undefined {
-  return SHOTS[`../assets/guide/${locale}/${n}.jpg`];
-}
 
 export function GuideScreen() {
   const t = useT();
@@ -39,7 +26,7 @@ export function GuideScreen() {
 
           <ol className="guide__steps">
             {t.guide.steps.map((step, i) => {
-              const src = shotUrl(locale, i + 1);
+              const src = guideShot(locale, i + 1);
               return (
                 <li key={step.title} className="guide-step">
                   <h2 className="guide-step__title">
