@@ -599,7 +599,8 @@ export function TripScreen() {
           </button>
         )}
         {/* 옮길 수 있는 방문지가 둘 이상일 때만 의미가 있다 (첫 일정은 고정) */}
-        {items.filter((i, idx) => idx > 0 && i.kind === 'place' && i.coord).length > 1 && (
+        {/* 숙소에서 출발하면 첫 일정도 옮길 수 있다 (domain/optimize.ts) */}
+        {items.filter((i, idx) => (idx > 0 || lodgingStart) && i.kind === 'place' && i.coord).length > 1 && (
           <button
             className="sheet__item"
             onClick={() => {
@@ -752,6 +753,8 @@ export function TripScreen() {
       {optimizeOpen && (
         <OptimizeSheet
           items={items}
+          start={lodgingStart?.coord}
+          end={lodgingEnd?.coord}
           onClose={() => setOptimizeOpen(false)}
           onApply={(order) => {
             setDayOrder(trip.id, activeDate, order);
