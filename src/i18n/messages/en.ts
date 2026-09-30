@@ -279,6 +279,8 @@ export const en: Messages = {
     saving: (pct) => `${pct}% shorter (straight-line)`,
     noGain: 'This order is already the shortest.',
     note: "The first plan, trains/flights and plans without a location stay put. Times you've set won't change.",
+    noteLodging:
+      'Calculated from and to where you stay. Trains, flights and plans without a location stay put; times you wrote are kept.',
     timesOff: "⚠ Some plans will be out of order with the times you've set. Adjust the times after applying.",
     apply: 'Use this order',
     close: 'Close',
@@ -584,6 +586,8 @@ export const en: Messages = {
   },
 
   profile: {
+    contact: 'Questions & bug reports',
+    contactSubject: '[TravelTomodachi] Feedback',
     signOutPendingTitle: (n: number) => `${n} change${n === 1 ? '' : 's'} not sent yet`,
     signOutPendingBody: "If you sign out now, changes you made offline won't reach the server and will be lost. Connect to the internet first, then sign out.",
     title: 'Profile',

@@ -9,6 +9,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AppHeader } from '@/components/AppHeader';
 import { ConfirmSheet } from '@/components/ConfirmSheet';
+import { CONTACT_EMAIL } from '@/legal/privacyPolicy';
 import { useTripStore } from '@/store/tripStore';
 import { initialOf, NICKNAME_MAX, nicknameMessage, nicknameProblem } from '@/auth';
 import { versionLabel } from '@/config';
@@ -167,6 +168,13 @@ export function ProfileScreen() {
             <Link to="/privacy" className="signin__link">
               {t.profile.privacyLink}
             </Link>
+          </p>
+          {/* 문의·문제 제보는 메일로 — 누르면 메일 앱이 받는 사람이 채워진 채로 열린다 */}
+          <p className="signin__privacy">
+            {t.profile.contact}{' '}
+            <a className="signin__link" href={`mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(t.profile.contactSubject)}`}>
+              {CONTACT_EMAIL}
+            </a>
           </p>
 
           {/*

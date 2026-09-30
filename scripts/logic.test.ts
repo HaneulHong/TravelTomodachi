@@ -503,6 +503,16 @@ console.log('\n── 동선 최적화 ──');
 
   eq('이미 최단이면 그대로', optimizeDay([at('a', 0), at('b', 0.01), at('c', 0.02)]).order.join(','), 'a,b,c');
   eq('첫 일정은 고정', optimizeDay([at('far', 0.05), at('a', 0), at('b', 0.01)]).order[0], 'far');
+  // 전날 숙소에서 출발하면 첫 일정도 옮긴다 — 숙소 옆부터
+  const hotel = at('h', 0).coord!;
+  eq('숙소 출발: 첫 일정도 옮김',
+    optimizeDay([at('far', 0.05), at('a', 0.01), at('b', 0.02)], { start: hotel }).order.join(','), 'a,b,far');
+  // 이 날 숙소가 멀리 있으면 그쪽으로 향하게 — 마지막을 숙소 가까운 곳으로
+  eq('숙소 도착: 숙소 쪽으로 끝냄',
+    optimizeDay([at('s', 0), at('near-hotel', 0.05), at('mid', 0.02)], { end: at('h2', 0.06).coord }).order.join(','), 's,mid,near-hotel');
+  // 거리에 숙소 → 첫 일정 구간이 들어간다(숙소 옆부터 가면 줄어든다)
+  const fromHotel = optimizeDay([at('far', 0.05), at('a', 0.01)], { start: hotel });
+  ok('숙소에서 출발하는 거리까지 잰다', fromHotel.before > fromHotel.after);
 
   // 기차 구간은 제자리, 그 앞뒤 묶음끼리만 정렬
   const withTrain = [

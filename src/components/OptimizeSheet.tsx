@@ -10,11 +10,14 @@ import { MenuSheet } from '@/components/MenuSheet';
 import { formatDistance } from '@/domain/geo';
 import { optimizeDay } from '@/domain/optimize';
 import { timeConflicts } from '@/domain/order';
-import type { Item } from '@/domain/types';
+import type { Coord, Item } from '@/domain/types';
 import { useT } from '@/i18n';
 
 interface Props {
   items: Item[];
+  /** 전날 숙소(출발) · 이 날 숙소(도착) — 있으면 그 사이 경로로 잰다 */
+  start?: Coord;
+  end?: Coord;
   onApply(order: string[]): void;
   onClose(): void;
 }
@@ -22,9 +25,10 @@ interface Props {
 /** 이 정도는 줄어야 제안할 가치가 있다 — 몇십 미터 차이로 순서를 뒤섞지 않는다 */
 const MIN_GAIN = 0.05;
 
-export function OptimizeSheet({ items, onApply, onClose }: Props) {
+export function OptimizeSheet({ items, start, end, onApply, onClose }: Props) {
   const t = useT();
-  const result = useMemo(() => optimizeDay(items), [items]);
+  const result = useMemo(() => optimizeDay(items, { start, end }), [items, start, end]);
+  const usesLodging = Boolean(start || end);
   const gain = result.before > 0 ? (result.before - result.after) / result.before : 0;
   const worth = gain >= MIN_GAIN;
   const byId = new Map(items.map((i) => [i.id, i]));
@@ -60,7 +64,7 @@ export function OptimizeSheet({ items, onApply, onClose }: Props) {
                 })}
               </ol>
               {breaksTimes && <p className="form__hint form__hint--warn">{t.optimize.timesOff}</p>}
-              <p className="form__hint">{t.optimize.note}</p>
+              <p className="form__hint">{usesLodging ? t.optimize.noteLodging : t.optimize.note}</p>
             </div>
             <div className="form__actions">
               <button className="btn btn--primary" onClick={() => onApply(result.order)}>
@@ -75,7 +79,7 @@ export function OptimizeSheet({ items, onApply, onClose }: Props) {
           <>
             <div className="confirm__body">
               <p>{t.optimize.noGain}</p>
-              <p className="form__hint">{t.optimize.note}</p>
+              <p className="form__hint">{usesLodging ? t.optimize.noteLodging : t.optimize.note}</p>
             </div>
             <div className="form__actions">
               <button className="btn" onClick={onClose}>

@@ -5,8 +5,12 @@
  * 요청이 수십 개가 되어 무료 서버의 제한에 걸린다. 직선거리는 강·바다를 돌아가는
  * 길에서 틀릴 수 있어서 화면은 "제안"으로 보여 주고 사람이 적용한다.
  *
+ * ── 숙소 ───────────────────────────────────────────────────────────
+ * 숙소를 정해 두면(날짜 설정) 전날 숙소에서 출발해 이 날 숙소로 들어가는 경로로 잰다.
+ * 그때는 하루가 숙소에서 시작하니 첫 일정도 옮길 수 있다.
+ *
  * ── 옮기지 않는 일정(고정점) ─────────────────────────────────────
- *   그 날 첫 일정 — 보통 숙소·공항처럼 하루가 시작되는 곳
+ *   그 날 첫 일정 — 출발 숙소가 없을 때. 보통 공항·역처럼 하루가 시작되는 곳
  *   구간 일정(항공·기차·버스·배) — 시각에 묶여 있다
  *   좌표가 없는 일정 — 어디인지 모르니 거리를 잴 수 없다
  * 고정점 사이의 방문 일정끼리만 순서를 바꾼다. 앞 고정점에서 출발해 다음 고정점에
@@ -119,18 +123,28 @@ function bestOrder(start: Coord | undefined, pts: readonly Coord[], end: Coord |
 }
 
 /** 전체 경로 길이 — 구간 일정은 출발지까지 와서 도착지로 건너간다(그 사이는 세지 않는다) */
-function totalLength(points: readonly RoutePoint[]): number {
+function totalLength(points: readonly RoutePoint[], start?: Coord, end?: Coord): number {
   let sum = 0;
-  let prev: Coord | undefined;
+  let prev: Coord | undefined = start;
   for (const p of points) {
     if (p.coord && prev) sum += haversineMeters(prev, p.coord);
     prev = p.toCoord ?? p.coord ?? prev;
   }
+  if (prev && end) sum += haversineMeters(prev, end);
   return sum;
 }
 
-export function optimizeDay(points: readonly RoutePoint[]): OptimizeResult {
-  const movable = (p: RoutePoint, i: number) => i > 0 && p.kind === 'place' && Boolean(p.coord);
+export interface OptimizeEnds {
+  /** 전날 묵은 숙소 — 하루의 출발점. 있으면 첫 일정도 옮긴다 */
+  start?: Coord;
+  /** 이 날 묵는 숙소 — 하루의 끝 */
+  end?: Coord;
+}
+
+export function optimizeDay(points: readonly RoutePoint[], ends: OptimizeEnds = {}): OptimizeResult {
+  const { start: dayStart, end: dayEnd } = ends;
+  const movable = (p: RoutePoint, i: number) =>
+    (i > 0 || Boolean(dayStart)) && p.kind === 'place' && Boolean(p.coord);
   const out: RoutePoint[] = [];
 
   let i = 0;
@@ -144,11 +158,16 @@ export function optimizeDay(points: readonly RoutePoint[]): OptimizeResult {
     const run: RoutePoint[] = [];
     while (i < points.length && movable(points[i]!, i)) run.push(points[i++]!);
     const before = out[out.length - 1];
-    const start = before?.toCoord ?? before?.coord;
-    const end = points[i]?.coord;
+    const start = before ? (before.toCoord ?? before.coord) : dayStart;
+    // 뒤에 고정점이 없으면(하루의 마지막 묶음) 숙소로 들어간다
+    const end = i < points.length ? points[i]?.coord : dayEnd;
     const order = bestOrder(start, run.map((p) => p.coord!), end);
     out.push(...order.map((k) => run[k]!));
   }
 
-  return { order: out.map((p) => p.id), before: totalLength(points), after: totalLength(out) };
+  return {
+    order: out.map((p) => p.id),
+    before: totalLength(points, dayStart, dayEnd),
+    after: totalLength(out, dayStart, dayEnd),
+  };
 }
