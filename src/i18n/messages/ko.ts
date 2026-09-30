@@ -124,8 +124,10 @@ export const ko = {
 
   home: {
     title: '홈',
-    list: '일정 리스트',
-    empty: '아직 여행이 없습니다. 아래에서 첫 여행을 만들어 보세요.',
+    upcoming: '다가오는 여행',
+    pastTrips: (n: number) => `지난 여행 ${n}개`,
+    /** 맨 위 큰 카드 — 일정 개수 · 멤버 수 */
+    stats: (items: number, members: number) => `일정 ${items}개 · ${members}명`,
     dayCount: (n: number) => `${n}일`,
     bothRegions: '국내 + 해외',
     dday: (n: number) => `D-${n}`,
@@ -134,6 +136,18 @@ export const ko = {
     past: '지난 여행',
     newTrip: '새 여행 만들기',
     joinByCode: '초대 코드로 참가',
+  },
+
+  /** 여행이 하나도 없을 때 — 홈의 첫 카드, 일정·지도 탭의 빈 화면 */
+  start: {
+    title: '친구와 같이 짜는 여행 일정',
+    body: '여행을 만들고 친구를 초대하면 일정·지도·가계부를 함께 채울 수 있어요.',
+    step1: '여행 만들기 — 이름과 날짜만',
+    step2: '친구 초대 — 링크나 코드로',
+    step3: '같이 채우기 — 고치면 바로 보여요',
+    noTrip: '아직 여행이 없어요',
+    scheduleBody: '일정은 여행을 만들면 날짜별로 채울 수 있어요.',
+    mapBody: '지도에는 여행 일정의 장소가 날짜별로 표시돼요.',
   },
 
   today: {

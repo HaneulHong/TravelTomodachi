@@ -103,3 +103,38 @@ export function minutesUntil(from: string, to: string): number {
 export function defaultDateFor(trip: Trip, now: Date = new Date()): string {
   return findToday([trip], now)?.day.date ?? trip.startDate;
 }
+
+/** 기기 기준 오늘 'YYYY-MM-DD' — 여행 목록을 다가오는/지난 여행으로 나눌 때 쓴다 */
+function deviceToday(now: Date): string {
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${now.getFullYear()}-${p(now.getMonth() + 1)}-${p(now.getDate())}`;
+}
+
+/**
+ * 홈 목록을 나눈다. 다가오는 여행(여행 중 포함)은 먼저 떠나는 순, 지난 여행은 최근에 끝난 순.
+ * 끝나는 날까지는 다가오는 쪽이다 — 마지막 날 저녁에 "지난 여행"으로 접히면 안 된다.
+ */
+export function splitTrips(
+  trips: readonly Trip[],
+  now: Date = new Date(),
+): { upcoming: Trip[]; past: Trip[] } {
+  const today = deviceToday(now);
+  const upcoming = trips
+    .filter((t) => t.endDate >= today)
+    .sort((a, b) => a.startDate.localeCompare(b.startDate));
+  const past = trips
+    .filter((t) => t.endDate < today)
+    .sort((a, b) => b.endDate.localeCompare(a.endDate));
+  return { upcoming, past };
+}
+
+/**
+ * 홈에서 일정·지도 탭을 눌렀을 때 열 여행.
+ * 여행 중(현지 날짜) → 가장 먼저 떠나는 다가오는 여행 → 가장 최근에 끝난 여행. 없으면 null.
+ */
+export function focusTrip(trips: readonly Trip[], now: Date = new Date()): Trip | null {
+  const ongoing = findToday(trips, now);
+  if (ongoing) return ongoing.trip;
+  const { upcoming, past } = splitTrips(trips, now);
+  return upcoming[0] ?? past[0] ?? null;
+}

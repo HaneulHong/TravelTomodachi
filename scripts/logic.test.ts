@@ -33,7 +33,7 @@ import { normalizeBaseUrl } from '../src/platform/baseUrl';
 import { rankPlaces } from '../src/domain/ideas';
 import { buildIcs } from '../src/domain/ics';
 import { optimizeDay, type RoutePoint } from '../src/domain/optimize';
-import { findToday, localNow, minutesUntil, nextItem } from '../src/domain/today';
+import { findToday, focusTrip, localNow, minutesUntil, nextItem, splitTrips } from '../src/domain/today';
 import { balances, convert, currencyDigits, settle, transfers } from '../src/domain/settle';
 import {
   dropIndex,
@@ -976,6 +976,32 @@ console.log('\n── 시각 옆 시간대 표시 ──');
   eq('서울 일정을 서울 기기로 → 같음(표시 안 함)', sameOffsetAsDevice('Asia/Seoul', '2026-10-01', 'Asia/Seoul'), true);
   eq('도쿄도 같은 시차(+9)', sameOffsetAsDevice('Asia/Tokyo', '2026-10-01', 'Asia/Seoul'), true);
   eq('방콕 일정을 서울 기기로 → 다름(표시)', sameOffsetAsDevice('Asia/Bangkok', '2026-10-01', 'Asia/Seoul'), false);
+}
+
+console.log('\n── 홈 목록 · 탭이 열 여행 ──');
+{
+  const tr = (id: string, startDate: string, endDate: string, timezone = 'Asia/Seoul') =>
+    ({
+      id, name: id, startDate, endDate, ownerId: 'a', inviteCode: 'X', coverEmoji: '🧳', members: [],
+      days: [{ date: startDate, timezone, cityLabel: '' }, { date: endDate, timezone, cityLabel: '' }],
+    }) as Trip;
+  // 기기 기준 2026-10-10 정오
+  const now = new Date(2026, 9, 10, 12, 0);
+  const later = tr('later', '2026-12-01', '2026-12-03');
+  const soon = tr('soon', '2026-10-20', '2026-10-22');
+  const old1 = tr('old1', '2026-05-01', '2026-05-03');
+  const old2 = tr('old2', '2026-08-01', '2026-08-03');
+  const lastDay = tr('lastDay', '2026-10-08', '2026-10-10');
+  const split = splitTrips([later, old1, soon, old2], now);
+  eq('다가오는 여행은 먼저 떠나는 순', split.upcoming.map((t) => t.id).join(','), 'soon,later');
+  eq('지난 여행은 최근에 끝난 순', split.past.map((t) => t.id).join(','), 'old2,old1');
+  eq('마지막 날은 아직 다가오는 쪽', splitTrips([lastDay], now).upcoming.length, 1);
+  eq('여행이 없으면 없음', focusTrip([], now), null);
+  eq('다가오는 여행 중 가장 가까운 것', focusTrip([later, soon, old2], now)?.id, 'soon');
+  eq('다 지났으면 가장 최근 것', focusTrip([old1, old2], now)?.id, 'old2');
+  // 여행 중(현지 날짜)이면 더 먼저 떠난 다가오는 여행보다 앞선다
+  const ongoing = tr('ongoing', '2026-10-09', '2026-10-12');
+  eq('여행 중이 먼저', focusTrip([soon, ongoing], now)?.id, 'ongoing');
 }
 
 console.log(`\n${failed === 0 ? '✓ 전부 통과' : '✗ 실패 있음'} — ${passed} passed, ${failed} failed\n`);

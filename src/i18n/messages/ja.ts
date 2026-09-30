@@ -111,8 +111,9 @@ export const ja: Messages = {
 
   home: {
     title: 'ホーム',
-    list: '旅行リスト',
-    empty: 'まだ旅行がありません。下から最初の旅行を作りましょう。',
+    upcoming: 'これからの旅行',
+    pastTrips: (n) => `過去の旅行 ${n}件`,
+    stats: (items, members) => `予定 ${items}件 · ${members}人`,
     dayCount: (n) => `${n}日間`,
     bothRegions: '韓国 + 海外',
     dday: (n) => `あと${n}日`,
@@ -121,6 +122,17 @@ export const ja: Messages = {
     past: '過去の旅行',
     newTrip: '新しい旅行を作る',
     joinByCode: '招待コードで参加',
+  },
+
+  start: {
+    title: '友だちと一緒に作る旅行プラン',
+    body: '旅行を作って友だちを招待すると、予定・地図・家計簿を一緒に書き込めます。',
+    step1: '旅行を作る — 名前と日付だけ',
+    step2: '友だちを招待 — リンクかコードで',
+    step3: '一緒に書き込む — 変更はすぐ反映',
+    noTrip: 'まだ旅行がありません',
+    scheduleBody: '旅行を作ると、日ごとに予定を書き込めます。',
+    mapBody: '地図には旅行の予定の場所が日ごとに表示されます。',
   },
 
   today: {

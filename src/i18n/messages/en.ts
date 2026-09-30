@@ -111,8 +111,10 @@ export const en: Messages = {
 
   home: {
     title: 'Home',
-    list: 'My trips',
-    empty: 'No trips yet. Create your first one below.',
+    upcoming: 'Upcoming',
+    pastTrips: (n) => (n === 1 ? '1 past trip' : `${n} past trips`),
+    stats: (items, members) =>
+      `${items === 1 ? '1 plan' : `${items} plans`} · ${members === 1 ? '1 person' : `${members} people`}`,
     dayCount: (n) => (n === 1 ? '1 day' : `${n} days`),
     bothRegions: 'Korea + abroad',
     dday: (n) => `D-${n}`,
@@ -121,6 +123,17 @@ export const en: Messages = {
     past: 'Past trip',
     newTrip: 'New trip',
     joinByCode: 'Join with invite code',
+  },
+
+  start: {
+    title: 'Plan trips together with friends',
+    body: 'Create a trip, invite friends, and fill in the plan, map and expenses together.',
+    step1: 'Create a trip — just a name and dates',
+    step2: 'Invite friends — by link or code',
+    step3: 'Plan together — edits show up instantly',
+    noTrip: 'No trips yet',
+    scheduleBody: 'Once you create a trip, you can plan each day here.',
+    mapBody: 'The map shows the places in your plan, day by day.',
   },
 
   today: {

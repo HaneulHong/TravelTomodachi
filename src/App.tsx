@@ -36,6 +36,7 @@ import { NicknameSetupScreen } from '@/screens/NicknameSetupScreen';
 import { OfflineBar } from '@/components/OfflineBar';
 import { OpenInBrowserScreen } from '@/screens/OpenInBrowserScreen';
 import { SignInScreen } from '@/screens/SignInScreen';
+import { TabFallbackScreen } from '@/screens/TabFallbackScreen';
 import { UnavailableScreen } from '@/screens/UnavailableScreen';
 import { hasBackend } from '@/supabase/client';
 
@@ -255,6 +256,9 @@ export function App() {
       <Suspense fallback={<ScreenLoading />}>
       <Routes>
         <Route path="/" element={<HomeScreen />} />
+        {/* 여행 밖에서 누른 일정·지도 탭 — 볼 여행으로 넘기거나, 없으면 빈 화면 */}
+        <Route path="/schedule" element={<TabFallbackScreen kind="schedule" />} />
+        <Route path="/map" element={<TabFallbackScreen kind="map" />} />
         {/* 'new'가 :tripId로 잡히지 않도록 먼저 선언한다 */}
         <Route path="/trip/new" element={<TripCreateScreen />} />
         <Route path="/trip/:tripId" element={<TripScreen />} />
