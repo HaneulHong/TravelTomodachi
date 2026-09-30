@@ -1,16 +1,24 @@
 /**
- * 로그인.
+ * 로그인 — 처음 온 사람에게는 표지.
  *
  * 친구를 초대해 같이 고치려면 "누가 고쳤는지"가 있어야 하고, 그러려면 계정이
  * 필요하다. 그 이상은 받지 않는다 — 닉네임 하나로 쓸 수 있게 한다.
+ *
+ * 링크만 받고 온 사람은 이 앱을 처음 본다. 로그인 버튼만 있으면 무엇을 하는 앱인지 모른 채
+ * 계정을 내놓으라는 셈이다. 버튼은 첫 화면에 그대로 두고(초대받은 사람은 바로 누른다),
+ * 그 아래에 할 수 있는 일 세 가지와 실제 화면 하나를 둔다. 더 자세한 건 사용법(#/guide).
  */
 
+import { guideShot } from '@/assets/guide';
 import { hasBackend, type SignInMethod } from '@/auth';
 import { AppleIcon, GoogleIcon } from '@/components/icons';
 import { versionLabel } from '@/config';
 import { Rich } from '@/i18n/Rich';
-import { useT } from '@/i18n';
+import { useLocale, useT } from '@/i18n';
 import { useAuthStore } from '@/store/authStore';
+
+/** 표지의 세 가지 — 문구는 i18n signIn.features와 같은 순서 */
+const FEATURE_ICONS = ['👥', '🗺️', '💸'];
 
 function MethodIcon({ method }: { method: SignInMethod }) {
   if (method === 'google') return <GoogleIcon />;
@@ -28,10 +36,13 @@ export function SignInScreen({ methods, invited = false }: Props) {
   const signIn = useAuthStore((s) => s.signIn);
   const error = useAuthStore((s) => s.error);
   const t = useT();
+  const locale = useLocale();
+  // 사용법 4단계(하루 일정) — 이동 시간이 끼어 있어 이 앱이 무엇인지 한눈에 보인다
+  const shot = guideShot(locale, 4);
 
   return (
     <div className="app">
-      <main className="main main--no-tabs signin">
+      <main className="main main--no-tabs signin signin--cover">
         <div className="signin__brand">
           <span className="signin__mark">🧳</span>
           <h1 className="signin__title">TravelTomodachi</h1>
@@ -60,6 +71,37 @@ export function SignInScreen({ methods, invited = false }: Props) {
         </div>
 
         {error && <p className="signin__error">{error}</p>}
+
+        {/* 로그인 전이라 라우터 밖이다 — 주소만 바꾸면 App이 사용법을 띄운다 */}
+        <a href="#/guide" className="signin__guide">
+          {t.guide.link}
+        </a>
+
+        <section className="cover__features" aria-label={t.signIn.tagline}>
+          {t.signIn.features.map((f, i) => (
+            <div key={f.title} className="cover-feature">
+              <span className="cover-feature__icon" aria-hidden>
+                {FEATURE_ICONS[i]}
+              </span>
+              <div>
+                <h2 className="cover-feature__title">{f.title}</h2>
+                <p className="cover-feature__body">{f.body}</p>
+              </div>
+            </div>
+          ))}
+        </section>
+
+        {shot && (
+          <img
+            className="cover__shot"
+            src={shot}
+            alt={t.signIn.shotAlt}
+            width={360}
+            height={740}
+            loading="lazy"
+            decoding="async"
+          />
+        )}
 
         {/*
           이게 진짜 로그인이 아니라는 걸 숨기지 않는다. 진짜처럼 보이면

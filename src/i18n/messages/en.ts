@@ -86,6 +86,12 @@ export const en: Messages = {
       'No backend is connected yet, so the session stays **in this browser only**. Invites and shared editing work once Supabase is connected.',
     privacy: "Other people only ever see your nickname. The email you sign in with stays hidden.",
     privacyLink: "Privacy policy",
+    features: [
+      { title: 'Edit together', body: 'Friends’ edits show up right away, no refresh. You can see who changed what, and when.' },
+      { title: 'Maps & travel times', body: 'Add places and get walking and transit times to the next plan. Kakao Map in Korea, Google Maps elsewhere.' },
+      { title: 'Shared expenses', body: 'Log who paid and it works out who owes whom. Mixed currencies are fine.' },
+    ],
+    shotAlt: 'A day’s plan, with travel times between plans',
   },
 
   inApp: {
@@ -111,8 +117,10 @@ export const en: Messages = {
 
   home: {
     title: 'Home',
-    list: 'My trips',
-    empty: 'No trips yet. Create your first one below.',
+    upcoming: 'Upcoming',
+    pastTrips: (n) => (n === 1 ? '1 past trip' : `${n} past trips`),
+    stats: (items, members) =>
+      `${items === 1 ? '1 plan' : `${items} plans`} · ${members === 1 ? '1 person' : `${members} people`}`,
     dayCount: (n) => (n === 1 ? '1 day' : `${n} days`),
     bothRegions: 'Korea + abroad',
     dday: (n) => `D-${n}`,
@@ -121,6 +129,74 @@ export const en: Messages = {
     past: 'Past trip',
     newTrip: 'New trip',
     joinByCode: 'Join with invite code',
+  },
+
+  guide: {
+    title: 'How to use',
+    link: 'New here? See how it works',
+    intro: 'Plan trips together with friends. Create a trip, invite friends, and every edit shows up on everyone’s screen right away.',
+    shotAlt: (title) => `${title} screen`,
+    steps: [
+      {
+        title: 'Create a trip',
+        body: 'On Home, tap “New trip” and pick a name, dates and cover. Going abroad? Set the default time zone to that city so plans show in local time. For days in another city, tap the city name on the plan screen.',
+      },
+      {
+        title: 'Invite friends',
+        body: 'On the plan screen, open the menu (≡) → “Members · invite code” and send the invite link over a messenger. When a friend opens it and signs in, they join the trip right away. No link? They can enter the code under “Join with invite code” on Home.',
+      },
+      {
+        title: 'Add plans',
+        body: 'Pick a day and tap “+ Add to plan”. Search for a place and the results appear as numbered pins on the map, so you can pick the right branch. For flights, trains and buses, change the type and add departure and arrival.',
+      },
+      {
+        title: 'See the day',
+        body: 'Walking, transit and driving times between plans are calculated for you. Tap a leg to change how you get there or set the time yourself. Swipe sideways to move to another day.',
+      },
+      {
+        title: 'Map',
+        body: 'The “Map” tab shows the day’s route. Kakao Map in Korea, Google Maps elsewhere. “Directions” on a plan opens your map app with the destination set.',
+      },
+      {
+        title: 'Do it together',
+        body: 'The menu (≡) has Expenses (log who paid, and it settles up), Ideas (vote on places), Checklist, Change history (who changed what) and Send this day’s plan.',
+      },
+      {
+        title: 'During the trip',
+        body: 'While you’re traveling, a Today card sits at the top of Home: what’s on now, time until the next plan, weather and directions to the next place.',
+      },
+    ],
+    tipsTitle: 'Good to know',
+    tips: [
+      {
+        q: 'Can I use it like an app?',
+        a: 'Add it to your home screen. iPhone: Safari’s Share button → “Add to Home Screen”. Android: Chrome menu (⋮) → “Add to Home screen” (or “Install app”).',
+      },
+      {
+        q: 'A link from a messenger opened in another browser',
+        a: 'That’s expected. Google blocks sign-in inside in-app browsers, so we move you to Safari or Chrome.',
+      },
+      {
+        q: 'What if I’m offline?',
+        a: 'Trips you’ve opened before still show. Edits made offline are kept on your device and sent once you’re back online.',
+      },
+      {
+        q: 'Does it cost anything?',
+        a: 'It’s free, with no ads. Others only see your nickname.',
+      },
+    ],
+    start: 'Get started',
+  },
+
+  start: {
+    title: 'Plan trips together with friends',
+    body: 'Create a trip, invite friends, and fill in the plan, map and expenses together.',
+    step1: 'Create a trip — just a name and dates',
+    step2: 'Invite friends — by link or code',
+    step3: 'Plan together — edits show up instantly',
+    noTrip: 'No trips yet',
+    scheduleBody: 'Once you create a trip, you can plan each day here.',
+    mapBody: 'The map shows the places in your plan, day by day.',
   },
 
   today: {

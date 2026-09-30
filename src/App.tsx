@@ -20,6 +20,7 @@ import {
   ActivityScreen,
   ChecklistScreen,
   ExpensesScreen,
+  GuideScreen,
   IdeasScreen,
   InviteScreen,
   ItemDetailScreen,
@@ -36,6 +37,7 @@ import { NicknameSetupScreen } from '@/screens/NicknameSetupScreen';
 import { OfflineBar } from '@/components/OfflineBar';
 import { OpenInBrowserScreen } from '@/screens/OpenInBrowserScreen';
 import { SignInScreen } from '@/screens/SignInScreen';
+import { TabFallbackScreen } from '@/screens/TabFallbackScreen';
 import { UnavailableScreen } from '@/screens/UnavailableScreen';
 import { hasBackend } from '@/supabase/client';
 
@@ -219,13 +221,14 @@ export function App() {
   if (!account) {
     /*
      * 처리방침은 로그인 전에도 읽을 수 있어야 한다 — 가입하기 전에 읽는 문서다.
+     * 사용법도 — 초대받은 친구가 로그인하기 전에 무슨 앱인지 본다.
      * 로그인 전 화면은 라우터 밖이라, 이 경우만 라우터로 감싸 띄운다.
      */
-    if (hash.startsWith('#/privacy')) {
+    if (hash.startsWith('#/privacy') || hash.startsWith('#/guide')) {
       return (
         <HashRouter>
           <Suspense fallback={<ScreenLoading />}>
-            <PrivacyScreen />
+            {hash.startsWith('#/guide') ? <GuideScreen /> : <PrivacyScreen />}
           </Suspense>
         </HashRouter>
       );
@@ -255,6 +258,9 @@ export function App() {
       <Suspense fallback={<ScreenLoading />}>
       <Routes>
         <Route path="/" element={<HomeScreen />} />
+        {/* 여행 밖에서 누른 일정·지도 탭 — 볼 여행으로 넘기거나, 없으면 빈 화면 */}
+        <Route path="/schedule" element={<TabFallbackScreen kind="schedule" />} />
+        <Route path="/map" element={<TabFallbackScreen kind="map" />} />
         {/* 'new'가 :tripId로 잡히지 않도록 먼저 선언한다 */}
         <Route path="/trip/new" element={<TripCreateScreen />} />
         <Route path="/trip/:tripId" element={<TripScreen />} />
@@ -270,6 +276,7 @@ export function App() {
         <Route path="/trip/:tripId/activity" element={<ActivityScreen />} />
         <Route path="/profile" element={<ProfileScreen />} />
         <Route path="/privacy" element={<PrivacyScreen />} />
+        <Route path="/guide" element={<GuideScreen />} />
         <Route path="/invite" element={<InviteRoute />} />
         <Route path="/invite/:code" element={<InviteRoute />} />
         <Route path="*" element={<Navigate to="/" replace />} />

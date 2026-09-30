@@ -64,3 +64,4 @@
 - [docs/STATUS.md](docs/STATUS.md) 진행 현황 · [docs/DEPLOY.md](docs/DEPLOY.md) 배포
 - [docs/AUTH_SETUP.md](docs/AUTH_SETUP.md) Supabase·로그인 · [docs/MAP_SETUP.md](docs/MAP_SETUP.md) 지도 키
 - [docs/APP_SETUP.md](docs/APP_SETUP.md) iOS·Android · [ARCHITECTURE.md](ARCHITECTURE.md) 설계
+- [docs/GUIDE.md](docs/GUIDE.md) 사용법 (앱의 `#/guide`와 같은 내용 — 화면이 바뀌면 문구·그림도. 그림은 `scripts/guide-shots.mjs`)
