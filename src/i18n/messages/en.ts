@@ -169,6 +169,10 @@ export const en: Messages = {
     tipsTitle: 'Good to know',
     tips: [
       {
+        q: 'How do I find this guide again?',
+        a: 'Tap ? at the top left of Home, open the menu (≡) on the plan screen → “How to use”, or use “How to use” at the bottom of your profile.',
+      },
+      {
         q: 'Can I use it like an app?',
         a: 'Add it to your home screen. iPhone: Safari’s Share button → “Add to Home Screen”. Android: Chrome menu (⋮) → “Add to Home screen” (or “Install app”).',
       },

@@ -137,7 +137,11 @@ export function HomeScreen() {
 
   return (
     <div className="app">
-      <AppHeader title={t.home.title} onProfile={() => navigate('/profile')} />
+      <AppHeader
+        title={t.home.title}
+        onProfile={() => navigate('/profile')}
+        onHelp={() => navigate('/guide')}
+      />
 
       <main className="main">
         {/* 여행 중일 때만 그려진다 */}
